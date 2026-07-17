@@ -1,0 +1,821 @@
+<div id="uzum-evidence-landscape">
+  <style>
+    #uzum-evidence-landscape {
+      width: 100%;
+      color: var(--foreground);
+    }
+    #uzum-evidence-landscape .vcm-stage {
+      position: relative;
+      height: 540px;
+      overflow: hidden;
+      padding: 0;
+    }
+    #uzum-evidence-landscape canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+    #uzum-evidence-landscape .vcm-label-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    #uzum-evidence-landscape .vcm-label {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+    }
+    #uzum-evidence-landscape .vcm-hint {
+      position: absolute;
+      left: 50%;
+      bottom: 0.75rem;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    #uzum-evidence-landscape .vcm-tooltip {
+      position: absolute;
+      display: none;
+      pointer-events: none;
+      max-width: 280px;
+      z-index: 4;
+    }
+    #uzum-evidence-landscape .vcm-detail {
+      margin-top: 0.75rem;
+    }
+    #uzum-evidence-landscape .vcm-detail-copy {
+      min-width: 0;
+      flex: 1 1 28rem;
+    }
+    #uzum-evidence-landscape .vcm-detail-copy code {
+      overflow-wrap: anywhere;
+    }
+    #uzum-evidence-landscape .vcm-metrics {
+      margin-top: 0.25rem;
+    }
+    #uzum-evidence-landscape .vcm-legend {
+      min-height: 1.5rem;
+    }
+    #uzum-evidence-landscape .vcm-key {
+      display: grid;
+      gap: 0.35rem;
+      margin: 0.35rem 0 0.55rem;
+    }
+    #uzum-evidence-landscape .vcm-key-row,
+    #uzum-evidence-landscape .vcm-key-item {
+      display: flex;
+      align-items: center;
+    }
+    #uzum-evidence-landscape .vcm-key-row {
+      flex-wrap: wrap;
+      gap: 0.35rem 0.7rem;
+    }
+    #uzum-evidence-landscape .vcm-key-item {
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+    #uzum-evidence-landscape .vcm-heat-scale {
+      display: inline-block;
+      width: 7rem;
+      height: 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--muted-foreground), var(--viz-series-1), var(--destructive));
+    }
+    #uzum-evidence-landscape .vcm-key-mark {
+      display: inline-block;
+      flex: none;
+      width: 0.65rem;
+      height: 0.65rem;
+      background: var(--viz-series-1);
+    }
+    #uzum-evidence-landscape .vcm-key-grounded {
+      border-bottom: 0.16rem solid var(--foreground);
+    }
+    #uzum-evidence-landscape .vcm-key-floating {
+      opacity: 0.66;
+      transform: translateY(-0.15rem);
+      box-shadow: 0 0.28rem 0 -0.08rem var(--muted-foreground);
+    }
+    #uzum-evidence-landscape .vcm-key-effect,
+    #uzum-evidence-landscape .vcm-key-outgoing {
+      border-radius: 50%;
+    }
+    #uzum-evidence-landscape .vcm-key-effect {
+      width: 0.45rem;
+      height: 0.45rem;
+      background: var(--viz-series-4);
+    }
+    #uzum-evidence-landscape .vcm-key-outgoing {
+      background: var(--viz-series-3);
+    }
+    #uzum-evidence-landscape .vcm-key-incoming {
+      background: var(--viz-series-5);
+      transform: rotate(45deg);
+    }
+    #uzum-evidence-landscape .vcm-key-unknown {
+      width: 0;
+      height: 0;
+      background: transparent;
+      border-left: 0.38rem solid transparent;
+      border-right: 0.38rem solid transparent;
+      border-bottom: 0.7rem solid var(--muted-foreground);
+    }
+    @media (max-width: 520px) {
+      #uzum-evidence-landscape .vcm-stage {
+        height: 450px;
+      }
+      #uzum-evidence-landscape .vcm-hint {
+        white-space: normal;
+        width: calc(100% - 2rem);
+        text-align: center;
+      }
+    }
+  </style>
+
+  <div class="viz-controls" aria-label="Code condition map controls">
+    <label class="form-label" for="vcm-lens">
+      Lens
+      <select id="vcm-lens" class="form-select">
+        <option value="attention">Review priority</option>
+        <option value="coverage">Missing coverage</option>
+        <option value="complexity">Complexity</option>
+        <option value="churn">Change pressure</option>
+        <option value="effects">Mutating side effects</option>
+        <option value="coupling">Coupling</option>
+      </select>
+    </label>
+    <label class="form-label" for="vcm-file">
+      Selected file
+      <select id="vcm-file" class="form-select"></select>
+    </label>
+    <div class="viz-row" aria-label="Camera presets">
+      <button type="button" class="btn" data-view="overview">Overview</button>
+      <button type="button" class="btn" data-view="files">Files</button>
+      <button type="button" class="btn" data-view="top">Top</button>
+      <button type="button" class="btn" data-view="side">Side</button>
+      <button type="button" class="btn btn-primary" data-view="detail">Detail</button>
+    </div>
+  </div>
+
+  <div class="vcm-key text-small" aria-label="Visual encoding legend" aria-live="polite">
+    <div class="vcm-key-row">
+      <span id="vcm-level" class="viz-badge">Loading 3D map…</span>
+      <span id="vcm-lens-name">Review priority</span>
+      <span id="vcm-lens-low" class="text-muted">lower</span>
+      <span class="vcm-heat-scale" role="img" aria-label="Heat scale from lower to higher"></span>
+      <span id="vcm-lens-high" class="text-muted">higher</span>
+    </div>
+    <div class="vcm-key-row" aria-label="Persistent shape meanings">
+      <span class="text-muted">Files:</span>
+      <span class="vcm-key-item"><span class="vcm-key-mark vcm-key-grounded" aria-hidden="true"></span><span class="vcm-key-mark vcm-key-effect" aria-hidden="true"></span>grounded + sphere: direct mutation detected</span>
+      <span class="vcm-key-item"><span class="vcm-key-mark vcm-key-floating" aria-hidden="true"></span>floating: none directly detected</span>
+      <span class="text-muted">Detail:</span>
+      <span class="vcm-key-item"><span class="vcm-key-mark vcm-key-outgoing" aria-hidden="true"></span>outgoing static dependency</span>
+      <span class="vcm-key-item"><span class="vcm-key-mark vcm-key-incoming" aria-hidden="true"></span>incoming static dependency</span>
+      <span class="text-muted">Coverage lens:</span>
+      <span class="vcm-key-item"><span class="vcm-key-mark vcm-key-unknown" aria-hidden="true"></span>unknown</span>
+    </div>
+    <div id="vcm-legend-copy" class="vcm-legend text-muted"></div>
+  </div>
+
+  <div class="card vcm-stage" id="vcm-stage">
+    <div id="vcm-label-layer" class="vcm-label-layer" aria-hidden="true"></div>
+    <div id="vcm-tooltip" class="tooltip vcm-tooltip text-small"></div>
+    <div class="vcm-hint text-small text-muted">Drag to rotate · scroll or pinch to zoom · select a building</div>
+    <span class="sr-only">Interactive 3D map of 46 Python source files grouped by package. Building footprint encodes lines of code and stable height encodes maximum function complexity. Grounded buildings with roof spheres have directly detected mutating side effects; translucent floating buildings have none directly detected, which does not prove transitive purity. The selected lens controls heat color. Far zoom shows package aggregates, middle zoom shows files, and near zoom shows functions plus bounded incoming and outgoing static dependencies.</span>
+  </div>
+
+  <div class="card vcm-detail viz-row" aria-live="polite">
+    <div class="vcm-detail-copy">
+      <div><code id="vcm-path"></code> <span id="vcm-selected-function" class="text-muted text-small"></span></div>
+      <div id="vcm-metrics" class="vcm-metrics text-small"></div>
+    </div>
+    <button type="button" id="vcm-open" class="btn">Open source</button>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'https://esm.sh/three@0.185.1';
+    import { OrbitControls } from 'https://esm.sh/three@0.185.1/examples/jsm/controls/OrbitControls.js';
+
+    const root = document.getElementById('uzum-evidence-landscape');
+    const stage = root.querySelector('#vcm-stage');
+    const labelLayer = root.querySelector('#vcm-label-layer');
+    const tooltip = root.querySelector('#vcm-tooltip');
+    const lensSelect = root.querySelector('#vcm-lens');
+    const fileSelect = root.querySelector('#vcm-file');
+    const levelBadge = root.querySelector('#vcm-level');
+    const lensName = root.querySelector('#vcm-lens-name');
+    const lensLow = root.querySelector('#vcm-lens-low');
+    const lensHigh = root.querySelector('#vcm-lens-high');
+    const legendCopy = root.querySelector('#vcm-legend-copy');
+    const pathCopy = root.querySelector('#vcm-path');
+    const selectedFunctionCopy = root.querySelector('#vcm-selected-function');
+    const metricsCopy = root.querySelector('#vcm-metrics');
+    const openButton = root.querySelector('#vcm-open');
+
+    const files = [{"p":"__init__.py","g":"app-root","l":335,"cc":11,"nest":2,"fn":10,"cov":0.7714,"bcov":0.5526,"unc":32,"ch":433,"cm":22,"fx":3,"fxall":21,"fi":3,"fo":8,"a":0.693,"fun":[{"n":"_validate_runtime_config","ln":115,"end":156,"cc":11,"fx":3},{"n":"create_app","ln":16,"end":112,"cc":8,"fx":1},{"n":"configure_proxy_fix","ln":170,"end":198,"cc":4,"fx":1},{"n":"allowed_file","ln":314,"end":335,"cc":4,"fx":0},{"n":"configure_enhanced_static_serving","ln":259,"end":275,"cc":4,"fx":4}],"dep":["cli/__init__.py","extensions.py","models/__init__.py","services/enhancement/orchestrator.py","services/google_auth_service.py","views/api.py","views/auth.py","views/main.py"]},{"p":"cli/__init__.py","g":"cli","l":9,"cc":1,"nest":0,"fn":1,"cov":1.0,"bcov":null,"unc":0,"ch":11,"cm":2,"fx":0,"fxall":0,"fi":1,"fo":2,"a":0.183,"fun":[{"n":"register_commands","ln":6,"end":9,"cc":1,"fx":0}],"dep":["cli/account.py","cli/payments.py"]},{"p":"cli/account.py","g":"cli","l":289,"cc":13,"nest":3,"fn":8,"cov":0.2637,"bcov":0.5441,"unc":148,"ch":715,"cm":8,"fx":9,"fxall":15,"fi":1,"fo":6,"a":0.8455,"fun":[{"n":"set_plan","ln":126,"end":176,"cc":13,"fx":3},{"n":"record_payment","ln":188,"end":223,"cc":8,"fx":3},{"n":"_get_user","ln":25,"end":49,"cc":7,"fx":4},{"n":"list_users","ln":59,"end":81,"cc":5,"fx":1},{"n":"grant_credits","ln":94,"end":111,"cc":3,"fx":1}],"dep":["extensions.py","models/__init__.py","services/asset_retention_service.py","services/credit_service.py","services/payment_service.py","services/user_service.py"]},{"p":"cli/payments.py","g":"cli","l":212,"cc":13,"nest":3,"fn":3,"cov":0.4,"bcov":0.4545,"unc":21,"ch":222,"cm":2,"fx":4,"fxall":10,"fi":1,"fo":3,"a":0.6272,"fun":[{"n":"reconcile_payments","ln":35,"end":94,"cc":13,"fx":5},{"n":"reconcile_operations","ln":112,"end":145,"cc":9,"fx":2},{"n":"cleanup_expired_payments","ln":162,"end":212,"cc":7,"fx":3}],"dep":["extensions.py","models/__init__.py","services/payment_service.py"]},{"p":"config/ai_config.py","g":"config","l":93,"cc":5,"nest":1,"fn":4,"cov":null,"bcov":null,"unc":0,"ch":99,"cm":3,"fx":0,"fxall":0,"fi":0,"fo":0,"a":0.2398,"fun":[{"n":"AIConfig.validate_config","ln":60,"end":79,"cc":5,"fx":0},{"n":"AIConfig.is_ready","ln":82,"end":84,"cc":2,"fx":0},{"n":"AIConfig.get_config_dict","ln":47,"end":57,"cc":1,"fx":0},{"n":"AIConfig.get_image_optimization_config","ln":87,"end":93,"cc":1,"fx":0}],"dep":[]},{"p":"config/enhancement_config.py","g":"config","l":152,"cc":2,"nest":1,"fn":4,"cov":0.8723,"bcov":1.0,"unc":6,"ch":168,"cm":6,"fx":0,"fxall":0,"fi":4,"fo":0,"a":0.3602,"fun":[{"n":"EnhancementConfig.get_strategy_config","ln":76,"end":102,"cc":2,"fx":0},{"n":"EnhancementConfig.get_daily_limit","ln":111,"end":113,"cc":2,"fx":0},{"n":"EnhancementConfig.get_all_configs","ln":116,"end":152,"cc":1,"fx":0},{"n":"EnhancementConfig.is_strategy_available","ln":105,"end":108,"cc":1,"fx":0}],"dep":[]},{"p":"extensions.py","g":"app-root","l":46,"cc":3,"nest":2,"fn":1,"cov":0.9048,"bcov":0.5,"unc":2,"ch":50,"cm":5,"fx":0,"fxall":0,"fi":15,"fo":0,"a":0.3406,"fun":[{"n":"_get_limiter_storage_uri","ln":20,"end":36,"cc":3,"fx":0}],"dep":[]},{"p":"models/__init__.py","g":"models","l":548,"cc":6,"nest":3,"fn":14,"cov":0.8697,"bcov":0.6136,"unc":31,"ch":664,"cm":13,"fx":0,"fxall":1,"fi":13,"fo":2,"a":0.5938,"fun":[{"n":"User.display_name","ln":181,"end":191,"cc":6,"fx":0},{"n":"GUID.process_bind_param","ln":40,"end":50,"cc":4,"fx":0},{"n":"User.__repr__","ln":193,"end":195,"cc":4,"fx":0},{"n":"User.check_password","ln":162,"end":174,"cc":3,"fx":1},{"n":"GUID.process_result_value","ln":52,"end":59,"cc":3,"fx":0}],"dep":["extensions.py","models/mixins.py"]},{"p":"models/mixins.py","g":"models","l":16,"cc":0,"nest":0,"fn":0,"cov":1.0,"bcov":null,"unc":0,"ch":16,"cm":1,"fx":0,"fxall":0,"fi":1,"fo":1,"a":0.1449,"fun":[],"dep":["extensions.py"]},{"p":"security/__init__.py","g":"security","l":17,"cc":0,"nest":0,"fn":0,"cov":1.0,"bcov":null,"unc":0,"ch":17,"cm":2,"fx":0,"fxall":0,"fi":1,"fo":1,"a":0.1496,"fun":[],"dep":["__init__.py"]},{"p":"security/password_validation.py","g":"security","l":39,"cc":7,"nest":1,"fn":1,"cov":0.1429,"bcov":0.0,"unc":12,"ch":39,"cm":1,"fx":0,"fxall":0,"fi":1,"fo":0,"a":0.3247,"fun":[{"n":"validate_password","ln":5,"end":39,"cc":7,"fx":0}],"dep":[]},{"p":"security/sanitizers.py","g":"security","l":132,"cc":9,"nest":2,"fn":5,"cov":0.2836,"bcov":0.0769,"unc":48,"ch":148,"cm":3,"fx":0,"fxall":1,"fi":0,"fo":0,"a":0.4583,"fun":[{"n":"sanitize_requirements_filter","ln":81,"end":102,"cc":9,"fx":0},{"n":"validate_uuid4","ln":105,"end":115,"cc":5,"fx":0},{"n":"sanitize_prompt_text","ln":27,"end":51,"cc":4,"fx":0},{"n":"validate_ai_response","ln":54,"end":78,"cc":4,"fx":1},{"n":"ensure_path_within_base","ln":118,"end":132,"cc":4,"fx":0}],"dep":[]},{"p":"services/ai_analysis/ai_analyzer.py","g":"services/ai_analysis","l":344,"cc":7,"nest":3,"fn":16,"cov":0.1894,"bcov":0.0,"unc":107,"ch":400,"cm":7,"fx":0,"fxall":2,"fi":1,"fo":5,"a":0.6259,"fun":[{"n":"AIAnalyzer.validate_ai_setup","ln":247,"end":315,"cc":7,"fx":0},{"n":"AIAnalyzer.get_improvement_suggestions","ln":323,"end":344,"cc":6,"fx":0},{"n":"AIAnalyzer._get_requirements_for_analysis","ln":92,"end":108,"cc":6,"fx":0},{"n":"AIAnalyzer._log_concerning_content","ln":146,"end":172,"cc":5,"fx":2},{"n":"AIAnalyzer.analyze_image_with_ai","ln":35,"end":90,"cc":4,"fx":0}],"dep":["services/ai_analysis/gemini_service.py","services/ai_analysis/prompt_manager.py","services/ai_analysis/requirement_templates.py","services/ai_analysis/response_parser.py","utils/provider_usage.py"]},{"p":"services/ai_analysis/gemini_service.py","g":"services/ai_analysis","l":162,"cc":5,"nest":2,"fn":4,"cov":0.2877,"bcov":0.1,"unc":52,"ch":236,"cm":7,"fx":3,"fxall":9,"fi":1,"fo":0,"a":0.5287,"fun":[{"n":"GeminiService.analyze_image","ln":35,"end":106,"cc":5,"fx":6},{"n":"GeminiService.__init__","ln":17,"end":33,"cc":5,"fx":1},{"n":"GeminiService._prepare_image_for_analysis","ln":108,"end":146,"cc":4,"fx":1},{"n":"GeminiService.test_connection","ln":148,"end":162,"cc":2,"fx":1}],"dep":[]},{"p":"services/ai_analysis/prompt_manager.py","g":"services/ai_analysis","l":178,"cc":3,"nest":1,"fn":7,"cov":0.3056,"bcov":0.0,"unc":25,"ch":198,"cm":9,"fx":0,"fxall":0,"fi":1,"fo":1,"a":0.3841,"fun":[{"n":"PromptManager.get_custom_prompt","ln":164,"end":178,"cc":3,"fx":0},{"n":"PromptManager._build_analysis_prompt","ln":35,"end":142,"cc":2,"fx":0},{"n":"PromptManager.get_analysis_prompt","ln":12,"end":25,"cc":2,"fx":0},{"n":"PromptManager.get_category_specific_prompt","ln":27,"end":33,"cc":2,"fx":0},{"n":"PromptManager._load_base_prompts","ln":148,"end":162,"cc":1,"fx":0}],"dep":["services/ai_analysis/requirement_templates.py"]},{"p":"services/ai_analysis/requirement_templates.py","g":"services/ai_analysis","l":184,"cc":4,"nest":3,"fn":3,"cov":0.4231,"bcov":0.2857,"unc":15,"ch":226,"cm":7,"fx":0,"fxall":0,"fi":4,"fo":0,"a":0.4257,"fun":[{"n":"get_requirements_by_importance","ln":160,"end":170,"cc":4,"fx":0},{"n":"format_requirements_for_prompt","ln":172,"end":184,"cc":3,"fx":0},{"n":"get_all_requirements","ln":149,"end":158,"cc":3,"fx":0}],"dep":[]},{"p":"services/ai_analysis/response_parser.py","g":"services/ai_analysis","l":270,"cc":22,"nest":4,"fn":10,"cov":0.1377,"bcov":0.0,"unc":119,"ch":390,"cm":6,"fx":0,"fxall":3,"fi":1,"fo":1,"a":0.6755,"fun":[{"n":"ResponseParser._validate_response_structure","ln":114,"end":170,"cc":22,"fx":2},{"n":"ResponseParser._normalize_response","ln":172,"end":225,"cc":16,"fx":0},{"n":"ResponseParser._extract_required_fields","ln":89,"end":112,"cc":10,"fx":0},{"n":"ResponseParser.parse_ai_response","ln":27,"end":74,"cc":6,"fx":1},{"n":"ResponseParser.generate_summary","ln":253,"end":270,"cc":4,"fx":0}],"dep":["services/ai_analysis/requirement_templates.py"]},{"p":"services/asset_retention_service.py","g":"services","l":93,"cc":19,"nest":2,"fn":2,"cov":null,"bcov":null,"unc":0,"ch":93,"cm":1,"fx":0,"fxall":3,"fi":1,"fo":3,"a":0.4245,"fun":[{"n":"AssetRetentionService.cleanup_expired","ln":30,"end":93,"cc":19,"fx":3},{"n":"AssetRetentionService.__init__","ln":27,"end":28,"cc":2,"fx":0}],"dep":["extensions.py","models/__init__.py","services/image_lifecycle_manager.py"]},{"p":"services/credit_service.py","g":"services","l":573,"cc":14,"nest":4,"fn":14,"cov":0.3896,"bcov":0.1667,"unc":47,"ch":885,"cm":6,"fx":0,"fxall":6,"fi":2,"fo":3,"a":0.6766,"fun":[{"n":"CreditService.reserve_operation","ln":182,"end":317,"cc":14,"fx":1},{"n":"CreditService.settle_operation","ln":319,"end":377,"cc":8,"fx":1},{"n":"CreditService.check_ai_allowance","ln":77,"end":138,"cc":7,"fx":0},{"n":"CreditService.grant_credits","ln":495,"end":547,"cc":6,"fx":2},{"n":"CreditService._matching_operation","ln":155,"end":180,"cc":6,"fx":1}],"dep":["extensions.py","models/__init__.py","services/user_service.py"]},{"p":"services/dev_mocks.py","g":"services","l":249,"cc":1,"nest":0,"fn":1,"cov":null,"bcov":null,"unc":0,"ch":249,"cm":1,"fx":0,"fxall":0,"fi":1,"fo":0,"a":0.2817,"fun":[{"n":"get_mock_ai_result","ln":9,"end":249,"cc":1,"fx":0}],"dep":[]},{"p":"services/enhancement/__init__.py","g":"services/enhancement","l":60,"cc":0,"nest":0,"fn":0,"cov":1.0,"bcov":null,"unc":0,"ch":60,"cm":2,"fx":0,"fxall":0,"fi":0,"fo":1,"a":0.1538,"fun":[],"dep":["__init__.py"]},{"p":"services/enhancement/core.py","g":"services/enhancement","l":105,"cc":2,"nest":1,"fn":4,"cov":0.9057,"bcov":0.75,"unc":5,"ch":119,"cm":5,"fx":0,"fxall":0,"fi":5,"fo":0,"a":0.3461,"fun":[{"n":"ProviderBillingError.__init__","ln":76,"end":89,"cc":2,"fx":0},{"n":"EnhancementContext.__post_init__","ln":20,"end":24,"cc":2,"fx":0},{"n":"EnhancementStrategy.apply","ln":56,"end":61,"cc":1,"fx":0},{"n":"EnhancementStrategy.can_apply","ln":51,"end":53,"cc":1,"fx":0}],"dep":[]},{"p":"services/enhancement/edge_ml_background_removal.py","g":"services/enhancement","l":561,"cc":12,"nest":2,"fn":13,"cov":0.2604,"bcov":0.0,"unc":142,"ch":627,"cm":6,"fx":0,"fxall":10,"fi":1,"fo":1,"a":0.6475,"fun":[{"n":"get_edge_ml_client_config","ln":467,"end":561,"cc":12,"fx":0},{"n":"EdgeMLBackgroundRemovalStrategy._select_background_color","ln":430,"end":464,"cc":5,"fx":0},{"n":"EdgeMLBackgroundRemovalService.postprocess_mask","ln":212,"end":245,"cc":5,"fx":0},{"n":"EdgeMLBackgroundRemovalService.load_model","ln":145,"end":176,"cc":5,"fx":5},{"n":"EdgeMLBackgroundRemovalService.is_available","ln":135,"end":143,"cc":4,"fx":0}],"dep":["services/enhancement/core.py"]},{"p":"services/enhancement/gemini_service.py","g":"services/enhancement","l":770,"cc":32,"nest":6,"fn":14,"cov":0.1201,"bcov":0.0227,"unc":271,"ch":1680,"cm":21,"fx":2,"fxall":17,"fi":1,"fo":3,"a":0.8736,"fun":[{"n":"GeminiEnhancementService._process_api_result","ln":565,"end":678,"cc":32,"fx":3},{"n":"GeminiEnhancementService._extract_applied_steps","ln":680,"end":726,"cc":20,"fx":0},{"n":"GeminiEnhancementService._build_analysis_prompt","ln":298,"end":361,"cc":14,"fx":0},{"n":"GeminiEnhancementService._sanitize_error_message","ln":144,"end":164,"cc":13,"fx":0},{"n":"GeminiEnhancementService._extract_summary","ln":728,"end":755,"cc":12,"fx":1}],"dep":["config/enhancement_config.py","services/enhancement/core.py","utils/provider_usage.py"]},{"p":"services/enhancement/metrics.py","g":"services/enhancement","l":202,"cc":11,"nest":2,"fn":5,"cov":0.123,"bcov":0.3333,"unc":107,"ch":206,"cm":2,"fx":0,"fxall":0,"fi":3,"fo":0,"a":0.5751,"fun":[{"n":"ImageMetrics._calculate_pil_metrics","ln":34,"end":81,"cc":11,"fx":0},{"n":"ImageMetrics.calculate_all_metrics","ln":10,"end":31,"cc":5,"fx":0},{"n":"ImageMetrics._calculate_cv_metrics","ln":84,"end":124,"cc":4,"fx":0},{"n":"ImageMetrics.compare_metrics","ln":181,"end":202,"cc":4,"fx":0},{"n":"ImageMetrics.calculate_quality_score","ln":127,"end":178,"cc":2,"fx":0}],"dep":[]},{"p":"services/enhancement/orchestrator.py","g":"services/enhancement","l":480,"cc":22,"nest":4,"fn":15,"cov":0.157,"bcov":0.0,"unc":188,"ch":1044,"cm":20,"fx":6,"fxall":31,"fi":2,"fo":4,"a":0.9113,"fun":[{"n":"EnhancementOrchestrator._apply_strategies","ln":191,"end":339,"cc":22,"fx":8},{"n":"EnhancementOrchestrator._save_enhanced_image","ln":398,"end":438,"cc":11,"fx":4},{"n":"EnhancementOrchestrator._select_strategies","ln":136,"end":170,"cc":9,"fx":6},{"n":"EnhancementOrchestrator.enhance_image","ln":66,"end":134,"cc":6,"fx":1},{"n":"EnhancementOrchestrator._check_cache","ln":353,"end":373,"cc":6,"fx":2}],"dep":["config/enhancement_config.py","services/enhancement/core.py","services/enhancement/metrics.py","services/enhancement/strategies.py"]},{"p":"services/enhancement/strategies.py","g":"services/enhancement","l":263,"cc":6,"nest":2,"fn":12,"cov":0.2053,"bcov":0.0667,"unc":120,"ch":389,"cm":13,"fx":0,"fxall":3,"fi":1,"fo":4,"a":0.5998,"fun":[{"n":"GeminiEnhancementStrategy.apply","ln":228,"end":263,"cc":6,"fx":3},{"n":"DeterministicEnhancementStrategy._clean_borders","ln":170,"end":192,"cc":4,"fx":0},{"n":"DeterministicEnhancementStrategy._adjust_brightness","ln":120,"end":139,"cc":4,"fx":0},{"n":"DeterministicEnhancementStrategy._correct_aspect_ratio","ln":88,"end":118,"cc":3,"fx":0},{"n":"DeterministicEnhancementStrategy._enhance_resolution","ln":64,"end":86,"cc":3,"fx":0}],"dep":["config/enhancement_config.py","services/enhancement/core.py","services/enhancement/gemini_service.py","services/enhancement/metrics.py"]},{"p":"services/google_auth_service.py","g":"services","l":181,"cc":17,"nest":3,"fn":2,"cov":0.2738,"bcov":0.125,"unc":61,"ch":183,"cm":2,"fx":3,"fxall":13,"fi":2,"fo":3,"a":0.7055,"fun":[{"n":"handle_google_callback","ln":69,"end":181,"cc":17,"fx":10},{"n":"init_google_oauth","ln":41,"end":66,"cc":3,"fx":3}],"dep":["extensions.py","models/__init__.py","services/user_service.py"]},{"p":"services/image_lifecycle_manager.py","g":"services","l":584,"cc":14,"nest":3,"fn":20,"cov":0.2076,"bcov":0.0857,"unc":187,"ch":1374,"cm":8,"fx":9,"fxall":27,"fi":4,"fo":2,"a":0.88,"fun":[{"n":"ImageLifecycleManager.list_images","ln":528,"end":581,"cc":14,"fx":0},{"n":"ImageLifecycleManager.get_image_info","ln":455,"end":503,"cc":11,"fx":2},{"n":"ImageLifecycleManager.get_image_path","ln":401,"end":453,"cc":8,"fx":1},{"n":"ImageLifecycleManager._segments_to_search","ln":241,"end":270,"cc":8,"fx":1},{"n":"ImageLifecycleManager._persist_file","ln":131,"end":173,"cc":7,"fx":6}],"dep":["services/storage/__init__.py","services/storage/local.py"]},{"p":"services/image_service.py","g":"services","l":798,"cc":41,"nest":6,"fn":12,"cov":0.0901,"bcov":0.0,"unc":313,"ch":1402,"cm":20,"fx":1,"fxall":41,"fi":2,"fo":2,"a":0.8761,"fun":[{"n":"ImageAutoFixer.auto_fix_image","ln":395,"end":643,"cc":41,"fx":21},{"n":"BorderDetector.detect_borders","ln":34,"end":215,"cc":17,"fx":0},{"n":"ImageService.validate_upload","ln":671,"end":731,"cc":15,"fx":10},{"n":"ImageService.ensure_json_serializable","ln":782,"end":798,"cc":9,"fx":0},{"n":"QualityAnalyzer.assess_image_quality","ln":290,"end":334,"cc":4,"fx":0}],"dep":["__init__.py","services/image_lifecycle_manager.py"]},{"p":"services/job_service.py","g":"services","l":141,"cc":5,"nest":3,"fn":6,"cov":0.2545,"bcov":0.0,"unc":41,"ch":149,"cm":3,"fx":0,"fxall":0,"fi":2,"fo":3,"a":0.4645,"fun":[{"n":"JobService.create_job","ln":29,"end":59,"cc":5,"fx":0},{"n":"JobService.attach_asset","ln":61,"end":95,"cc":4,"fx":0},{"n":"JobService.complete_job","ln":109,"end":133,"cc":2,"fx":0},{"n":"JobService.__init__","ln":24,"end":26,"cc":2,"fx":0},{"n":"JobService.record_analysis","ln":97,"end":107,"cc":1,"fx":0}],"dep":["extensions.py","models/__init__.py","services/user_service.py"]},{"p":"services/language_service.py","g":"services","l":112,"cc":8,"nest":3,"fn":8,"cov":0.5116,"bcov":0.3571,"unc":21,"ch":112,"cm":2,"fx":0,"fxall":1,"fi":2,"fo":0,"a":0.4032,"fun":[{"n":"LanguageService.get_translation","ln":34,"end":49,"cc":8,"fx":0},{"n":"LanguageService.load_translations","ln":19,"end":32,"cc":5,"fx":1},{"n":"LanguageService.get_translations","ln":104,"end":108,"cc":2,"fx":0},{"n":"LanguageService.get_ai_prompt_language","ln":51,"end":89,"cc":1,"fx":0},{"n":"LanguageService.get_language_name","ln":91,"end":98,"cc":1,"fx":0}],"dep":[]},{"p":"services/payment_service.py","g":"services","l":184,"cc":13,"nest":1,"fn":4,"cov":null,"bcov":null,"unc":0,"ch":184,"cm":1,"fx":0,"fxall":9,"fi":3,"fo":2,"a":0.4732,"fun":[{"n":"PaymentService.grant_credits","ln":53,"end":116,"cc":13,"fx":4},{"n":"PaymentService.reverse_credits","ln":118,"end":184,"cc":12,"fx":4},{"n":"PaymentService._link_legacy_transaction","ln":24,"end":51,"cc":3,"fx":1},{"n":"PaymentService.__init__","ln":21,"end":22,"cc":2,"fx":0}],"dep":["extensions.py","models/__init__.py"]},{"p":"services/storage/__init__.py","g":"services/storage","l":18,"cc":0,"nest":0,"fn":0,"cov":1.0,"bcov":null,"unc":0,"ch":18,"cm":1,"fx":0,"fxall":0,"fi":2,"fo":2,"a":0.1862,"fun":[],"dep":["services/storage/base.py","services/storage/factory.py"]},{"p":"services/storage/base.py","g":"services/storage","l":97,"cc":1,"nest":0,"fn":10,"cov":0.6875,"bcov":1.0,"unc":10,"ch":97,"cm":1,"fx":0,"fxall":0,"fi":5,"fo":0,"a":0.3191,"fun":[{"n":"StorageBackend.url","ln":52,"end":70,"cc":1,"fx":0},{"n":"StorageBackend.get_absolute_path","ln":87,"end":97,"cc":1,"fx":0},{"n":"StorageBackend.list","ln":78,"end":85,"cc":1,"fx":0},{"n":"StorageBackend.read_to_local","ln":35,"end":38,"cc":1,"fx":0},{"n":"StorageBackend.delete_tree","ln":46,"end":49,"cc":1,"fx":0}],"dep":[]},{"p":"services/storage/factory.py","g":"services/storage","l":88,"cc":6,"nest":4,"fn":3,"cov":0.2432,"bcov":0.0,"unc":28,"ch":88,"cm":1,"fx":0,"fxall":0,"fi":1,"fo":4,"a":0.4151,"fun":[{"n":"_create_backend","ln":53,"end":82,"cc":6,"fx":0},{"n":"get_storage_backend","ln":20,"end":50,"cc":5,"fx":0},{"n":"reset_storage_backend","ln":85,"end":88,"cc":1,"fx":0}],"dep":["services/storage/base.py","services/storage/gcs.py","services/storage/local.py","services/storage/s3.py"]},{"p":"services/storage/gcs.py","g":"services/storage","l":118,"cc":4,"nest":2,"fn":10,"cov":null,"bcov":null,"unc":0,"ch":118,"cm":1,"fx":3,"fxall":11,"fi":1,"fo":1,"a":0.3381,"fun":[{"n":"GCSStorage.list","ln":109,"end":118,"cc":4,"fx":0},{"n":"GCSStorage.__init__","ln":25,"end":38,"cc":3,"fx":1},{"n":"GCSStorage.delete_tree","ln":82,"end":93,"cc":2,"fx":2},{"n":"GCSStorage.delete","ln":71,"end":80,"cc":2,"fx":2},{"n":"GCSStorage.read_to_local","ln":62,"end":69,"cc":1,"fx":2}],"dep":["services/storage/base.py"]},{"p":"services/storage/local.py","g":"services/storage","l":141,"cc":6,"nest":3,"fn":12,"cov":0.3626,"bcov":0.0385,"unc":58,"ch":141,"cm":1,"fx":10,"fxall":17,"fi":2,"fo":1,"a":0.5722,"fun":[{"n":"LocalStorage.delete_tree","ln":96,"end":112,"cc":6,"fx":3},{"n":"LocalStorage.list","ln":123,"end":136,"cc":6,"fx":0},{"n":"LocalStorage._full_path","ln":32,"end":48,"cc":3,"fx":0},{"n":"LocalStorage.delete","ln":85,"end":94,"cc":2,"fx":3},{"n":"LocalStorage.read_to_local","ln":75,"end":83,"cc":2,"fx":2}],"dep":["services/storage/base.py"]},{"p":"services/storage/s3.py","g":"services/storage","l":142,"cc":5,"nest":3,"fn":10,"cov":null,"bcov":null,"unc":0,"ch":142,"cm":1,"fx":4,"fxall":11,"fi":1,"fo":1,"a":0.387,"fun":[{"n":"S3Storage.delete_tree","ln":89,"end":112,"cc":5,"fx":1},{"n":"S3Storage.list","ln":130,"end":142,"cc":5,"fx":0},{"n":"S3Storage.__init__","ln":25,"end":47,"cc":4,"fx":2},{"n":"S3Storage.save","ln":49,"end":56,"cc":3,"fx":2},{"n":"S3Storage.delete","ln":79,"end":87,"cc":2,"fx":2}],"dep":["services/storage/base.py"]},{"p":"services/telegram_auth_service.py","g":"services","l":117,"cc":12,"nest":2,"fn":3,"cov":0.2727,"bcov":0.087,"unc":48,"ch":117,"cm":1,"fx":0,"fxall":3,"fi":1,"fo":2,"a":0.4968,"fun":[{"n":"TelegramAuthService.authenticate","ln":42,"end":102,"cc":12,"fx":3},{"n":"TelegramAuthService._is_signature_valid","ln":104,"end":117,"cc":5,"fx":0},{"n":"TelegramAuthService.__init__","ln":29,"end":40,"cc":5,"fx":0}],"dep":["models/__init__.py","services/user_service.py"]},{"p":"services/user_service.py","g":"services","l":450,"cc":20,"nest":2,"fn":11,"cov":0.1837,"bcov":0.125,"unc":160,"ch":512,"cm":7,"fx":0,"fxall":6,"fi":7,"fo":3,"a":0.7842,"fun":[{"n":"UserService.sync_telegram_user","ln":190,"end":288,"cc":20,"fx":2},{"n":"UserService.update_profile","ln":309,"end":396,"cc":16,"fx":0},{"n":"UserService.create_user","ln":75,"end":130,"cc":11,"fx":0},{"n":"UserService.authenticate","ln":132,"end":188,"cc":9,"fx":2},{"n":"UserService.ensure_monthly_usage","ln":424,"end":450,"cc":6,"fx":2}],"dep":["extensions.py","models/__init__.py","security/password_validation.py"]},{"p":"utils/provider_usage.py","g":"utils","l":26,"cc":7,"nest":2,"fn":1,"cov":null,"bcov":null,"unc":0,"ch":26,"cm":1,"fx":0,"fxall":0,"fi":2,"fo":0,"a":0.2779,"fun":[{"n":"serialize_provider_usage","ln":8,"end":26,"cc":7,"fx":0}],"dep":[]},{"p":"utils/transaction.py","g":"utils","l":138,"cc":8,"nest":3,"fn":2,"cov":0.0,"bcov":0.0,"unc":48,"ch":138,"cm":1,"fx":0,"fxall":3,"fi":1,"fo":1,"a":0.4653,"fun":[{"n":"atomic_transaction","ln":25,"end":87,"cc":8,"fx":3},{"n":"transactional","ln":90,"end":138,"cc":1,"fx":0}],"dep":["extensions.py"]},{"p":"views/api.py","g":"views","l":3649,"cc":96,"nest":7,"fn":43,"cov":0.1247,"bcov":0.2423,"unc":1123,"ch":5827,"cm":56,"fx":32,"fxall":134,"fi":1,"fo":18,"a":1.0,"fun":[{"n":"enhance_image","ln":1607,"end":2220,"cc":96,"fx":32},{"n":"paycom_merchant_api","ln":3163,"end":3538,"cc":67,"fx":15},{"n":"analyze_with_ai","ln":485,"end":872,"cc":44,"fx":12},{"n":"download_image_v2","ln":2342,"end":2524,"cc":37,"fx":8},{"n":"download_image","ln":2529,"end":2673,"cc":34,"fx":6}],"dep":["config/enhancement_config.py","extensions.py","models/__init__.py","security/__init__.py","services/ai_analysis/ai_analyzer.py","services/ai_analysis/requirement_templates.py","services/credit_service.py","services/dev_mocks.py","services/enhancement/core.py","services/enhancement/edge_ml_background_removal.py","services/enhancement/metrics.py","services/enhancement/orchestrator.py","services/image_lifecycle_manager.py","services/image_service.py","services/job_service.py","services/language_service.py","services/payment_service.py","services/user_service.py"]},{"p":"views/auth.py","g":"views","l":352,"cc":14,"nest":3,"fn":10,"cov":0.223,"bcov":0.5,"unc":115,"ch":478,"cm":15,"fx":3,"fxall":5,"fi":1,"fo":5,"a":0.7864,"fun":[{"n":"telegram_authorize","ln":222,"end":294,"cc":14,"fx":5},{"n":"login","ln":71,"end":112,"cc":11,"fx":0},{"n":"_is_safe_url","ln":32,"end":53,"cc":7,"fx":0},{"n":"signup","ln":117,"end":136,"cc":6,"fx":0},{"n":"profile","ln":150,"end":217,"cc":5,"fx":0}],"dep":["extensions.py","models/__init__.py","services/google_auth_service.py","services/telegram_auth_service.py","services/user_service.py"]},{"p":"views/main.py","g":"views","l":281,"cc":19,"nest":2,"fn":8,"cov":0.2518,"bcov":0.4615,"unc":104,"ch":587,"cm":14,"fx":4,"fxall":20,"fi":1,"fo":7,"a":0.8223,"fun":[{"n":"upload_file","ln":61,"end":181,"cc":19,"fx":17},{"n":"health_readiness","ln":212,"end":263,"cc":6,"fx":3},{"n":"_serialize_asset","ln":28,"end":44,"cc":5,"fx":0},{"n":"get_supported_languages","ln":267,"end":275,"cc":2,"fx":0},{"n":"health_liveness","ln":202,"end":208,"cc":1,"fx":0}],"dep":["extensions.py","models/__init__.py","services/image_lifecycle_manager.py","services/image_service.py","services/job_service.py","services/language_service.py","services/storage/__init__.py"]}];
+
+    const groupOrder = ['views', 'services', 'services/enhancement', 'services/ai_analysis', 'services/storage', 'models', 'app-root', 'security', 'config', 'cli', 'utils'];
+    const groups = new Map(groupOrder.map(name => [name, files.filter(file => file.g === name)]));
+    const fileByPath = new Map(files.map(file => [file.p, file]));
+
+    function cssColor(variable) {
+      const probe = document.createElement('span');
+      probe.style.color = `var(${variable})`;
+      probe.style.display = 'none';
+      root.appendChild(probe);
+      const value = getComputedStyle(probe).color;
+      probe.remove();
+      const rgb = value.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/);
+      if (rgb) return `rgb(${rgb[1]}, ${rgb[2]}, ${rgb[3]})`;
+      const srgb = value.match(/^color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+      if (srgb) {
+        return `rgb(${Math.round(Number(srgb[1]) * 255)}, ${Math.round(Number(srgb[2]) * 255)}, ${Math.round(Number(srgb[3]) * 255)})`;
+      }
+      return value;
+    }
+
+    const colors = {
+      background: cssColor('--background'),
+      foreground: cssColor('--foreground'),
+      border: cssColor('--border'),
+      muted: cssColor('--muted'),
+      mutedForeground: cssColor('--muted-foreground'),
+      low: cssColor('--muted-foreground'),
+      middle: cssColor('--viz-series-1'),
+      high: cssColor('--destructive'),
+      selected: cssColor('--primary'),
+      outgoing: cssColor('--viz-series-3'),
+      incoming: cssColor('--viz-series-5'),
+      effects: cssColor('--viz-series-4')
+    };
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 180);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = false;
+    renderer.domElement.setAttribute('role', 'img');
+    renderer.domElement.setAttribute('aria-label', 'Zoomable 3D software condition landscape for the uzumtools Python application');
+    stage.prepend(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = false;
+    controls.minDistance = 5;
+    controls.maxDistance = 95;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.screenSpacePanning = true;
+
+    scene.add(new THREE.HemisphereLight(colors.foreground, colors.background, 1.65));
+    const keyLight = new THREE.DirectionalLight(colors.foreground, 1.8);
+    keyLight.position.set(18, 30, 22);
+    scene.add(keyLight);
+
+    const buildings = new Map();
+    const groupBeacons = new Map();
+    const groupLabels = new Map();
+    const fileLabels = new Map();
+    const selectableMeshes = [];
+    const effectsMarkers = [];
+    const unknownMarkers = [];
+    const floatingShadows = [];
+    const detailObjects = new THREE.Group();
+    const relationObjects = new THREE.Group();
+    scene.add(detailObjects, relationObjects);
+
+    function rank(values, value) {
+      const sorted = [...values].sort((a, b) => a - b);
+      const lower = sorted.findIndex(item => item >= value);
+      return sorted.length < 2 ? 0 : Math.max(0, lower) / (sorted.length - 1);
+    }
+
+    const rawValues = {
+      complexity: files.map(file => file.cc),
+      churn: files.map(file => file.ch),
+      effects: files.map(file => file.fx),
+      coupling: files.map(file => file.fi + file.fo)
+    };
+
+    function rawMetric(file, lens = lensSelect.value) {
+      if (lens === 'attention') return file.a;
+      if (lens === 'coverage') return file.cov === null ? null : 1 - file.cov;
+      if (lens === 'complexity') return file.cc;
+      if (lens === 'churn') return file.ch;
+      if (lens === 'effects') return file.fx;
+      return file.fi + file.fo;
+    }
+
+    function normalizedMetric(file, lens = lensSelect.value) {
+      const raw = rawMetric(file, lens);
+      if (raw === null) return null;
+      if (lens === 'attention' || lens === 'coverage') return THREE.MathUtils.clamp(raw, 0, 1);
+      return rank(rawValues[lens], raw);
+    }
+
+    function heatColor(value) {
+      if (value === null) return new THREE.Color(colors.muted);
+      const low = new THREE.Color(colors.low);
+      const middle = new THREE.Color(colors.middle);
+      const high = new THREE.Color(colors.high);
+      return value <= 0.55
+        ? low.lerp(middle, value / 0.55)
+        : middle.lerp(high, (value - 0.55) / 0.45);
+    }
+
+    function makeLabel(text) {
+      const label = document.createElement('span');
+      label.className = 'viz-badge vcm-label text-small';
+      label.textContent = text;
+      labelLayer.appendChild(label);
+      return label;
+    }
+
+    function aggregateValue(members, lens) {
+      const known = members.map(file => rawMetric(file, lens)).filter(value => value !== null);
+      if (!known.length) return null;
+      if (lens === 'attention' || lens === 'coverage') return Math.max(...known);
+      const total = members.reduce((sum, file) => sum + rawMetric(file, lens), 0);
+      const totals = [...groups.values()].map(group => group.reduce((sum, file) => sum + rawMetric(file, lens), 0));
+      return rank(totals, total);
+    }
+
+    groupOrder.forEach((groupName, groupIndex) => {
+      const members = groups.get(groupName);
+      const column = groupIndex % 4;
+      const row = Math.floor(groupIndex / 4);
+      const centerX = (column - 1.5) * 12;
+      const centerZ = (row - 1) * 10;
+
+      const plateMaterial = new THREE.MeshStandardMaterial({ color: colors.muted, roughness: 0.94, metalness: 0.02, transparent: true, opacity: 0.58 });
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(10.2, 0.16, 8.1), plateMaterial);
+      plate.position.set(centerX, 0, centerZ);
+      scene.add(plate);
+
+      const beaconHeight = 1.2 + Math.max(...members.map(file => file.a)) * 5.5;
+      const beaconMaterial = new THREE.MeshStandardMaterial({ color: colors.middle, roughness: 0.72, metalness: 0.08 });
+      const beacon = new THREE.Mesh(new THREE.BoxGeometry(7.1, beaconHeight, 5.2), beaconMaterial);
+      beacon.position.set(centerX, beaconHeight / 2 + 0.1, centerZ);
+      beacon.userData.group = groupName;
+      beacon.userData.kind = 'group';
+      scene.add(beacon);
+      groupBeacons.set(groupName, beacon);
+      selectableMeshes.push(beacon);
+
+      const label = makeLabel(groupName);
+      groupLabels.set(groupName, { element: label, position: new THREE.Vector3(centerX, beaconHeight + 0.65, centerZ) });
+
+      members.forEach((file, index) => {
+        const localColumn = index % 4;
+        const localRow = Math.floor(index / 4);
+        const x = centerX + (localColumn - 1.5) * 2.25;
+        const z = centerZ + (localRow - 1) * 2.35;
+        const footprint = THREE.MathUtils.clamp(0.68 + Math.sqrt(file.l) / 30, 0.72, 1.95);
+        const height = 0.62 + Math.log2(file.cc + 1) * 0.82 + Math.log2(file.l + 1) * 0.12;
+        const floatsAboveGround = file.fx === 0;
+        const elevation = floatsAboveGround ? 0.72 : 0;
+        const material = new THREE.MeshStandardMaterial({
+          color: colors.middle,
+          roughness: 0.76,
+          metalness: 0.06,
+          transparent: floatsAboveGround,
+          opacity: floatsAboveGround ? 0.7 : 1
+        });
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(footprint, height, footprint), material);
+        mesh.position.set(x, height / 2 + 0.13 + elevation, z);
+        mesh.userData.file = file;
+        mesh.userData.kind = 'file';
+        mesh.userData.height = height;
+        mesh.userData.floatsAboveGround = floatsAboveGround;
+        scene.add(mesh);
+        buildings.set(file.p, mesh);
+        selectableMeshes.push(mesh);
+
+        const edges = new THREE.LineSegments(
+          new THREE.EdgesGeometry(mesh.geometry),
+          new THREE.LineBasicMaterial({ color: colors.border, transparent: true, opacity: 0.72 })
+        );
+        edges.position.copy(mesh.position);
+        edges.userData.kind = 'file-edge';
+        scene.add(edges);
+        mesh.userData.edges = edges;
+
+        if (floatsAboveGround) {
+          const shadow = new THREE.Mesh(
+            new THREE.CircleGeometry(footprint * 0.34, 20),
+            new THREE.MeshBasicMaterial({
+              color: colors.mutedForeground,
+              transparent: true,
+              opacity: 0.2,
+              depthWrite: false
+            })
+          );
+          shadow.rotation.x = -Math.PI / 2;
+          shadow.position.set(x, 0.095, z);
+          scene.add(shadow);
+          floatingShadows.push(shadow);
+        }
+
+        if (file.fx > 0) {
+          const radius = THREE.MathUtils.clamp(0.1 + Math.sqrt(file.fx) * 0.055, 0.12, 0.42);
+          const marker = new THREE.Mesh(
+            new THREE.SphereGeometry(radius, 12, 9),
+            new THREE.MeshBasicMaterial({ color: colors.effects })
+          );
+          marker.position.set(x, height + 0.28 + radius, z);
+          marker.userData.file = file;
+          marker.userData.kind = 'effect';
+          scene.add(marker);
+          effectsMarkers.push(marker);
+          selectableMeshes.push(marker);
+        }
+
+        if (file.cov === null) {
+          const marker = new THREE.Mesh(
+            new THREE.ConeGeometry(0.18, 0.46, 5),
+            new THREE.MeshBasicMaterial({ color: colors.mutedForeground })
+          );
+          marker.position.set(x, height + 0.38 + elevation, z);
+          marker.userData.file = file;
+          marker.userData.kind = 'unknown';
+          scene.add(marker);
+          unknownMarkers.push(marker);
+          selectableMeshes.push(marker);
+        }
+
+        const fileLabel = makeLabel(file.p.split('/').pop());
+        fileLabel.style.display = 'none';
+        fileLabels.set(file.p, { element: fileLabel, position: new THREE.Vector3(x, height + 0.7 + elevation, z) });
+      });
+    });
+
+    const selectionBox = new THREE.BoxHelper(buildings.get('views/api.py'), colors.selected);
+    scene.add(selectionBox);
+    let selected = fileByPath.get('views/api.py');
+    let selectedFunction = selected.fun[0] || null;
+    let lod = 'overview';
+
+    function clearGroup(group) {
+      [...group.children].forEach(child => {
+        group.remove(child);
+        const selectableIndex = selectableMeshes.indexOf(child);
+        if (selectableIndex >= 0) selectableMeshes.splice(selectableIndex, 1);
+        child.geometry?.dispose();
+        child.material?.dispose();
+      });
+    }
+
+    function buildRelations() {
+      clearGroup(relationObjects);
+      const selectedMesh = buildings.get(selected.p);
+      if (!selectedMesh) return;
+      const incoming = files.filter(file => file.dep.includes(selected.p)).sort((a, b) => b.a - a.a).slice(0, 4);
+      const outgoing = selected.dep.map(path => fileByPath.get(path)).filter(Boolean).sort((a, b) => b.a - a.a).slice(0, 7);
+      const center = selectedMesh.position.clone();
+      center.y += selectedMesh.userData.height * 0.12;
+      const radius = 2.5 + selectedMesh.geometry.parameters.width * 0.55;
+
+      function addPort(targetFile, color, direction, index, count) {
+        const spread = count === 1 ? 0 : index / (count - 1) - 0.5;
+        const angle = direction === 'out'
+          ? spread * Math.PI * 0.78
+          : Math.PI + spread * Math.PI * 0.58;
+        const target = new THREE.Vector3(
+          center.x + Math.cos(angle) * radius,
+          center.y + 0.35 + (index % 2) * 0.3,
+          center.z + Math.sin(angle) * radius
+        );
+        const midpoint = center.clone().lerp(target, 0.5);
+        midpoint.y += 0.65;
+        const curve = new THREE.QuadraticBezierCurve3(center.clone(), midpoint, target.clone());
+        const line = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(curve.getPoints(24)),
+          new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.82 })
+        );
+        relationObjects.add(line);
+
+        const port = new THREE.Mesh(
+          direction === 'out'
+            ? new THREE.SphereGeometry(0.18 + targetFile.a * 0.08, 12, 9)
+            : new THREE.OctahedronGeometry(0.21 + targetFile.a * 0.08),
+          new THREE.MeshBasicMaterial({ color })
+        );
+        port.position.copy(target);
+        port.userData.file = targetFile;
+        port.userData.sourceFile = selected;
+        port.userData.targetFile = targetFile;
+        port.userData.kind = direction === 'out' ? 'dependency-out' : 'dependency-in';
+        relationObjects.add(port);
+        selectableMeshes.push(port);
+      }
+
+      outgoing.forEach((file, index) => addPort(file, colors.outgoing, 'out', index, outgoing.length));
+      incoming.forEach((file, index) => addPort(file, colors.incoming, 'in', index, incoming.length));
+    }
+
+    function buildFunctionDetail() {
+      clearGroup(detailObjects);
+      const mesh = buildings.get(selected.p);
+      if (!mesh || !selected.fun.length) return;
+      const radius = Math.max(0.8, mesh.geometry.parameters.width * 0.85);
+      selected.fun.forEach((fn, index) => {
+        const angle = (index / selected.fun.length) * Math.PI * 2 - Math.PI / 2;
+        const height = 0.3 + Math.log2(fn.cc + 1) * 0.28;
+        const node = new THREE.Mesh(
+          new THREE.BoxGeometry(0.34, height, 0.34),
+          new THREE.MeshStandardMaterial({ color: index === 0 ? colors.selected : colors.middle, roughness: 0.66 })
+        );
+        node.position.set(
+          mesh.position.x + Math.cos(angle) * radius,
+          mesh.position.y + mesh.userData.height / 2 + 0.42 + height / 2,
+          mesh.position.z + Math.sin(angle) * radius
+        );
+        node.userData.file = selected;
+        node.userData.function = fn;
+        node.userData.kind = 'function';
+        detailObjects.add(node);
+        selectableMeshes.push(node);
+      });
+    }
+
+    function updateColors() {
+      const lens = lensSelect.value;
+      files.forEach(file => {
+        const mesh = buildings.get(file.p);
+        mesh.material.color.copy(heatColor(normalizedMetric(file, lens)));
+      });
+      groups.forEach((members, name) => {
+        groupBeacons.get(name).material.color.copy(heatColor(aggregateValue(members, lens)));
+      });
+      effectsMarkers.forEach(marker => {
+        marker.visible = lod !== 'overview';
+      });
+      unknownMarkers.forEach(marker => {
+        marker.visible = lens === 'coverage' && lod !== 'overview';
+      });
+      const maxComplexity = Math.max(...rawValues.complexity);
+      const maxChurn = Math.max(...rawValues.churn);
+      const maxEffects = Math.max(...rawValues.effects);
+      const maxCoupling = Math.max(...rawValues.coupling);
+      const legends = {
+        attention: {
+          name: 'Review priority', low: 'lower', high: 'higher',
+          copy: 'Weighted relative priority: complexity 26% · uncovered lines 24% · churn 22% · mutating effects 16% · coupling 12%. Not a quality verdict.'
+        },
+        coverage: {
+          name: 'Missing coverage', low: '0% uncovered', high: '100% uncovered',
+          copy: 'A cone means no coverage record; unknown is not treated as zero. Coverage data is stale for this working tree.'
+        },
+        complexity: {
+          name: 'Maximum complexity', low: 'CC 0', high: `CC ${maxComplexity}`,
+          copy: 'Heat uses within-scan rank of maximum per-function cyclomatic complexity.'
+        },
+        churn: {
+          name: 'Change pressure', low: 'less changed', high: `${maxChurn.toLocaleString()} lines`,
+          copy: 'Heat uses within-scan rank of lines added or removed during the last 18 months.'
+        },
+        effects: {
+          name: 'Mutating side effects', low: 'none detected', high: `${maxEffects} sites`,
+          copy: 'Grounded blocks and roof spheres have directly detected mutating database, filesystem, network, or external-state calls. Floating means none directly detected, not transitive purity.'
+        },
+        coupling: {
+          name: 'Static coupling', low: 'fewer links', high: `${maxCoupling} links`,
+          copy: 'Heat uses within-scan rank of internal fan-in plus fan-out. Near zoom shows outgoing spheres and incoming diamonds.'
+        }
+      };
+      const legend = legends[lens];
+      lensName.textContent = legend.name;
+      lensLow.textContent = legend.low;
+      lensHigh.textContent = legend.high;
+      legendCopy.textContent = legend.copy;
+      render();
+    }
+
+    function updateDetail() {
+      const topFunction = selectedFunction || selected.fun[0];
+      pathCopy.textContent = `/Users/mirolim/projects/uzumtools/photochecker/app/${selected.p}`;
+      selectedFunctionCopy.textContent = topFunction ? `${topFunction.n} · lines ${topFunction.ln}–${topFunction.end}` : 'module level';
+      const coverage = selected.cov === null ? 'coverage unknown' : `${Math.round(selected.cov * 100)}% line / ${selected.bcov === null ? '—' : Math.round(selected.bcov * 100) + '%'} branch coverage`;
+      const shownOut = Math.min(selected.dep.length, 7);
+      const effectState = selected.fx > 0
+        ? `${selected.fx} directly detected mutating effect sites · grounded`
+        : 'no direct mutating effect sites detected · floating';
+      metricsCopy.textContent = `${selected.l.toLocaleString()} lines · max CC ${selected.cc} · nesting ${selected.nest} · ${coverage} · ${selected.ch.toLocaleString()} changed lines · ${effectState} · ${selected.fi} in / ${selected.fo} out · detail shows ${shownOut}/${selected.dep.length} outgoing links`;
+      fileSelect.value = selected.p;
+      selectionBox.setFromObject(buildings.get(selected.p));
+      buildRelations();
+      buildFunctionDetail();
+      updateVisibility();
+    }
+
+    function selectFile(file, focus = false) {
+      if (!file) return;
+      selected = file;
+      selectedFunction = file.fun[0] || null;
+      updateDetail();
+      if (focus) moveCamera('detail');
+      render();
+    }
+
+    function updateVisibility() {
+      const distance = controls.getDistance();
+      const nextLod = distance > 64 ? 'overview' : distance > 17 ? 'files' : 'detail';
+      lod = nextLod;
+      groupBeacons.forEach(beacon => { beacon.visible = lod === 'overview'; });
+      buildings.forEach(mesh => {
+        mesh.visible = lod !== 'overview';
+        mesh.userData.edges.visible = lod !== 'overview';
+      });
+      selectionBox.visible = lod !== 'overview';
+      floatingShadows.forEach(shadow => { shadow.visible = lod !== 'overview'; });
+      detailObjects.visible = lod === 'detail';
+      relationObjects.visible = lod === 'detail';
+      effectsMarkers.forEach(marker => {
+        marker.visible = lod !== 'overview';
+      });
+      unknownMarkers.forEach(marker => {
+        marker.visible = lod !== 'overview' && lensSelect.value === 'coverage';
+      });
+      groupLabels.forEach(({ element }) => { element.style.display = lod === 'detail' ? 'none' : ''; });
+      fileLabels.forEach(({ element }, path) => { element.style.display = lod !== 'overview' && path === selected.p ? '' : 'none'; });
+      levelBadge.textContent = lod === 'overview' ? 'L0 · packages' : lod === 'files' ? 'L1 · files' : 'L2 · functions + selected links';
+    }
+
+    function projectLabel(record) {
+      const point = record.position.clone().project(camera);
+      const width = stage.clientWidth;
+      const height = stage.clientHeight;
+      const visible = point.z > -1 && point.z < 1;
+      record.element.style.visibility = visible ? 'visible' : 'hidden';
+      if (!visible) return;
+      record.element.style.left = `${(point.x * 0.5 + 0.5) * width}px`;
+      record.element.style.top = `${(-point.y * 0.5 + 0.5) * height}px`;
+    }
+
+    function render() {
+      updateVisibility();
+      renderer.render(scene, camera);
+      groupLabels.forEach(projectLabel);
+      fileLabels.forEach(projectLabel);
+    }
+
+    const center = new THREE.Vector3(0, 0.8, 0);
+    camera.position.set(38, 42, 48);
+    controls.target.copy(center);
+    controls.update();
+
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function animateCamera(position, target) {
+      const fromPosition = camera.position.clone();
+      const fromTarget = controls.target.clone();
+      const duration = reducedMotion ? 0 : 380;
+      const started = performance.now();
+      function frame(now) {
+        const t = duration ? Math.min(1, (now - started) / duration) : 1;
+        const eased = 1 - Math.pow(1 - t, 3);
+        camera.position.lerpVectors(fromPosition, position, eased);
+        controls.target.lerpVectors(fromTarget, target, eased);
+        controls.update();
+        render();
+        if (t < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function moveCamera(view) {
+      const selectedMesh = buildings.get(selected.p);
+      if (view === 'overview') animateCamera(new THREE.Vector3(38, 42, 48), center);
+      if (view === 'files') animateCamera(new THREE.Vector3(30, 35, 39), center);
+      if (view === 'top') {
+        const distance = Math.max(controls.getDistance(), 24);
+        animateCamera(controls.target.clone().add(new THREE.Vector3(0.01, distance, 0.01)), controls.target.clone());
+      }
+      if (view === 'side') {
+        const distance = Math.max(controls.getDistance(), 24);
+        animateCamera(controls.target.clone().add(new THREE.Vector3(distance, 8, 0.01)), controls.target.clone());
+      }
+      if (view === 'detail') {
+        const target = selectedMesh.position.clone();
+        target.y += selectedMesh.userData.height * 0.25;
+        animateCamera(target.clone().add(new THREE.Vector3(8, 8, 11)), target);
+      }
+    }
+
+    fileSelect.replaceChildren(...files
+      .slice()
+      .sort((a, b) => b.a - a.a)
+      .map(file => {
+        const option = document.createElement('option');
+        option.value = file.p;
+        option.textContent = file.p;
+        return option;
+      }));
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    function intersections(event) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      return raycaster.intersectObjects(selectableMeshes.filter(mesh => mesh.visible), false);
+    }
+
+    renderer.domElement.addEventListener('pointermove', event => {
+      const hit = intersections(event)[0];
+      if (!hit) {
+        tooltip.style.display = 'none';
+        renderer.domElement.style.cursor = 'grab';
+        return;
+      }
+      renderer.domElement.style.cursor = 'pointer';
+      const object = hit.object;
+      let copy = '';
+      if (object.userData.group) {
+        const members = groups.get(object.userData.group);
+        copy = `${object.userData.group} · ${members.length} files · highest priority ${Math.round(Math.max(...members.map(file => file.a)) * 100)}th percentile`;
+      } else if (object.userData.function) {
+        const fn = object.userData.function;
+        copy = `${fn.n} · CC ${fn.cc} · lines ${fn.ln}–${fn.end} · ${fn.fx} detected effect calls`;
+      } else if (object.userData.kind === 'dependency-out') {
+        copy = `${object.userData.sourceFile.p} → ${object.userData.targetFile.p} · outgoing static dependency`;
+      } else if (object.userData.kind === 'dependency-in') {
+        copy = `${object.userData.targetFile.p} → ${object.userData.sourceFile.p} · incoming static dependency`;
+      } else if (object.userData.kind === 'effect') {
+        copy = `${object.userData.file.p} · ${object.userData.file.fx} directly detected mutating effect sites`;
+      } else if (object.userData.kind === 'unknown') {
+        copy = `${object.userData.file.p} · coverage not observed`;
+      } else if (object.userData.file) {
+        const file = object.userData.file;
+        const metric = rawMetric(file);
+        const metricCopy = metric === null
+          ? 'unknown for this lens'
+          : lensSelect.value === 'coverage'
+            ? `${Math.round(metric * 100)}% uncovered`
+            : `${metric.toLocaleString()}`;
+        const effectCopy = file.fx > 0
+          ? `${file.fx} direct mutating sites · grounded`
+          : 'no direct mutating sites detected · floating';
+        copy = `${file.p} · ${lensName.textContent}: ${metricCopy} · ${effectCopy}`;
+      }
+      tooltip.textContent = copy;
+      tooltip.style.display = 'block';
+      const left = Math.min(event.clientX - stage.getBoundingClientRect().left + 12, stage.clientWidth - 292);
+      const top = Math.max(8, event.clientY - stage.getBoundingClientRect().top - 34);
+      tooltip.style.left = `${Math.max(8, left)}px`;
+      tooltip.style.top = `${top}px`;
+    });
+
+    renderer.domElement.addEventListener('pointerleave', () => { tooltip.style.display = 'none'; });
+    renderer.domElement.addEventListener('click', event => {
+      const hit = intersections(event)[0];
+      if (!hit) return;
+      const object = hit.object;
+      if (object.userData.group) {
+        const group = groups.get(object.userData.group);
+        selectFile(group.slice().sort((a, b) => b.a - a.a)[0]);
+        moveCamera('files');
+      } else if (object.userData.function) {
+        selectedFunction = object.userData.function;
+        updateDetail();
+      } else if (object.userData.file) {
+        selectFile(object.userData.file, lod === 'detail');
+      }
+    });
+
+    controls.addEventListener('change', render);
+    lensSelect.addEventListener('change', updateColors);
+    fileSelect.addEventListener('change', () => selectFile(fileByPath.get(fileSelect.value), lod === 'detail'));
+    root.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => moveCamera(button.dataset.view)));
+    openButton.addEventListener('click', async () => {
+      const fn = selectedFunction || selected.fun[0];
+      const absolutePath = `/Users/mirolim/projects/uzumtools/photochecker/app/${selected.p}`;
+      const line = fn?.ln || 1;
+      if (window.openai?.sendFollowUpMessage) {
+        await window.openai.sendFollowUpMessage({
+          title: `Inspect ${selected.p}`,
+          prompt: `Open ${absolutePath}:${line}. Explain the selected hotspot using the exact code, including complexity, side effects, dependencies, and test evidence. Do not assume the metric means the code is defective.`
+        });
+      } else {
+        legendCopy.textContent = `Source target: ${absolutePath}:${line}`;
+      }
+    });
+
+    const resizeObserver = new ResizeObserver(() => {
+      const width = Math.max(1, stage.clientWidth);
+      const height = Math.max(1, stage.clientHeight);
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      render();
+    });
+    resizeObserver.observe(stage);
+
+    updateDetail();
+    updateColors();
+    render();
+  </script>
+</div>

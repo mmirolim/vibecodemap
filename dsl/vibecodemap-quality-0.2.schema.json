@@ -1,0 +1,320 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vibecodemap.dev/schema/quality-0.2-draft.json",
+  "title": "VibeCodeMap Quality and Semantic Zoom 0.2 Draft",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["vcm_quality", "model", "metric_catalog", "measurements"],
+  "properties": {
+    "vcm_quality": { "const": "0.2-draft" },
+    "model": { "$ref": "#/$defs/model" },
+    "metric_catalog": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/metricDefinition" }
+    },
+    "measurements": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/measurement" }
+    },
+    "analyzer_findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/analyzerFinding" },
+      "default": []
+    },
+    "quality_findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/qualityFinding" },
+      "default": []
+    },
+    "priority_models": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/priorityModel" },
+      "default": []
+    },
+    "priority_results": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/priorityResult" },
+      "default": []
+    },
+    "layout_profiles": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/layoutProfile" },
+      "default": []
+    },
+    "lenses": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/lens" },
+      "default": []
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
+    },
+    "nonEmpty": { "type": "string", "minLength": 1 },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["core_model", "revision", "dirty", "generated_at", "scope"],
+      "properties": {
+        "core_model": { "$ref": "#/$defs/id" },
+        "revision": { "$ref": "#/$defs/nonEmpty" },
+        "dirty": { "type": "boolean" },
+        "generated_at": { "$ref": "#/$defs/nonEmpty" },
+        "scope": { "$ref": "#/$defs/nonEmpty" },
+        "notes": { "type": "string" }
+      }
+    },
+    "aggregation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default", "allowed"],
+      "properties": {
+        "default": { "$ref": "#/$defs/id" },
+        "allowed": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "forbidden": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "metricDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "value_type", "unit", "direction", "aggregation"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/nonEmpty" },
+        "value_type": { "enum": ["number", "integer", "ratio", "duration", "rate"] },
+        "unit": { "$ref": "#/$defs/nonEmpty" },
+        "direction": { "enum": ["higher_is_risk", "lower_is_risk", "contextual", "neutral"] },
+        "description": { "type": "string" },
+        "subject_kinds": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "aggregation": { "$ref": "#/$defs/aggregation" },
+        "caveats": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmpty" }
+        }
+      }
+    },
+    "sourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact"],
+      "properties": {
+        "artifact": { "$ref": "#/$defs/id" },
+        "symbol": { "type": "string" },
+        "lines": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [
+            { "type": "integer", "minimum": 1 },
+            { "type": "integer", "minimum": 1 }
+          ]
+        },
+        "role": { "$ref": "#/$defs/id" },
+        "supports": { "type": "string" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["producer", "method", "scope"],
+      "properties": {
+        "producer": { "$ref": "#/$defs/nonEmpty" },
+        "producer_version": { "$ref": "#/$defs/nonEmpty" },
+        "method": { "enum": ["deterministic", "runtime_observed", "ai_inferred", "human_declared", "human_confirmed"] },
+        "configuration": { "type": ["string", "object"] },
+        "scope": { "$ref": "#/$defs/nonEmpty" },
+        "report": { "type": "string" },
+        "format": { "type": "string" },
+        "run_id": { "type": "string" },
+        "limitations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmpty" }
+        }
+      }
+    },
+    "measurement": {
+      "type": "object",
+      "required": ["id", "subject", "metric", "status", "measured_at", "revision", "provenance"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "subject": { "$ref": "#/$defs/id" },
+        "metric": { "$ref": "#/$defs/id" },
+        "status": { "enum": ["observed", "unknown", "not_applicable", "stale", "invalid"] },
+        "value": { "type": "number" },
+        "dimensions": { "type": "object" },
+        "measured_at": { "$ref": "#/$defs/nonEmpty" },
+        "revision": { "$ref": "#/$defs/nonEmpty" },
+        "source_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sourceRef" }
+        },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "enum": ["observed", "stale"] } } },
+          "then": { "required": ["value"] }
+        }
+      ]
+    },
+    "analyzerFinding": {
+      "type": "object",
+      "required": ["id", "subject", "rule", "category", "severity", "state", "message", "provenance"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "subject": { "$ref": "#/$defs/id" },
+        "rule": { "$ref": "#/$defs/nonEmpty" },
+        "category": { "$ref": "#/$defs/id" },
+        "severity": { "enum": ["info", "warning", "high", "critical", "tool_defined"] },
+        "state": { "enum": ["open", "fixed", "dismissed", "unknown"] },
+        "message": { "$ref": "#/$defs/nonEmpty" },
+        "source_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sourceRef" }
+        },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "generated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "confidence", "rationale"],
+      "properties": {
+        "method": { "enum": ["deterministic", "runtime_observed", "ai_inferred", "human_declared", "human_confirmed"] },
+        "confidence": { "enum": ["high", "medium", "low"] },
+        "rationale": { "$ref": "#/$defs/nonEmpty" }
+      }
+    },
+    "qualityFinding": {
+      "type": "object",
+      "required": ["id", "kind", "severity", "subjects", "summary", "impact", "factors", "generated"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "$ref": "#/$defs/id" },
+        "severity": { "enum": ["info", "warning", "high", "critical"] },
+        "subjects": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "summary": { "$ref": "#/$defs/nonEmpty" },
+        "impact": { "$ref": "#/$defs/nonEmpty" },
+        "factors": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sourceRef" }
+        },
+        "generated": { "$ref": "#/$defs/generated" }
+      }
+    },
+    "priorityFactor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric", "weight"],
+      "properties": {
+        "metric": { "$ref": "#/$defs/id" },
+        "weight": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "priorityModel": {
+      "type": "object",
+      "required": ["id", "label", "meaning", "normalization", "factors", "missing_data", "validation_state"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "label": { "$ref": "#/$defs/nonEmpty" },
+        "meaning": { "$ref": "#/$defs/nonEmpty" },
+        "scope": { "type": "string" },
+        "normalization": { "type": "object" },
+        "factors": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/priorityFactor" }
+        },
+        "missing_data": { "$ref": "#/$defs/id" },
+        "validation_state": { "enum": ["experimental", "validated", "deprecated"] }
+      }
+    },
+    "priorityResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "subject", "value"],
+      "properties": {
+        "model": { "$ref": "#/$defs/id" },
+        "subject": { "$ref": "#/$defs/id" },
+        "value": { "type": "number" },
+        "rank": { "type": "integer", "minimum": 1 },
+        "factors": { "type": "object" }
+      }
+    },
+    "layoutProfile": {
+      "type": "object",
+      "required": ["id", "hierarchy", "stable_coordinates", "footprint", "height", "scale", "unknown_geometry"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "hierarchy": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "stable_coordinates": { "type": "boolean" },
+        "footprint": { "$ref": "#/$defs/id" },
+        "height": { "$ref": "#/$defs/id" },
+        "scale": { "type": "object" },
+        "unknown_geometry": { "$ref": "#/$defs/id" },
+        "effect_contact": { "$ref": "#/$defs/effectContact" }
+      }
+    },
+    "effectContact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric", "direct", "none_detected", "transitive_policy"],
+      "properties": {
+        "metric": { "$ref": "#/$defs/id" },
+        "direct": { "$ref": "#/$defs/id" },
+        "none_detected": { "$ref": "#/$defs/id" },
+        "transitive_policy": { "$ref": "#/$defs/id" }
+      }
+    },
+    "lensLegend": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "low_label", "high_label"],
+      "properties": {
+        "name": { "$ref": "#/$defs/nonEmpty" },
+        "low_label": { "$ref": "#/$defs/nonEmpty" },
+        "high_label": { "$ref": "#/$defs/nonEmpty" },
+        "caveat": { "type": "string" }
+      }
+    },
+    "lens": {
+      "type": "object",
+      "required": ["id", "question", "layout"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "question": { "$ref": "#/$defs/nonEmpty" },
+        "layout": { "$ref": "#/$defs/id" },
+        "heat": { "type": "object" },
+        "marker": { "type": "object" },
+        "detail": { "type": "array" },
+        "lod": { "type": "array" },
+        "edges": { "type": "object" },
+        "legend": { "$ref": "#/$defs/lensLegend" },
+        "unknown_policy": { "$ref": "#/$defs/id" }
+      }
+    }
+  }
+}

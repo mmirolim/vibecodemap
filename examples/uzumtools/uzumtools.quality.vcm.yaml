@@ -1,0 +1,380 @@
+vcm_quality: "0.2-draft"
+
+model:
+  core_model: uzum-photo-checker
+  revision: 4b65d40de6830e6cee70ea7930ae05b9a099df44
+  dirty: true
+  generated_at: "2026-07-17T21:00:00+05:00"
+  scope: pilot-hotspots
+  notes: This fixture contains repository totals and five hotspot files, not every measured artifact.
+
+metric_catalog:
+  - id: code.lines.physical
+    name: Physical lines
+    value_type: number
+    unit: lines
+    direction: contextual
+    aggregation: { default: sum, allowed: [sum, distribution] }
+
+  - id: complexity.cyclomatic.max
+    name: Maximum function cyclomatic complexity
+    value_type: number
+    unit: paths
+    direction: contextual
+    aggregation: { default: max, allowed: [max, p95, distribution] }
+
+  - id: test.line_coverage
+    name: Line coverage
+    value_type: number
+    unit: ratio
+    direction: lower_is_risk
+    aggregation: { default: weighted_ratio, allowed: [weighted_ratio, distribution] }
+
+  - id: test.branch_coverage
+    name: Branch coverage
+    value_type: number
+    unit: ratio
+    direction: lower_is_risk
+    aggregation: { default: weighted_ratio, allowed: [weighted_ratio, distribution] }
+
+  - id: test.uncovered_lines
+    name: Uncovered executable lines
+    value_type: number
+    unit: lines
+    direction: higher_is_risk
+    aggregation: { default: sum, allowed: [sum, max, distribution] }
+
+  - id: change.lines_changed_18m
+    name: Lines changed in 18 months
+    value_type: number
+    unit: lines
+    direction: contextual
+    aggregation: { default: sum, allowed: [sum, max, distribution] }
+
+  - id: effects.mutating_sites
+    name: Detected mutating side-effect sites
+    value_type: number
+    unit: call_sites
+    direction: contextual
+    aggregation: { default: sum, allowed: [sum, max, distribution] }
+
+  - id: coupling.fan_in_plus_out
+    name: Static internal fan-in plus fan-out
+    value_type: number
+    unit: resolved_dependencies
+    direction: contextual
+    aggregation: { default: bundled_edge_count, allowed: [bundled_edge_count, max, distribution] }
+
+measurements:
+  - &repository_line_coverage
+    id: measurement.repository.line-coverage
+    subject: uzum-photo-checker
+    metric: test.line_coverage
+    status: stale
+    value: 0.2542
+    measured_at: "2026-05-23T19:16:39Z"
+    revision: unknown
+    provenance: &coverage_provenance
+      producer: coverage.py
+      producer_version: "7.4.0"
+      method: runtime_observed
+      report: /Users/mirolim/projects/uzumtools/coverage.xml
+      configuration: branch-enabled Cobertura XML
+      scope: 41 Python files recorded by the report
+      limitations:
+        - The report does not record a Git revision.
+        - The current working tree is dirty and the report predates this scan.
+        - Coverage measures execution, not assertion quality or correctness.
+
+  - <<: *repository_line_coverage
+    id: measurement.repository.branch-coverage
+    metric: test.branch_coverage
+    value: 0.2252
+
+  - &api_lines
+    id: measurement.api.lines
+    subject: file.app.views.api
+    metric: code.lines.physical
+    status: observed
+    value: 3649
+    measured_at: "2026-07-17T21:00:00+05:00"
+    revision: 4b65d40de6830e6cee70ea7930ae05b9a099df44+dirty
+    source_refs: &api_source
+      - artifact: file.app.views.api
+        symbol: enhance_image
+        lines: [1607, 2220]
+        role: evidence
+    provenance: &ast_provenance
+      producer: vibecodemap-python-ast
+      producer_version: "0.1"
+      method: deterministic
+      configuration: python-ast-quality-v0.1
+      scope: app/**/*.py
+      limitations:
+        - Python-only prototype; dynamic dispatch and framework wiring are incomplete.
+        - Complexity values must be compared with Radon before portable thresholds are used.
+
+  - <<: *api_lines
+    id: measurement.api.max-cc
+    metric: complexity.cyclomatic.max
+    value: 96
+
+  - <<: *api_lines
+    id: measurement.api.line-coverage
+    metric: test.line_coverage
+    status: stale
+    value: 0.1247
+    measured_at: "2026-05-23T19:16:39Z"
+    revision: unknown
+    provenance: *coverage_provenance
+
+  - <<: *api_lines
+    id: measurement.api.uncovered-lines
+    metric: test.uncovered_lines
+    status: stale
+    value: 1123
+    measured_at: "2026-05-23T19:16:39Z"
+    revision: unknown
+    provenance: *coverage_provenance
+
+  - <<: *api_lines
+    id: measurement.api.churn
+    metric: change.lines_changed_18m
+    value: 5827
+    provenance: &git_provenance
+      producer: git
+      producer_version: system
+      method: deterministic
+      configuration: numstat
+      scope: 18 months before scan time
+      limitations:
+        - Changed lines include both additions and deletions.
+        - Churn is context, not proof of poor design.
+
+  - <<: *api_lines
+    id: measurement.api.mutating-effects
+    metric: effects.mutating_sites
+    value: 32
+
+  - <<: *api_lines
+    id: measurement.api.coupling
+    metric: coupling.fan_in_plus_out
+    value: 19
+
+  - &orchestrator_cc
+    id: measurement.enhancement-orchestrator.max-cc
+    subject: file.app.services.enhancement.orchestrator
+    metric: complexity.cyclomatic.max
+    status: observed
+    value: 22
+    measured_at: "2026-07-17T21:00:00+05:00"
+    revision: 4b65d40de6830e6cee70ea7930ae05b9a099df44+dirty
+    provenance: *ast_provenance
+
+  - <<: *orchestrator_cc
+    id: measurement.enhancement-orchestrator.line-coverage
+    metric: test.line_coverage
+    status: stale
+    value: 0.1570
+    measured_at: "2026-05-23T19:16:39Z"
+    revision: unknown
+    provenance: *coverage_provenance
+
+  - <<: *orchestrator_cc
+    id: measurement.enhancement-orchestrator.churn
+    metric: change.lines_changed_18m
+    value: 1044
+    provenance: *git_provenance
+
+  - <<: *orchestrator_cc
+    id: measurement.enhancement-orchestrator.mutating-effects
+    metric: effects.mutating_sites
+    value: 6
+
+  - &image_lifecycle_cc
+    id: measurement.image-lifecycle.max-cc
+    subject: file.app.services.image-lifecycle
+    metric: complexity.cyclomatic.max
+    status: observed
+    value: 14
+    measured_at: "2026-07-17T21:00:00+05:00"
+    revision: 4b65d40de6830e6cee70ea7930ae05b9a099df44+dirty
+    provenance: *ast_provenance
+
+  - <<: *image_lifecycle_cc
+    id: measurement.image-lifecycle.line-coverage
+    metric: test.line_coverage
+    status: stale
+    value: 0.2076
+    measured_at: "2026-05-23T19:16:39Z"
+    revision: unknown
+    provenance: *coverage_provenance
+
+  - <<: *image_lifecycle_cc
+    id: measurement.image-lifecycle.churn
+    metric: change.lines_changed_18m
+    value: 1374
+    provenance: *git_provenance
+
+  - <<: *image_lifecycle_cc
+    id: measurement.image-lifecycle.mutating-effects
+    metric: effects.mutating_sites
+    value: 9
+
+  - &image_service_cc
+    id: measurement.image-service.max-cc
+    subject: file.app.services.image
+    metric: complexity.cyclomatic.max
+    status: observed
+    value: 41
+    measured_at: "2026-07-17T21:00:00+05:00"
+    revision: 4b65d40de6830e6cee70ea7930ae05b9a099df44+dirty
+    provenance: *ast_provenance
+
+  - <<: *image_service_cc
+    id: measurement.image-service.line-coverage
+    metric: test.line_coverage
+    status: stale
+    value: 0.0901
+    measured_at: "2026-05-23T19:16:39Z"
+    revision: unknown
+    provenance: *coverage_provenance
+
+  - <<: *image_service_cc
+    id: measurement.image-service.churn
+    metric: change.lines_changed_18m
+    value: 1402
+    provenance: *git_provenance
+
+  - &enhancement_gemini_cc
+    id: measurement.enhancement-gemini.max-cc
+    subject: file.app.services.enhancement.gemini
+    metric: complexity.cyclomatic.max
+    status: observed
+    value: 32
+    measured_at: "2026-07-17T21:00:00+05:00"
+    revision: 4b65d40de6830e6cee70ea7930ae05b9a099df44+dirty
+    provenance: *ast_provenance
+
+  - <<: *enhancement_gemini_cc
+    id: measurement.enhancement-gemini.line-coverage
+    metric: test.line_coverage
+    status: stale
+    value: 0.1201
+    measured_at: "2026-05-23T19:16:39Z"
+    revision: unknown
+    provenance: *coverage_provenance
+
+  - <<: *enhancement_gemini_cc
+    id: measurement.enhancement-gemini.churn
+    metric: change.lines_changed_18m
+    value: 1680
+    provenance: *git_provenance
+
+quality_findings:
+  - id: quality-finding.api-convergent-hotspot
+    kind: convergent_hotspot
+    severity: high
+    subjects: [file.app.views.api, component.api-blueprint]
+    summary: The API boundary combines the scan's highest function complexity, uncovered-line count, churn, mutating-effect count, and outgoing coupling.
+    impact: Unrelated feature changes converge on one weakly verified source boundary.
+    factors:
+      - measurement.api.lines
+      - measurement.api.max-cc
+      - measurement.api.line-coverage
+      - measurement.api.churn
+      - measurement.api.mutating-effects
+      - measurement.api.coupling
+    generated:
+      method: ai_inferred
+      confidence: high
+      rationale: The interpretation is AI-generated, but every stated factor is a linked deterministic measurement.
+
+priority_models:
+  - id: priority.static-review.v0
+    label: Static review priority
+    meaning: Relative order for human investigation; not a code-quality score.
+    normalization: { method: within_scan_percentile_midrank, baseline: 48 Python files }
+    factors:
+      - { metric: complexity.cyclomatic.max, weight: 0.26 }
+      - { metric: test.uncovered_lines, weight: 0.24 }
+      - { metric: change.lines_changed_18m, weight: 0.22 }
+      - { metric: effects.mutating_sites, weight: 0.16 }
+      - { metric: coupling.fan_in_plus_out, weight: 0.12 }
+    missing_data: expose_and_exclude
+    validation_state: experimental
+
+priority_results:
+  - { model: priority.static-review.v0, subject: file.app.views.api, value: 1.0000, rank: 1 }
+  - { model: priority.static-review.v0, subject: file.app.services.enhancement.orchestrator, value: 0.9113, rank: 2 }
+  - { model: priority.static-review.v0, subject: file.app.services.image-lifecycle, value: 0.8800, rank: 3 }
+  - { model: priority.static-review.v0, subject: file.app.services.image, value: 0.8761, rank: 4 }
+  - { model: priority.static-review.v0, subject: file.app.services.enhancement.gemini, value: 0.8736, rank: 5 }
+
+layout_profiles:
+  - id: layout.software-landscape.v0
+    hierarchy: [system, deployable, component, artifact, symbol]
+    stable_coordinates: true
+    footprint: code.lines.physical
+    height: complexity.cyclomatic.max
+    scale: { footprint: sqrt_clamped, height: log2 }
+    unknown_geometry: neutral
+    effect_contact:
+      metric: effects.mutating_sites
+      direct: grounded_with_roof_sphere
+      none_detected: floating_translucent_with_ground_shadow
+      transitive_policy: typed_path_to_resource
+
+lenses:
+  - id: lens.review-priority
+    question: Where should a reviewer investigate first, and why?
+    layout: layout.software-landscape.v0
+    heat: { source: priority.static-review.v0, scale: percentile }
+    legend:
+      name: Review priority
+      low_label: lower relative priority
+      high_label: higher relative priority
+      caveat: Prioritization for investigation, not a quality verdict.
+    detail: [factors, raw_values, provenance, source_refs]
+    lod:
+      - { level: 0, subjects: package, aggregation: max_priority }
+      - { level: 1, subjects: artifact, aggregation: none }
+      - { level: 2, subjects: symbol, edges: bounded_selected_ego }
+
+  - id: lens.coverage-evidence
+    question: Where is test execution evidence weak, missing, or stale?
+    layout: layout.software-landscape.v0
+    heat: { metric: test.line_coverage, invert: true }
+    legend:
+      name: Missing coverage
+      low_label: 0% uncovered
+      high_label: 100% uncovered
+      caveat: Unknown and stale reports remain separate from the heat scale.
+    marker: { status: [unknown, stale], shape: cone }
+    unknown_policy: visibly_separate
+
+  - id: lens.mutating-effects
+    question: Where are state-changing effects concentrated?
+    layout: layout.software-landscape.v0
+    heat: { metric: effects.mutating_sites, scale: within_scan_percentile }
+    legend:
+      name: Direct mutating effects
+      low_label: none directly detected
+      high_label: scan maximum
+      caveat: No direct site does not imply transitive purity.
+    marker: { when: value_gt_zero, shape: sphere }
+
+  - id: lens.coupling
+    question: Which artifacts combine high dependency reach with local complexity?
+    layout: layout.software-landscape.v0
+    heat: { metric: coupling.fan_in_plus_out, scale: within_scan_percentile }
+    legend:
+      name: Static coupling
+      low_label: fewer internal links
+      high_label: more internal links
+      caveat: Dynamic dispatch may be unresolved.
+    edges:
+      macro: bundled_by_visible_parent
+      detail: bounded_selected_ego
+      maximum_outgoing: 7
+      maximum_incoming: 4

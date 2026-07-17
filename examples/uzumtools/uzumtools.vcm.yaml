@@ -1,0 +1,1984 @@
+vcm: "0.1"
+
+model:
+  id: uzum-photo-checker
+  name: Uzum Photo Checker
+  summary: Flask and browser application for marketplace photo analysis, correction, AI enhancement, user accounts, credits, and Paycom payments.
+  repository:
+    root: /Users/mirolim/projects/uzumtools/photochecker
+    revision: "4b65d40de6830e6cee70ea7930ae05b9a099df44"
+    dirty: true
+  generated:
+    at: "2026-07-17T20:09:21+05:00"
+    by: codex
+
+scope:
+  include:
+    - AGENTS.md
+    - run.py
+    - config.py
+    - gunicorn.conf.py
+    - app/**/*.py
+    - app/**/*.js
+    - app/**/*.html
+    - app/**/*.css
+    - app/static/locales/*.json
+  exclude:
+    - app/**/__pycache__/**
+    - app/static/images/**
+  notes: Runtime application, its agent-declared architecture rules, and browser assets. Tests, migrations, root scripts, plans, and other documentation are intentionally outside this first fixture.
+
+artifacts:
+  - id: file.agents
+    path: AGENTS.md
+    kind: documentation
+    language: markdown
+    summary: Agent guide declaring the intended Flask application-factory, blueprint, service-layer, model, testing, and security conventions.
+    metrics: { lines: 322 }
+    generated: &file_summary_ai
+      method: ai_inferred
+      confidence: high
+      rationale: The summary is based on the file's explicit headings and statements.
+
+  - id: file.run
+    path: run.py
+    kind: source
+    language: python
+    summary: Process entry point that loads environment configuration, creates the Flask app, and starts the development server.
+    metrics: { lines: 39 }
+    generated: *file_summary_ai
+
+  - id: file.config
+    path: config.py
+    kind: configuration
+    language: python
+    summary: Environment-specific Flask, database, upload storage, authentication, billing, security, and deployment configuration.
+    metrics: { lines: 404 }
+    generated: *file_summary_ai
+
+  - id: file.gunicorn
+    path: gunicorn.conf.py
+    kind: configuration
+    language: python
+    summary: Production Gunicorn process, thread-concurrency, timeout, request-limit, and logging configuration.
+    metrics: { lines: 67 }
+    generated: *file_summary_ai
+
+  - id: file.app.init
+    path: app/__init__.py
+    kind: source
+    language: python
+    summary: Flask application factory that loads configuration, initializes extensions and OAuth, registers blueprints and CLI commands, and configures middleware, logging, static files, errors, and security headers.
+    metrics: { lines: 335 }
+    generated: *file_summary_ai
+
+  - id: file.app.cli.init
+    path: app/cli/__init__.py
+    kind: source
+    language: python
+    summary: Registers account and payment command groups with the Flask CLI.
+    metrics: { lines: 9 }
+    generated: *file_summary_ai
+
+  - id: file.app.cli.account
+    path: app/cli/account.py
+    kind: source
+    language: python
+    summary: Operator commands for listing users, changing plans and credits, recording manual payments, resetting quota windows, and cleaning expired assets.
+    metrics: { lines: 289 }
+    generated: *file_summary_ai
+
+  - id: file.app.cli.payments
+    path: app/cli/payments.py
+    kind: source
+    language: python
+    summary: Operator commands for reconciling payment and billing records and cleaning expired payments.
+    metrics: { lines: 212 }
+    generated: *file_summary_ai
+
+  - id: file.app.config.ai
+    path: app/config/ai_config.py
+    kind: configuration
+    language: python
+    summary: AI-analysis feature flags, model selection, limits, and environment validation.
+    metrics: { lines: 93 }
+    generated: *file_summary_ai
+
+  - id: file.app.config.enhancement
+    path: app/config/enhancement_config.py
+    kind: configuration
+    language: python
+    summary: Image-enhancement strategy, model, quality, timeout, cache, credit-cost, and edge-ML configuration.
+    metrics: { lines: 152 }
+    generated: *file_summary_ai
+
+  - id: file.app.extensions
+    path: app/extensions.py
+    kind: source
+    language: python
+    summary: Shared SQLAlchemy, migration, login, CSRF, and rate-limiter extension objects, including Redis or process-memory limiter storage selection.
+    metrics: { lines: 46 }
+    generated: *file_summary_ai
+
+  - id: file.app.models
+    path: app/models/__init__.py
+    kind: schema
+    language: python
+    summary: SQLAlchemy schema for users, sessions, image jobs and assets, analyses, billing operations, credit transactions, payments, usage snapshots, and security audit records.
+    metrics: { lines: 548 }
+    generated: *file_summary_ai
+
+  - id: file.app.models.mixins
+    path: app/models/mixins.py
+    kind: schema
+    language: python
+    summary: Reusable created-at and updated-at SQLAlchemy timestamp columns.
+    metrics: { lines: 16 }
+    generated: *file_summary_ai
+
+  - id: file.app.security.init
+    path: app/security/__init__.py
+    kind: source
+    language: python
+    summary: Public exports for password validation, prompt and response sanitization, UUID validation, and path-containment checks.
+    metrics: { lines: 17 }
+    generated: *file_summary_ai
+
+  - id: file.app.security.password
+    path: app/security/password_validation.py
+    kind: source
+    language: python
+    summary: Password policy validation with length and character-class requirements.
+    metrics: { lines: 39 }
+    generated: *file_summary_ai
+
+  - id: file.app.security.sanitizers
+    path: app/security/sanitizers.py
+    kind: source
+    language: python
+    summary: Prompt-input, AI-output, requirement-filter, UUID, and filesystem-path validation helpers.
+    metrics: { lines: 132 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.ai.init
+    path: app/services/ai_analysis/__init__.py
+    kind: source
+    language: python
+    summary: Package marker for AI-analysis services.
+    metrics: { lines: 0 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.ai.analyzer
+    path: app/services/ai_analysis/ai_analyzer.py
+    kind: source
+    language: python
+    summary: Coordinates requirement selection, prompt construction, Gemini invocation, response parsing, safety logging, and analysis metadata.
+    metrics: { lines: 344 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.ai.gemini
+    path: app/services/ai_analysis/gemini_service.py
+    kind: source
+    language: python
+    summary: Synchronous Google Gemini SDK adapter that optimizes an image, submits multimodal analysis, and returns provider usage and charge state.
+    metrics: { lines: 162 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.ai.prompt-manager
+    path: app/services/ai_analysis/prompt_manager.py
+    kind: source
+    language: python
+    summary: Builds structured marketplace-analysis prompts from requirements and optional user instructions.
+    metrics: { lines: 178 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.ai.requirements
+    path: app/services/ai_analysis/requirement_templates.py
+    kind: source
+    language: python
+    summary: Canonical AI-evaluated marketplace requirement definitions and prompt-formatting helpers.
+    metrics: { lines: 184 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.ai.response-parser
+    path: app/services/ai_analysis/response_parser.py
+    kind: source
+    language: python
+    summary: Extracts, normalizes, validates, and summarizes structured data returned by the AI provider.
+    metrics: { lines: 270 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.asset-retention
+    path: app/services/asset_retention_service.py
+    kind: source
+    language: python
+    summary: Finds expired image assets, delegates physical deletion, and marks retained job metadata.
+    metrics: { lines: 93 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.credit
+    path: app/services/credit_service.py
+    kind: source
+    language: python
+    summary: Reserves, charges, releases, and reconciles free quota and paid credits through billing-operation and ledger records.
+    metrics: { lines: 573 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.dev-mocks
+    path: app/services/dev_mocks.py
+    kind: source
+    language: python
+    summary: Development-only mock AI analysis payloads for UI and local testing.
+    metrics: { lines: 249 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.enhancement.init
+    path: app/services/enhancement/__init__.py
+    kind: source
+    language: python
+    summary: Public enhancement-service API and strategy exports.
+    metrics: { lines: 60 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.enhancement.core
+    path: app/services/enhancement/core.py
+    kind: source
+    language: python
+    summary: Enhancement context, result, strategy protocol, and domain error types.
+    metrics: { lines: 105 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.enhancement.edge-ml
+    path: app/services/enhancement/edge_ml_background_removal.py
+    kind: source
+    language: python
+    summary: Optional server-side ONNX background-removal service, strategy adapter, configuration, mask composition, and client-configuration export.
+    metrics: { lines: 561 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.enhancement.gemini
+    path: app/services/enhancement/gemini_service.py
+    kind: source
+    language: python
+    summary: Gemini image-enhancement adapter for prompt generation, provider invocation, image decoding, billing metadata, and result validation.
+    metrics: { lines: 770 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.enhancement.metrics
+    path: app/services/enhancement/metrics.py
+    kind: source
+    language: python
+    summary: Computes image-quality metrics, aggregate scores, and before/after comparisons.
+    metrics: { lines: 202 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.enhancement.orchestrator
+    path: app/services/enhancement/orchestrator.py
+    kind: source
+    language: python
+    summary: Selects and sequences enhancement strategies, checks process-local limits, caches intermediate results, writes enhanced images, and compares quality.
+    metrics: { lines: 480 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.enhancement.strategies
+    path: app/services/enhancement/strategies.py
+    kind: source
+    language: python
+    summary: Deterministic and Gemini strategy implementations behind the common enhancement protocol.
+    metrics: { lines: 263 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.google-auth
+    path: app/services/google_auth_service.py
+    kind: source
+    language: python
+    summary: Configures Google OAuth and exchanges callback identity data into local users and sessions.
+    metrics: { lines: 181 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.image-lifecycle
+    path: app/services/image_lifecycle_manager.py
+    kind: source
+    language: python
+    summary: Creates per-image storage structure and manages original, fixed, enhanced, and background-removed image versions and cleanup.
+    metrics: { lines: 584 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.image
+    path: app/services/image_service.py
+    kind: source
+    language: python
+    summary: Upload validation, border detection, technical and quality analysis, requirement checking, automatic fixes, and lifecycle integration.
+    metrics: { lines: 798 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.job
+    path: app/services/job_service.py
+    kind: source
+    language: python
+    summary: Persists request-lifecycle job records, image assets, analysis payloads, completion state, and usage counters; it does not dispatch background work.
+    metrics: { lines: 141 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.language
+    path: app/services/language_service.py
+    kind: source
+    language: python
+    summary: Loads locale JSON and translates server-generated analysis fields for supported languages.
+    metrics: { lines: 112 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.payment
+    path: app/services/payment_service.py
+    kind: source
+    language: python
+    summary: Applies idempotent payment completion and reversal to the credit ledger.
+    metrics: { lines: 184 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.storage.init
+    path: app/services/storage/__init__.py
+    kind: source
+    language: python
+    summary: Public storage-backend interface and factory exports.
+    metrics: { lines: 18 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.storage.base
+    path: app/services/storage/base.py
+    kind: source
+    language: python
+    summary: Abstract contract for save, read, delete, existence, URL, and path operations across image-storage backends.
+    metrics: { lines: 97 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.storage.factory
+    path: app/services/storage/factory.py
+    kind: source
+    language: python
+    summary: Selects and caches local, Google Cloud Storage, or S3-compatible storage implementations from environment configuration.
+    metrics: { lines: 88 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.storage.gcs
+    path: app/services/storage/gcs.py
+    kind: source
+    language: python
+    summary: Google Cloud Storage implementation of the image-storage contract.
+    metrics: { lines: 118 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.storage.local
+    path: app/services/storage/local.py
+    kind: source
+    language: python
+    summary: Local-filesystem implementation of the image-storage contract with path-containment checks.
+    metrics: { lines: 141 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.storage.s3
+    path: app/services/storage/s3.py
+    kind: source
+    language: python
+    summary: S3-compatible object-storage implementation with upload, download, deletion, and signed-URL operations.
+    metrics: { lines: 142 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.telegram-auth
+    path: app/services/telegram_auth_service.py
+    kind: source
+    language: python
+    summary: Verifies Telegram login signatures, freshness, and replay constraints and synchronizes Telegram identity with a local user.
+    metrics: { lines: 117 }
+    generated: *file_summary_ai
+
+  - id: file.app.services.user
+    path: app/services/user_service.py
+    kind: source
+    language: python
+    summary: Creates and authenticates users, manages sessions and profiles, tracks failed logins and profile audits, and maintains monthly usage records.
+    metrics: { lines: 450 }
+    generated: *file_summary_ai
+
+  - id: file.app.static.billing-history
+    path: app/static/js/billing-history.js
+    kind: source
+    language: javascript
+    summary: Fetches and renders paginated payment history and recent billing-operation activity on the account page.
+    metrics: { lines: 314 }
+    generated: *file_summary_ai
+
+  - id: file.app.static.edge-ml
+    path: app/static/js/edge-ml-background-removal.js
+    kind: source
+    language: javascript
+    summary: Browser-side asynchronous ONNX Runtime loader, IndexedDB model cache, capability fallback, image preprocessing, inference, mask postprocessing, and background composition.
+    metrics: { lines: 1572 }
+    generated: *file_summary_ai
+
+  - id: file.app.static.html-utils
+    path: app/static/js/html-utils.js
+    kind: source
+    language: javascript
+    summary: Escapes untrusted values before inserting them into generated HTML.
+    metrics: { lines: 18 }
+    generated: *file_summary_ai
+
+  - id: file.app.static.payments
+    path: app/static/js/payments.js
+    kind: source
+    language: javascript
+    summary: Initiates Paycom purchases, redirects to checkout, and polls the application for payment completion.
+    metrics: { lines: 238 }
+    generated: *file_summary_ai
+
+  - id: file.app.static.landing-style
+    path: app/static/landing.css
+    kind: style
+    language: css
+    summary: Landing-page layout, responsive behavior, pricing, examples, FAQ, animation, and marketing component styles.
+    metrics: { lines: 1408 }
+    generated: *file_summary_ai
+
+  - id: file.app.static.landing
+    path: app/static/landing.js
+    kind: source
+    language: javascript
+    summary: Landing-page interaction, navigation, FAQ, localization, animation, CTA, and best-effort analytics behavior.
+    metrics: { lines: 481 }
+    generated: *file_summary_ai
+
+  - id: file.app.locale.en
+    path: app/static/locales/en.json
+    kind: configuration
+    language: json
+    summary: English UI and analysis-result translations.
+    metrics: { lines: 453 }
+    generated: *file_summary_ai
+
+  - id: file.app.locale.ru
+    path: app/static/locales/ru.json
+    kind: configuration
+    language: json
+    summary: Russian UI and analysis-result translations.
+    metrics: { lines: 453 }
+    generated: *file_summary_ai
+
+  - id: file.app.locale.uz
+    path: app/static/locales/uz.json
+    kind: configuration
+    language: json
+    summary: Uzbek UI and analysis-result translations.
+    metrics: { lines: 455 }
+    generated: *file_summary_ai
+
+  - id: file.app.static.tool
+    path: app/static/script.js
+    kind: source
+    language: javascript
+    summary: Main tool-page controller for upload, technical and AI analysis, result rendering, enhancement, localization, account state, edge-ML orchestration, and background-result upload.
+    metrics: { lines: 2425 }
+    generated: *file_summary_ai
+
+  - id: file.app.static.global-style
+    path: app/static/style.css
+    kind: style
+    language: css
+    summary: Shared application, analysis tool, authentication, profile, result, billing, and responsive visual styles.
+    metrics: { lines: 2224 }
+    generated: *file_summary_ai
+
+  - id: file.app.static.telegram-auth
+    path: app/static/telegram_auth.js
+    kind: source
+    language: javascript
+    summary: Sends Telegram widget identity data and CSRF token to the local authorization endpoint and follows the returned redirect.
+    metrics: { lines: 50 }
+    generated: *file_summary_ai
+
+  - id: file.app.static.translation-utils
+    path: app/static/translation-utils.js
+    kind: source
+    language: javascript
+    summary: Reactive browser translation manager that loads locale data and updates static and dynamic page content.
+    metrics: { lines: 289 }
+    generated: *file_summary_ai
+
+  - id: file.app.template.telegram-card
+    path: app/templates/auth/_telegram_auth_card.html
+    kind: template
+    language: jinja2
+    summary: Shared Telegram widget, Google OAuth link, and optional legacy credential form for login and signup pages.
+    metrics: { lines: 75 }
+    generated: *file_summary_ai
+
+  - id: file.app.template.login
+    path: app/templates/auth/login.html
+    kind: template
+    language: jinja2
+    summary: Login page shell, flash messages, authentication card, and CSRF context.
+    metrics: { lines: 64 }
+    generated: *file_summary_ai
+
+  - id: file.app.template.profile
+    path: app/templates/auth/profile.html
+    kind: template
+    language: jinja2
+    summary: Account profile, plan and credit balances, purchase controls, payment history, billing activity, profile editing, and logout UI.
+    metrics: { lines: 343 }
+    generated: *file_summary_ai
+
+  - id: file.app.template.signup
+    path: app/templates/auth/signup.html
+    kind: template
+    language: jinja2
+    summary: Signup page shell reusing the shared Telegram, Google, and optional legacy authentication card.
+    metrics: { lines: 64 }
+    generated: *file_summary_ai
+
+  - id: file.app.template.tool
+    path: app/templates/index.html
+    kind: template
+    language: jinja2
+    summary: Main photo-tool page structure, upload controls, analysis and enhancement panels, edge-ML UI, authentication links, and script entry point.
+    metrics: { lines: 332 }
+    generated: *file_summary_ai
+
+  - id: file.app.template.landing
+    path: app/templates/landing.html
+    kind: template
+    language: jinja2
+    summary: Public product landing page with navigation, value proposition, examples, pricing, workflow, FAQ, footer, and localization hooks.
+    metrics: { lines: 613 }
+    generated: *file_summary_ai
+
+  - id: file.app.template.licenses
+    path: app/templates/licenses.html
+    kind: template
+    language: jinja2
+    summary: Third-party model and library attribution and license page.
+    metrics: { lines: 216 }
+    generated: *file_summary_ai
+
+  - id: file.app.utils.init
+    path: app/utils/__init__.py
+    kind: source
+    language: python
+    summary: Public transaction utility exports.
+    metrics: { lines: 5 }
+    generated: *file_summary_ai
+
+  - id: file.app.utils.provider-usage
+    path: app/utils/provider_usage.py
+    kind: source
+    language: python
+    summary: Normalizes provider SDK usage metadata into JSON-compatible dictionaries.
+    metrics: { lines: 26 }
+    generated: *file_summary_ai
+
+  - id: file.app.utils.transaction
+    path: app/utils/transaction.py
+    kind: source
+    language: python
+    summary: Context-manager and decorator helpers for commit, rollback, retry, and transaction logging.
+    metrics: { lines: 138 }
+    generated: *file_summary_ai
+
+  - id: file.app.views.api
+    path: app/views/api.py
+    kind: source
+    language: python
+    summary: API blueprint combining photo analysis, AI analysis, enhancement, downloads, job history, background removal, edge configuration, billing, Paycom merchant callbacks, cleanup, and payment statistics.
+    metrics: { lines: 3649 }
+    generated: *file_summary_ai
+
+  - id: file.app.views.auth
+    path: app/views/auth.py
+    kind: source
+    language: python
+    summary: Login, signup, logout, profile, Telegram authorization, and Google OAuth route handlers.
+    metrics: { lines: 352 }
+    generated: *file_summary_ai
+
+  - id: file.app.views.main
+    path: app/views/main.py
+    kind: source
+    language: python
+    summary: Landing and tool page rendering, legacy upload analysis, health probes, language metadata, and license routes.
+    metrics: { lines: 281 }
+    generated: *file_summary_ai
+
+elements:
+  - id: system.photochecker
+    kind: system
+    name: Uzum Photo Checker
+    summary: User-facing photo compliance and enhancement product with browser execution, a Flask server, durable account and job state, and third-party identity, AI, storage, and payment integrations.
+    facets: { runtime: shared, layer: application, features: [analysis, enhancement, identity, billing] }
+    reality: &present_unobserved
+      intent: unspecified
+      implementation: present
+      runtime: not_observed
+    source_refs:
+      - { artifact: file.app.init, symbol: create_app, lines: [16, 112], role: definition }
+      - { artifact: file.run, lines: [18, 38], role: implementation }
+    generated: &ai_high
+      method: ai_inferred
+      confidence: high
+      rationale: The named responsibility and boundary are directly supported by the cited definitions, configuration, and call sites.
+
+  - id: actor.seller
+    kind: actor
+    name: Seller
+    parent: system.photochecker
+    summary: End user who checks, improves, and pays for product-photo operations.
+    facets: { runtime: external, layer: external, trust_zone: public }
+    reality: *present_unobserved
+    generated:
+      method: human_declared
+      confidence: high
+      rationale: The project guide explicitly identifies individual sellers as target users.
+    evidence:
+      - { artifact: file.agents, lines: [1, 7], role: evidence, supports: The guide defines the product and its users. }
+
+  - id: actor.operator
+    kind: actor
+    name: Operator
+    parent: system.photochecker
+    summary: Trusted shell user who runs account, billing, reconciliation, and cleanup commands.
+    facets: { runtime: operator, layer: external, trust_zone: admin }
+    reality: *present_unobserved
+    generated: *ai_high
+    evidence:
+      - { artifact: file.app.cli.account, lines: [59, 286], role: implementation, supports: Account administration commands require shell access. }
+      - { artifact: file.app.cli.payments, lines: [35, 212], role: implementation, supports: Payment reconciliation commands require shell access. }
+
+  - id: deployable.browser
+    kind: deployable
+    name: Browser application
+    parent: system.photochecker
+    summary: Server-rendered HTML plus JavaScript that performs asynchronous API calls, rendering, localization, payment polling, and optional local ML inference.
+    facets: { runtime: browser, layer: presentation, features: [analysis, enhancement, identity, billing, localization], state: process_local, trust_zone: public }
+    reality: *present_unobserved
+    execution:
+      trigger: event
+      style: event_driven
+      blocking: "no"
+      concurrency: browser_event_loop
+      delivery: request_response
+    source_refs:
+      - { artifact: file.app.template.tool, lines: [1, 332], role: template }
+      - { artifact: file.app.static.tool, lines: [1, 2425], role: implementation }
+    generated: *ai_high
+
+  - id: layer.browser-presentation
+    kind: layer
+    name: Browser presentation
+    parent: deployable.browser
+    summary: Landing, photo-tool, and account interfaces rendered from Jinja templates and updated by JavaScript.
+    facets: { runtime: browser, layer: presentation, features: [ui] }
+    reality: *present_unobserved
+    source_refs:
+      - { artifact: file.app.template.landing, lines: [1, 613], role: template }
+      - { artifact: file.app.template.tool, lines: [1, 332], role: template }
+      - { artifact: file.app.template.profile, lines: [1, 343], role: template }
+    generated: *ai_high
+
+  - id: component.landing-ui
+    kind: component
+    name: Landing UI
+    parent: layer.browser-presentation
+    summary: Marketing, pricing, navigation, FAQ, localization, and CTA surface.
+    facets: { runtime: browser, layer: presentation, features: [acquisition, localization], state: stateless, trust_zone: public }
+    reality: *present_unobserved
+    source_refs:
+      - { artifact: file.app.template.landing, lines: [1, 613], role: template }
+      - { artifact: file.app.static.landing, lines: [1, 481], role: implementation }
+      - { artifact: file.app.static.landing-style, lines: [1, 1407], role: implementation }
+    generated: *ai_high
+
+  - id: component.tool-ui
+    kind: component
+    name: Photo tool UI
+    parent: layer.browser-presentation
+    summary: Uploads images, requests technical or AI analysis, renders results, launches enhancement, and coordinates client-side background removal.
+    facets: { runtime: browser, layer: presentation, features: [analysis, enhancement], state: process_local, trust_zone: mixed }
+    reality: *present_unobserved
+    source_refs:
+      - { artifact: file.app.template.tool, lines: [1, 332], role: template }
+      - { artifact: file.app.static.tool, lines: [1, 2425], role: implementation }
+    generated: *ai_high
+
+  - id: component.account-ui
+    kind: component
+    name: Account and payment UI
+    parent: layer.browser-presentation
+    summary: Displays profile, plan, credits, payments, and billing activity and initiates Paycom checkout.
+    facets: { runtime: browser, layer: presentation, features: [identity, billing], state: process_local, trust_zone: authenticated }
+    reality: *present_unobserved
+    source_refs:
+      - { artifact: file.app.template.profile, lines: [1, 343], role: template }
+      - { artifact: file.app.static.payments, lines: [1, 238], role: implementation }
+      - { artifact: file.app.static.billing-history, lines: [1, 314], role: implementation }
+    generated: *ai_high
+
+  - id: component.browser-i18n
+    kind: component
+    name: Browser localization
+    parent: deployable.browser
+    summary: Loads language JSON asynchronously and updates translated static and dynamic DOM content.
+    facets: { runtime: browser, layer: application, features: [localization], state: process_local, trust_zone: public }
+    reality: *present_unobserved
+    execution:
+      trigger: event
+      style: asynchronous
+      blocking: "no"
+      concurrency: browser_event_loop
+      delivery: request_response
+    source_refs:
+      - { artifact: file.app.static.translation-utils, symbol: TranslationManager, lines: [6, 288], role: definition }
+      - { artifact: file.app.locale.en, lines: [1, 453], role: configuration }
+      - { artifact: file.app.locale.ru, lines: [1, 453], role: configuration }
+      - { artifact: file.app.locale.uz, lines: [1, 455], role: configuration }
+    generated: *ai_high
+
+  - id: component.client-edge-ml
+    kind: component
+    name: Client edge ML
+    parent: deployable.browser
+    summary: Downloads and caches an ONNX segmentation model, selects WebGPU, WebGL, or WASM, runs local inference, and composes the resulting background.
+    facets: { runtime: browser, layer: application, features: [background-removal, ml], state: process_local, trust_zone: public }
+    reality: *present_unobserved
+    execution:
+      trigger: event
+      style: asynchronous
+      blocking: mixed
+      concurrency: browser_event_loop
+      delivery: request_response
+    source_refs:
+      - { artifact: file.app.static.edge-ml, symbol: EdgeMLBackgroundRemover, lines: [24, 1572], role: definition }
+    generated: *ai_high
+
+  - id: operation.client.edge-background-removal
+    kind: operation
+    name: Remove background in browser
+    parent: component.client-edge-ml
+    summary: Initializes ONNX runtime and model, runs segmentation with fallback providers, selects a background, and returns a result blob.
+    facets: { runtime: browser, layer: application, features: [background-removal], state: process_local, trust_zone: public }
+    reality: *present_unobserved
+    execution:
+      trigger: event
+      style: asynchronous
+      blocking: mixed
+      concurrency: browser_event_loop
+      delivery: request_response
+    source_refs:
+      - { artifact: file.app.static.edge-ml, symbol: EdgeMLBackgroundRemover.removeBackground, lines: [1368, 1535], role: definition }
+      - { artifact: file.app.static.tool, lines: [2280, 2350], role: implementation }
+    generated: *ai_high
+
+  - id: resource.browser-model-cache
+    kind: resource
+    name: Browser model cache
+    parent: deployable.browser
+    summary: IndexedDB database containing downloaded ONNX model bytes keyed by model URL.
+    facets: { runtime: browser, layer: infrastructure, features: [background-removal], state: durable, trust_zone: public }
+    reality: *present_unobserved
+    source_refs:
+      - { artifact: file.app.static.edge-ml, symbol: EdgeMLBackgroundRemover.openModelCacheDb, lines: [440, 525], role: implementation }
+    generated:
+      method: deterministic
+      confidence: high
+      rationale: IndexedDB open, read, and write operations are explicit in the source.
+
+  - id: deployable.flask-web
+    kind: deployable
+    name: Flask web application
+    parent: system.photochecker
+    summary: One Python web deployable serving pages and APIs and executing analysis, enhancement, identity, billing, storage, and payment logic.
+    facets: { runtime: server, layer: application, features: [analysis, enhancement, identity, billing], state: mixed, trust_zone: mixed }
+    reality: *present_unobserved
+    execution:
+      trigger: startup
+      style: synchronous
+      blocking: mixed
+      concurrency: process
+      delivery: request_response
+    source_refs:
+      - { artifact: file.run, lines: [18, 38], role: implementation }
+      - { artifact: file.app.init, symbol: create_app, lines: [16, 112], role: definition }
+    generated: *ai_high
+
+  - id: process.flask-request-workers
+    kind: process
+    name: Gunicorn request workers
+    parent: deployable.flask-web
+    summary: Configurable Gunicorn worker processes using gthread request concurrency; handlers themselves remain synchronous.
+    facets: { runtime: server, layer: infrastructure, features: [http], state: process_local, trust_zone: internal }
+    reality: *present_unobserved
+    execution:
+      trigger: startup
+      style: mixed
+      blocking: mixed
+      concurrency: request_thread
+      delivery: request_response
+    source_refs:
+      - { artifact: file.gunicorn, lines: [15, 31], role: configuration }
+    generated:
+      method: deterministic
+      confidence: high
+      rationale: Worker class, process count, and thread count are explicit configuration values.
+
+  - id: layer.server-interfaces
+    kind: layer
+    name: Server interfaces
+    parent: deployable.flask-web
+    summary: Page, API, authentication, health, callback, and operator command entry points.
+    facets: { runtime: server, layer: interface, features: [http, cli], state: stateless, trust_zone: mixed }
+    reality: *present_unobserved
+    source_refs:
+      - { artifact: file.app.views.main, lines: [1, 281], role: implementation }
+      - { artifact: file.app.views.auth, lines: [1, 352], role: implementation }
+      - { artifact: file.app.views.api, lines: [1, 3649], role: implementation }
+      - { artifact: file.app.cli.init, lines: [1, 9], role: implementation }
+    generated: *ai_high
+
+  - id: component.main-blueprint
+    kind: component
+    name: Main blueprint
+    parent: layer.server-interfaces
+    summary: Renders public pages and the tool and exposes legacy upload, health, language, and license routes.
+    facets: { runtime: server, layer: interface, features: [pages, analysis, health], state: stateless, trust_zone: public }
+    reality: *present_unobserved
+    execution: &sync_request
+      trigger: request
+      style: synchronous
+      blocking: "yes"
+      concurrency: request_thread
+      delivery: request_response
+    source_refs:
+      - { artifact: file.app.views.main, lines: [20, 281], role: definition }
+    generated: *ai_high
+
+  - id: component.auth-blueprint
+    kind: component
+    name: Authentication blueprint
+    parent: layer.server-interfaces
+    summary: Handles credential, Telegram, and Google login flows, logout, and profile changes.
+    facets: { runtime: server, layer: interface, features: [identity], state: stateless, trust_zone: mixed }
+    reality: *present_unobserved
+    execution: *sync_request
+    source_refs:
+      - { artifact: file.app.views.auth, lines: [27, 352], role: definition }
+    generated: *ai_high
+
+  - id: component.api-blueprint
+    kind: component
+    name: API blueprint
+    parent: layer.server-interfaces
+    summary: Large HTTP boundary that coordinates analysis, AI, enhancement, downloads, edge upload, jobs, billing, payment callbacks, and administration.
+    facets: { runtime: server, layer: interface, features: [analysis, enhancement, jobs, billing, payments], state: stateless, trust_zone: mixed }
+    reality: *present_unobserved
+    execution: *sync_request
+    source_refs:
+      - { artifact: file.app.views.api, lines: [57, 3649], role: definition }
+    generated: *ai_high
+
+  - id: interface.operator-cli
+    kind: interface
+    name: Operator CLI
+    parent: layer.server-interfaces
+    summary: Manual Flask CLI surface for accounts, credits, plans, payment reconciliation, and cleanup.
+    facets: { runtime: operator, layer: interface, features: [identity, billing, operations], state: stateless, trust_zone: admin }
+    reality: *present_unobserved
+    execution:
+      trigger: manual
+      style: synchronous
+      blocking: "yes"
+      concurrency: inline
+      delivery: request_response
+    source_refs:
+      - { artifact: file.app.cli.account, lines: [1, 289], role: implementation }
+      - { artifact: file.app.cli.payments, lines: [1, 212], role: implementation }
+    generated: *ai_high
+
+  - id: operation.api.technical-analysis
+    kind: operation
+    name: POST /api/analyze
+    parent: component.api-blueprint
+    summary: Validates and stores an upload, runs inline technical analysis, persists job, asset, and result records, and returns the completed result.
+    facets: { runtime: server, layer: interface, features: [analysis], state: stateless, trust_zone: public }
+    reality: *present_unobserved
+    execution: *sync_request
+    source_refs:
+      - { artifact: file.app.views.api, symbol: analyze_image, lines: [291, 406], role: definition }
+    generated: *ai_high
+
+  - id: operation.api.ai-analysis
+    kind: operation
+    name: POST /api/analyze-with-ai
+    parent: component.api-blueprint
+    summary: Authenticates, validates and stores an upload, reserves credits, invokes Gemini inline, validates output, settles billing, runs technical analysis, and persists results.
+    facets: { runtime: server, layer: interface, features: [analysis, ai, billing], state: stateless, trust_zone: authenticated }
+    reality: *present_unobserved
+    execution: *sync_request
+    source_refs:
+      - { artifact: file.app.views.api, symbol: analyze_with_ai, lines: [483, 872], role: definition }
+    generated: *ai_high
+
+  - id: operation.api.enhance-image
+    kind: operation
+    name: POST /api/enhance-image
+    parent: component.api-blueprint
+    summary: Runs selected deterministic or Gemini enhancement strategies inline with billing, persistence, and image version management.
+    facets: { runtime: server, layer: interface, features: [enhancement, ai, billing], state: stateless, trust_zone: authenticated }
+    reality: *present_unobserved
+    execution: *sync_request
+    source_refs:
+      - { artifact: file.app.views.api, symbol: enhance_image, lines: [1605, 2220], role: definition }
+    generated: *ai_high
+
+  - id: operation.api.background-upload
+    kind: operation
+    name: POST /api/bg-removal/upload
+    parent: component.api-blueprint
+    summary: Receives original and browser-processed images, validates them, stores both versions, and records a completed background-removal job.
+    facets: { runtime: server, layer: interface, features: [background-removal, jobs], state: stateless, trust_zone: mixed }
+    reality: *present_unobserved
+    execution: *sync_request
+    source_refs:
+      - { artifact: file.app.views.api, symbol: bg_removal_upload, lines: [2726, 2957], role: definition }
+    generated: *ai_high
+
+  - id: operation.api.paycom-callback
+    kind: operation
+    name: POST /api/paycom/merchant
+    parent: component.api-blueprint
+    summary: Authenticates Paycom JSON-RPC callbacks and performs transaction check, creation, completion, cancellation, and lookup operations.
+    facets: { runtime: server, layer: interface, features: [billing, payments], state: stateless, trust_zone: third_party }
+    reality: *present_unobserved
+    execution:
+      trigger: callback
+      style: synchronous
+      blocking: "yes"
+      concurrency: request_thread
+      delivery: request_response
+    source_refs:
+      - { artifact: file.app.views.api, symbol: paycom_merchant_api, lines: [3159, 3538], role: definition }
+    generated: *ai_high
+
+  - id: expected.endpoint.analytics
+    kind: expected_component
+    name: POST /api/analytics
+    parent: component.api-blueprint
+    summary: Endpoint called by the landing page for interaction analytics but not implemented by any Flask route in the scoped source.
+    facets: { runtime: server, layer: interface, features: [analytics], state: unknown, trust_zone: public }
+    reality:
+      intent: required
+      implementation: missing
+      runtime: not_observed
+    source_refs:
+      - { artifact: file.app.static.landing, symbol: trackEvent, lines: [201, 218], role: evidence }
+    generated:
+      method: ai_inferred
+      confidence: high
+      rationale: The client contains an explicit fetch to /api/analytics and no matching route exists in the complete scoped route inventory.
+
+  - id: layer.application-services
+    kind: layer
+    name: Application services
+    parent: deployable.flask-web
+    summary: Reusable application and domain coordination for images, AI, enhancement, lifecycle, identity, jobs, billing, payments, storage, and localization.
+    facets: { runtime: server, layer: application, features: [analysis, enhancement, identity, billing], state: mixed, trust_zone: internal }
+    reality: *present_unobserved
+    source_refs:
+      - { artifact: file.agents, lines: [33, 48], role: contract }
+      - { artifact: file.app.services.image, lines: [1, 798], role: implementation }
+      - { artifact: file.app.services.credit, lines: [1, 573], role: implementation }
+    generated: *ai_high
+
+  - id: component.image-analysis
+    kind: component
+    name: Technical image analysis
+    parent: layer.application-services
+    summary: Validates image uploads and calculates technical, quality, border, requirement, and auto-fix results.
+    facets: { runtime: server, layer: domain, features: [analysis, image-processing], state: stateless, trust_zone: internal }
+    reality: *present_unobserved
+    execution: *sync_request
+    source_refs:
+      - { artifact: file.app.services.image, symbol: ImageService, lines: [24, 798], role: definition }
+    generated: *ai_high
+
+  - id: component.ai-analysis
+    kind: component
+    name: AI image analysis
+    parent: layer.application-services
+    summary: Builds marketplace prompts, calls Gemini synchronously, parses and validates the response, and emits provider usage metadata.
+    facets: { runtime: server, layer: application, features: [analysis, ai], state: stateless, trust_zone: internal }
+    reality: *present_unobserved
+    execution: *sync_request
+    source_refs:
+      - { artifact: file.app.services.ai.analyzer, symbol: AIAnalyzer, lines: [19, 344], role: definition }
+      - { artifact: file.app.services.ai.gemini, symbol: GeminiService, lines: [14, 162], role: implementation }
+      - { artifact: file.app.services.ai.response-parser, symbol: ResponseParser, lines: [21, 269], role: implementation }
+    generated: *ai_high
+
+  - id: component.enhancement
+    kind: component
+    name: Image enhancement
+    parent: layer.application-services
+    summary: Chooses deterministic, Gemini, or optional edge strategies, applies them sequentially, caches and saves output, and compares image quality.
+    facets: { runtime: server, layer: application, features: [enhancement, ai, image-processing], state: process_local, trust_zone: internal }
+    reality: *present_unobserved
+    execution: *sync_request
+    source_refs:
+      - { artifact: file.app.services.enhancement.orchestrator, symbol: EnhancementOrchestrator, lines: [25, 480], role: definition }
+      - { artifact: file.app.services.enhancement.strategies, lines: [16, 263], role: implementation }
+      - { artifact: file.app.services.enhancement.gemini, lines: [140, 770], role: implementation }
+    generated: *ai_high
+
+  - id: component.image-lifecycle
+    kind: component
+    name: Image lifecycle
+    parent: layer.application-services
+    summary: Creates image version structure, stores original and derived files, resolves downloads, and deletes expired physical assets.
+    facets: { runtime: server, layer: infrastructure, features: [storage, retention], state: stateless, trust_zone: internal }
+    reality: *present_unobserved
+    execution: *sync_request
+    source_refs:
+      - { artifact: file.app.services.image-lifecycle, symbol: ImageLifecycleManager, lines: [36, 584], role: definition }
+      - { artifact: file.app.services.asset-retention, symbol: AssetRetentionService, lines: [24, 93], role: implementation }
+    generated: *ai_high
+
+  - id: component.storage-adapters
+    kind: component
+    name: Storage adapters
+    parent: layer.application-services
+    summary: Abstract storage interface with local, GCS, and S3-compatible implementations selected by environment.
+    facets: { runtime: server, layer: infrastructure, features: [storage], state: process_local, trust_zone: internal }
+    reality:
+      intent: required
+      implementation: partial
+      runtime: not_observed
+    source_refs:
+      - { artifact: file.app.services.storage.base, symbol: StorageBackend, lines: [12, 97], role: contract }
+      - { artifact: file.app.services.storage.factory, lines: [20, 88], role: implementation }
+      - { artifact: file.app.services.storage.local, lines: [20, 141], role: implementation }
+      - { artifact: file.app.services.storage.gcs, lines: [19, 118], role: implementation }
+      - { artifact: file.app.services.storage.s3, lines: [19, 142], role: implementation }
+    generated:
+      method: ai_inferred
+      confidence: high
+      rationale: The abstraction and three backends exist, but route and lifecycle code still stores and resolves absolute local paths directly.
+
+  - id: component.jobs
+    kind: component
+    name: Job record service
+    parent: layer.application-services
+    summary: Creates and completes durable records describing work performed inline during HTTP requests; no queue dispatch or worker consumption is present.
+    facets: { runtime: server, layer: application, features: [jobs, usage], state: stateless, trust_zone: internal }
+    reality: *present_unobserved
+    execution:
+      trigger: request
+      style: synchronous
+      blocking: "yes"
+      concurrency: request_thread
+      delivery: request_response
+    source_refs:
+      - { artifact: file.app.services.job, symbol: JobService, lines: [21, 141], role: definition }
+    generated:
+      method: ai_inferred
+      confidence: high
+      rationale: Job creation, asset attachment, result recording, and completion directly commit in route-call paths; no queue or worker appears in scope.
+
+  - id: component.identity
+    kind: component
+    name: Identity and user accounts
+    parent: layer.application-services
+    summary: Handles local user lifecycle, sessions, profile changes, Telegram verification, Google OAuth identity, failed login tracking, and audits.
+    facets: { runtime: server, layer: application, features: [identity, security], state: stateless, trust_zone: internal }
+    reality: *present_unobserved
+    execution: *sync_request
+    source_refs:
+      - { artifact: file.app.services.user, symbol: UserService, lines: [42, 450], role: definition }
+      - { artifact: file.app.services.telegram-auth, symbol: TelegramAuthService, lines: [26, 117], role: implementation }
+      - { artifact: file.app.services.google-auth, lines: [41, 181], role: implementation }
+    generated: *ai_high
+
+  - id: component.billing
+    kind: component
+    name: Credits and payments
+    parent: layer.application-services
+    summary: Manages credit reservation and settlement, free quota, debt, ledger entries, payment completion and reversal, and reconciliation.
+    facets: { runtime: server, layer: domain, features: [billing, payments], state: stateless, trust_zone: internal }
+    reality: *present_unobserved
+    execution: *sync_request
+    source_refs:
+      - { artifact: file.app.services.credit, symbol: CreditService, lines: [46, 573], role: definition }
+      - { artifact: file.app.services.payment, symbol: PaymentService, lines: [18, 184], role: implementation }
+    generated: *ai_high
+
+  - id: component.server-i18n
+    kind: component
+    name: Server localization
+    parent: layer.application-services
+    summary: Loads locale JSON and translates structured analysis data on the server.
+    facets: { runtime: server, layer: application, features: [localization], state: process_local, trust_zone: internal }
+    reality: *present_unobserved
+    execution: *sync_request
+    source_refs:
+      - { artifact: file.app.services.language, symbol: LanguageService, lines: [10, 111], role: definition }
+    generated: *ai_high
+
+  - id: layer.data-model
+    kind: layer
+    name: Data model
+    parent: deployable.flask-web
+    summary: SQLAlchemy entities and relationships for product, identity, billing, usage, and audit state.
+    facets: { runtime: server, layer: data, features: [identity, jobs, billing], state: durable, trust_zone: internal }
+    reality: *present_unobserved
+    source_refs:
+      - { artifact: file.app.models, lines: [1, 548], role: definition }
+      - { artifact: file.app.models.mixins, lines: [1, 16], role: definition }
+    generated: *ai_high
+
+  - id: component.orm-models
+    kind: component
+    name: ORM models
+    parent: layer.data-model
+    summary: User, session, job, asset, analysis, billing-operation, ledger, payment, usage, and audit entities.
+    facets: { runtime: server, layer: data, features: [identity, jobs, billing], state: durable, trust_zone: internal }
+    reality: *present_unobserved
+    source_refs:
+      - { artifact: file.app.models, lines: [67, 548], role: definition }
+    generated: *ai_high
+
+  - id: layer.cross-cutting
+    kind: layer
+    name: Cross-cutting infrastructure
+    parent: deployable.flask-web
+    summary: Shared framework extensions, input and path safety, transactions, logging, CSRF, login state, and rate limiting.
+    facets: { runtime: server, layer: cross_cutting, features: [security, observability, persistence], state: mixed, trust_zone: internal }
+    reality: *present_unobserved
+    source_refs:
+      - { artifact: file.app.extensions, lines: [1, 46], role: implementation }
+      - { artifact: file.app.security.sanitizers, lines: [1, 132], role: implementation }
+      - { artifact: file.app.utils.transaction, lines: [1, 138], role: implementation }
+    generated: *ai_high
+
+  - id: component.security
+    kind: component
+    name: Security policies and helpers
+    parent: layer.cross-cutting
+    summary: CSRF, login protection, rate limiting, password policy, prompt and response filtering, UUID checks, safe-path checks, proxy handling, and response headers.
+    facets: { runtime: server, layer: cross_cutting, features: [security], state: mixed, trust_zone: mixed }
+    reality: *present_unobserved
+    source_refs:
+      - { artifact: file.app.extensions, lines: [1, 46], role: implementation }
+      - { artifact: file.app.security.password, lines: [1, 39], role: implementation }
+      - { artifact: file.app.security.sanitizers, lines: [1, 132], role: implementation }
+      - { artifact: file.app.init, lines: [115, 198], role: configuration }
+    generated: *ai_high
+
+  - id: datastore.relational
+    kind: data_store
+    name: Relational database
+    parent: system.photochecker
+    summary: PostgreSQL in supported production deployments and SQLite for local development or isolated tests, accessed through SQLAlchemy.
+    facets: { runtime: database, layer: data, features: [identity, jobs, billing], state: durable, trust_zone: internal }
+    reality: *present_unobserved
+    source_refs:
+      - { artifact: file.config, lines: [84, 97], role: configuration }
+      - { artifact: file.app.models, lines: [1, 548], role: schema }
+    generated: *ai_high
+
+  - id: resource.image-storage
+    kind: resource
+    name: Image storage
+    parent: system.photochecker
+    summary: Local upload directories by default, with GCS and S3-compatible backends available for configured deployments.
+    facets: { runtime: shared, layer: infrastructure, features: [storage, retention], state: durable, trust_zone: internal }
+    reality:
+      intent: required
+      implementation: partial
+      runtime: not_observed
+    source_refs:
+      - { artifact: file.config, lines: [105, 110], role: configuration }
+      - { artifact: file.app.services.storage.factory, lines: [20, 82], role: implementation }
+    generated:
+      method: ai_inferred
+      confidence: high
+      rationale: Multiple configured backends exist, while important API and lifecycle paths still assume local absolute paths.
+
+  - id: datastore.rate-limit
+    kind: data_store
+    name: Rate-limit state
+    parent: system.photochecker
+    summary: Redis-backed shared counters by default, with a process-memory fallback.
+    facets: { runtime: shared, layer: infrastructure, features: [security], state: shared, trust_zone: internal }
+    reality: *present_unobserved
+    source_refs:
+      - { artifact: file.app.extensions, lines: [20, 46], role: configuration }
+    generated: *ai_high
+
+  - id: external.gemini
+    kind: external_system
+    name: Google Gemini
+    parent: system.photochecker
+    summary: External multimodal analysis and image-generation provider invoked by server-side SDK adapters.
+    facets: { runtime: external, layer: external, features: [ai], state: unknown, trust_zone: third_party }
+    reality: *present_unobserved
+    generated: *ai_high
+    evidence:
+      - { artifact: file.app.services.ai.gemini, lines: [8, 119], role: implementation, supports: The Google GenAI client and generate_content call are explicit. }
+      - { artifact: file.app.services.enhancement.gemini, lines: [140, 770], role: implementation, supports: A second Gemini adapter performs image enhancement. }
+
+  - id: external.google-oauth
+    kind: external_system
+    name: Google OAuth
+    parent: system.photochecker
+    summary: External OAuth authorization and identity provider.
+    facets: { runtime: external, layer: external, features: [identity], state: external, trust_zone: third_party }
+    reality: *present_unobserved
+    generated: *ai_high
+    evidence:
+      - { artifact: file.app.services.google-auth, lines: [41, 181], role: implementation, supports: OAuth client registration, redirect, token exchange, and user-info handling are explicit. }
+
+  - id: external.telegram
+    kind: external_system
+    name: Telegram Login
+    parent: system.photochecker
+    summary: Telegram widget supplies signed user identity that is verified by the server.
+    facets: { runtime: external, layer: external, features: [identity], state: external, trust_zone: third_party }
+    reality: *present_unobserved
+    generated: *ai_high
+    evidence:
+      - { artifact: file.app.template.telegram-card, lines: [25, 75], role: implementation, supports: The Telegram login widget and callback hook are embedded. }
+      - { artifact: file.app.services.telegram-auth, lines: [26, 117], role: implementation, supports: The server validates signed Telegram data. }
+
+  - id: external.paycom
+    kind: external_system
+    name: Paycom
+    parent: system.photochecker
+    summary: External checkout and merchant callback provider for credit purchases.
+    facets: { runtime: external, layer: external, features: [billing, payments], state: external, trust_zone: third_party }
+    reality: *present_unobserved
+    generated: *ai_high
+    evidence:
+      - { artifact: file.config, lines: [149, 165], role: configuration, supports: Merchant credentials and checkout URL are configured. }
+      - { artifact: file.app.views.api, lines: [912, 1074], role: implementation, supports: Checkout initiation, status, and history APIs exist. }
+      - { artifact: file.app.views.api, lines: [3159, 3538], role: implementation, supports: The merchant JSON-RPC callback exists. }
+
+  - id: external.huggingface-model
+    kind: external_system
+    name: Hugging Face model hosting
+    parent: system.photochecker
+    summary: Hosts the BiRefNet ONNX model downloaded by the browser for local background removal.
+    facets: { runtime: external, layer: external, features: [background-removal, ml], state: external, trust_zone: third_party }
+    reality: *present_unobserved
+    generated: *ai_high
+    evidence:
+      - { artifact: file.app.static.edge-ml, lines: [24, 35], role: configuration, supports: The default model URL points to Hugging Face. }
+
+  - id: external.onnx-runtime-cdn
+    kind: external_system
+    name: ONNX Runtime CDN
+    parent: system.photochecker
+    summary: CDN source for browser ONNX Runtime builds used with WebGPU, WebGL, or WASM.
+    facets: { runtime: external, layer: external, features: [background-removal, ml], state: external, trust_zone: third_party }
+    reality: *present_unobserved
+    generated: *ai_high
+    evidence:
+      - { artifact: file.app.static.edge-ml, lines: [367, 427], role: implementation, supports: Runtime script candidates are dynamically loaded from jsDelivr. }
+
+relations:
+  - id: relation.seller-to-tool
+    from: actor.seller
+    to: component.tool-ui
+    kind: invokes
+    summary: Seller interacts with the browser photo tool.
+    execution: { trigger: event, style: event_driven, blocking: "no", concurrency: browser_event_loop, delivery: request_response }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.template.tool, lines: [14, 329], role: implementation, supports: The tool exposes seller upload, analysis, enhancement, and result controls. }
+    generated: *ai_high
+
+  - id: relation.tool-to-technical-api
+    from: component.tool-ui
+    to: operation.api.technical-analysis
+    kind: http_request
+    summary: Browser uploads an image for technical analysis and handles the response asynchronously.
+    protocol: https
+    data: [multipart image, language, analysis result]
+    execution: &async_http
+      trigger: event
+      style: asynchronous
+      blocking: "no"
+      concurrency: browser_event_loop
+      delivery: request_response
+    effect: { domain: network, operation: invoke, mutates_state: unknown, durability: external }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.static.tool, lines: [839, 872], role: implementation, supports: jQuery sends the multipart request to /api/analyze. }
+      - { artifact: file.app.views.api, lines: [291, 406], role: implementation, supports: The matching route handles POST requests. }
+    generated: &static_high
+      method: deterministic
+      confidence: high
+      rationale: The relation is directly present in the cited call, route, configuration, or state operation.
+
+  - id: relation.technical-api-to-image-analysis
+    from: operation.api.technical-analysis
+    to: component.image-analysis
+    kind: invokes
+    summary: Route executes technical image analysis inline on its request thread.
+    protocol: in_process
+    execution: *sync_request
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.views.api, lines: [331, 339], role: implementation, supports: ImageService.analyze_image is called directly. }
+    generated: *static_high
+
+  - id: relation.technical-api-to-lifecycle
+    from: operation.api.technical-analysis
+    to: component.image-lifecycle
+    kind: invokes
+    summary: Route stores the original upload through the image lifecycle manager.
+    protocol: in_process
+    execution: *sync_request
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.views.api, lines: [322, 330], role: implementation, supports: store_original_image is called inline. }
+    generated: *static_high
+
+  - id: relation.technical-api-to-jobs
+    from: operation.api.technical-analysis
+    to: component.jobs
+    kind: invokes
+    summary: Route creates, updates, and completes a durable request-lifecycle job record inline.
+    protocol: in_process
+    execution: *sync_request
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.views.api, lines: [327, 370], role: implementation, supports: Job creation, asset and result recording, and completion occur before response. }
+    generated: *static_high
+
+  - id: relation.tool-to-ai-api
+    from: component.tool-ui
+    to: operation.api.ai-analysis
+    kind: http_request
+    summary: Authenticated browser uploads an image for AI-assisted analysis.
+    protocol: https
+    data: [multipart image, requirement filter, custom instructions, AI result]
+    execution: *async_http
+    effect: { domain: network, operation: invoke, mutates_state: unknown, durability: external }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.static.tool, lines: [778, 820], role: implementation, supports: jQuery sends a request to /api/analyze-with-ai. }
+      - { artifact: file.app.views.api, lines: [483, 872], role: implementation, supports: The server route handles it. }
+    generated: *static_high
+
+  - id: relation.ai-api-to-billing
+    from: operation.api.ai-analysis
+    to: component.billing
+    kind: invokes
+    summary: AI analysis reserves credits before provider work and settles the operation after success or failure.
+    protocol: in_process
+    execution: *sync_request
+    effect: { domain: billing, operation: reserve, mutates_state: "yes", durability: durable }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.views.api, lines: [615, 747], role: implementation, supports: Credit reservation and failure settlement wrap provider execution. }
+    generated: *static_high
+
+  - id: relation.ai-api-to-ai-analysis
+    from: operation.api.ai-analysis
+    to: component.ai-analysis
+    kind: invokes
+    summary: Route invokes AI analysis inline and waits for its result.
+    protocol: in_process
+    execution: *sync_request
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.views.api, lines: [664, 668], role: implementation, supports: AIAnalyzer.analyze_image_with_ai is a direct synchronous call. }
+    generated: *static_high
+
+  - id: relation.ai-analysis-to-gemini
+    from: component.ai-analysis
+    to: external.gemini
+    kind: calls
+    summary: Sends optimized image bytes and a prompt to Gemini and waits for generated content.
+    protocol: https-sdk
+    data: [image bytes, prompt, generated text, usage metadata]
+    execution: *sync_request
+    effect: { domain: network, operation: invoke, mutates_state: unknown, durability: external }
+    reality:
+      intent: required
+      implementation: present
+      runtime: not_observed
+    evidence:
+      - { artifact: file.app.services.ai.gemini, symbol: GeminiService.analyze_image, lines: [32, 119], role: implementation, supports: google-genai generate_content is called directly. }
+    generated: *static_high
+
+  - id: relation.ai-api-to-image-analysis
+    from: operation.api.ai-analysis
+    to: component.image-analysis
+    kind: invokes
+    summary: Route also performs deterministic technical analysis inline after successful AI analysis.
+    protocol: in_process
+    execution: *sync_request
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.views.api, lines: [748, 751], role: implementation, supports: ImageService.analyze_image is called before persistence. }
+    generated: *static_high
+
+  - id: relation.ai-api-to-jobs
+    from: operation.api.ai-analysis
+    to: component.jobs
+    kind: invokes
+    summary: Route records the upload, both analyses, billing result, usage, and final job state before responding.
+    protocol: in_process
+    execution: *sync_request
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.views.api, lines: [599, 814], role: implementation, supports: JobService calls surround provider and technical analysis work. }
+    generated: *static_high
+
+  - id: relation.tool-to-enhance-api
+    from: component.tool-ui
+    to: operation.api.enhance-image
+    kind: http_request
+    summary: Browser requests server-side deterministic or Gemini image enhancement.
+    protocol: https
+    data: [job and image references, requested strategies, enhanced result]
+    execution: *async_http
+    effect: { domain: network, operation: invoke, mutates_state: unknown, durability: external }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.static.tool, lines: [1436, 1484], role: implementation, supports: jQuery calls /api/enhance-image. }
+      - { artifact: file.app.views.api, lines: [1605, 2220], role: implementation, supports: The matching route executes enhancement. }
+    generated: *static_high
+
+  - id: relation.enhance-api-to-enhancement
+    from: operation.api.enhance-image
+    to: component.enhancement
+    kind: invokes
+    summary: Route executes the selected enhancement strategy chain inline.
+    protocol: in_process
+    execution: *sync_request
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.views.api, lines: [1900, 2070], role: implementation, supports: The route calls the orchestrator and handles its result before responding. }
+    generated: *static_high
+
+  - id: relation.enhancement-to-gemini
+    from: component.enhancement
+    to: external.gemini
+    kind: calls
+    summary: Gemini enhancement strategy sends an image and prompt to an external image-generation model and waits for output.
+    protocol: https-sdk
+    execution: *sync_request
+    effect: { domain: network, operation: invoke, mutates_state: unknown, durability: external }
+    reality:
+      intent: optional
+      implementation: present
+      runtime: not_observed
+    evidence:
+      - { artifact: file.app.services.enhancement.gemini, lines: [500, 700], role: implementation, supports: Gemini image generation and response handling occur synchronously. }
+    generated: *ai_high
+
+  - id: relation.image-lifecycle-to-storage
+    from: component.image-lifecycle
+    to: resource.image-storage
+    kind: writes
+    summary: Stores, reads, and deletes original and derived image files.
+    protocol: filesystem-or-object-storage
+    execution: *sync_request
+    effect: { domain: filesystem, operation: write, mutates_state: "yes", durability: durable }
+    reality:
+      intent: required
+      implementation: partial
+      runtime: not_observed
+    evidence:
+      - { artifact: file.app.services.image-lifecycle, lines: [36, 584], role: implementation, supports: Lifecycle methods create directories and read, write, and delete image versions. }
+      - { artifact: file.app.services.storage.base, lines: [12, 97], role: contract, supports: A generalized storage contract exists. }
+    generated: *ai_high
+
+  - id: relation.jobs-to-database
+    from: component.jobs
+    to: datastore.relational
+    kind: persists
+    summary: Commits job, asset, analysis, and usage state through SQLAlchemy.
+    protocol: sql
+    execution: *sync_request
+    effect: { domain: database, operation: write, mutates_state: "yes", durability: durable }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.services.job, lines: [32, 141], role: implementation, supports: Every mutation adds entities and commits the SQLAlchemy session. }
+    generated: *static_high
+
+  - id: relation.billing-to-database
+    from: component.billing
+    to: datastore.relational
+    kind: persists
+    summary: Reads and mutates users, quotas, billing operations, ledger entries, and payment state transactionally.
+    protocol: sql
+    execution: *sync_request
+    effect: { domain: database, operation: write, mutates_state: "yes", durability: durable }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.services.credit, lines: [46, 573], role: implementation, supports: Credit and billing entities are read and mutated. }
+      - { artifact: file.app.services.payment, lines: [18, 184], role: implementation, supports: Payment completion and reversal mutate ledger state. }
+    generated: *static_high
+
+  - id: relation.identity-to-database
+    from: component.identity
+    to: datastore.relational
+    kind: persists
+    summary: Reads and writes users, sessions, usage, failed-login records, and profile audit logs.
+    protocol: sql
+    execution: *sync_request
+    effect: { domain: database, operation: write, mutates_state: "yes", durability: durable }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.services.user, lines: [42, 450], role: implementation, supports: Identity methods query and mutate ORM entities. }
+    generated: *static_high
+
+  - id: relation.auth-to-google
+    from: component.identity
+    to: external.google-oauth
+    kind: authenticates_with
+    summary: Redirects to Google authorization and exchanges callback data for identity information.
+    protocol: oauth2-https
+    execution: { trigger: request, style: synchronous, blocking: "yes", concurrency: request_thread, delivery: request_response }
+    effect: { domain: network, operation: invoke, mutates_state: unknown, durability: external }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.services.google-auth, lines: [41, 181], role: implementation, supports: OAuth registration, redirect, token exchange, and profile retrieval are explicit. }
+    generated: *ai_high
+
+  - id: relation.auth-to-telegram
+    from: component.auth-blueprint
+    to: external.telegram
+    kind: authenticates_with
+    summary: Accepts signed Telegram widget identity and verifies it locally with the configured bot token.
+    protocol: signed-widget-callback
+    execution: *sync_request
+    effect: { domain: external_state, operation: read, mutates_state: "no", durability: external }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.views.auth, lines: [220, 294], role: implementation, supports: Telegram authorization route delegates signature verification. }
+      - { artifact: file.app.services.telegram-auth, lines: [26, 117], role: implementation, supports: Signature and freshness validation are explicit. }
+    generated: *ai_high
+
+  - id: relation.account-ui-to-paycom
+    from: component.account-ui
+    to: external.paycom
+    kind: redirects_to
+    summary: Initiates a local payment record, redirects the browser to Paycom checkout, and polls local status.
+    protocol: https-redirect
+    execution: *async_http
+    effect: { domain: external_state, operation: redirect, mutates_state: unknown, durability: external }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.static.payments, lines: [16, 105], role: implementation, supports: Purchase initiation, checkout redirect, and status polling are explicit. }
+    generated: *ai_high
+
+  - id: relation.paycom-to-callback
+    from: external.paycom
+    to: operation.api.paycom-callback
+    kind: callback_from
+    summary: Paycom sends authenticated JSON-RPC merchant operations to the application callback.
+    protocol: json-rpc-over-https
+    execution: { trigger: callback, style: synchronous, blocking: "yes", concurrency: request_thread, delivery: request_response }
+    effect: { domain: network, operation: invoke, mutates_state: unknown, durability: external }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.views.api, lines: [3100, 3538], role: implementation, supports: Callback authentication and JSON-RPC method handling are explicit. }
+    generated: *ai_high
+
+  - id: relation.paycom-callback-to-billing
+    from: operation.api.paycom-callback
+    to: component.billing
+    kind: invokes
+    summary: Callback checks and changes payment state and grants or reverses credits idempotently.
+    protocol: in_process
+    execution: *sync_request
+    effect: { domain: billing, operation: charge, mutates_state: "yes", durability: durable }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.views.api, lines: [3163, 3538], role: implementation, supports: Paycom methods query Payment and invoke PaymentService settlement behavior. }
+    generated: *ai_high
+
+  - id: relation.tool-to-edge-operation
+    from: component.tool-ui
+    to: operation.client.edge-background-removal
+    kind: invokes
+    summary: Tool UI starts client-side background removal and awaits a result blob.
+    protocol: in_browser
+    execution: { trigger: event, style: asynchronous, blocking: mixed, concurrency: browser_event_loop, delivery: request_response }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.static.tool, lines: [2280, 2350], role: implementation, supports: The tool coordinates background removal and subsequent upload. }
+    generated: *ai_high
+
+  - id: relation.edge-operation-to-model-host
+    from: operation.client.edge-background-removal
+    to: external.huggingface-model
+    kind: loads
+    summary: Downloads ONNX model bytes when no valid IndexedDB cache entry is available.
+    protocol: https
+    execution: *async_http
+    effect: { domain: network, operation: read, mutates_state: "no", durability: external }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.static.edge-ml, lines: [627, 684], role: implementation, supports: Model fetch streams bytes and reports progress. }
+    generated: *static_high
+
+  - id: relation.edge-operation-to-runtime-cdn
+    from: operation.client.edge-background-removal
+    to: external.onnx-runtime-cdn
+    kind: loads
+    summary: Dynamically loads a compatible ONNX Runtime browser bundle from CDN candidates.
+    protocol: https-script
+    execution: *async_http
+    effect: { domain: network, operation: read, mutates_state: "no", durability: external }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.static.edge-ml, lines: [367, 427], role: implementation, supports: Script candidates are inserted and awaited sequentially. }
+    generated: *static_high
+
+  - id: relation.edge-operation-to-browser-cache
+    from: operation.client.edge-background-removal
+    to: resource.browser-model-cache
+    kind: writes
+    summary: Reads a cached model first and writes downloaded model bytes to IndexedDB.
+    protocol: indexeddb
+    execution: { trigger: event, style: asynchronous, blocking: "no", concurrency: browser_event_loop, delivery: request_response }
+    effect: { domain: browser_storage, operation: write, mutates_state: "yes", durability: durable }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.static.edge-ml, lines: [440, 525], role: implementation, supports: IndexedDB read and write transactions are explicit. }
+    generated: *static_high
+
+  - id: relation.edge-operation-to-background-upload
+    from: operation.client.edge-background-removal
+    to: operation.api.background-upload
+    kind: http_request
+    summary: Optionally uploads the original and locally processed result for durable job tracking and later download.
+    protocol: https
+    execution: *async_http
+    effect: { domain: network, operation: invoke, mutates_state: unknown, durability: external }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.static.tool, lines: [2299, 2345], role: implementation, supports: The browser calls allowance and multipart upload endpoints. }
+      - { artifact: file.app.views.api, lines: [2726, 2957], role: implementation, supports: The matching upload endpoint persists both images. }
+    generated: *static_high
+
+  - id: relation.background-upload-to-lifecycle
+    from: operation.api.background-upload
+    to: component.image-lifecycle
+    kind: invokes
+    summary: Stores original and background-removed image versions.
+    protocol: in_process
+    execution: *sync_request
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.views.api, lines: [2830, 2915], role: implementation, supports: Lifecycle storage methods are called before response. }
+    generated: *ai_high
+
+  - id: relation.background-upload-to-jobs
+    from: operation.api.background-upload
+    to: component.jobs
+    kind: invokes
+    summary: Creates and completes a background-removal job with attached assets.
+    protocol: in_process
+    execution: *sync_request
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.views.api, lines: [2780, 2950], role: implementation, supports: Job and asset records are created inline. }
+    generated: *ai_high
+
+  - id: relation.security-to-rate-limit-store
+    from: component.security
+    to: datastore.rate-limit
+    kind: rate_limits_with
+    summary: Flask-Limiter stores counters in Redis by default or process memory when configured.
+    protocol: redis-or-memory
+    execution: { trigger: request, style: synchronous, blocking: "yes", concurrency: request_thread, delivery: request_response }
+    effect: { domain: external_state, operation: update, mutates_state: "yes", durability: process }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.extensions, lines: [20, 46], role: configuration, supports: Storage URI selection and limiter construction are explicit. }
+    generated: *static_high
+
+  - id: relation.operator-cli-to-billing
+    from: interface.operator-cli
+    to: component.billing
+    kind: invokes
+    summary: Operators adjust credits, record payments, reconcile state, and clean expired payment records synchronously.
+    protocol: in_process
+    execution: { trigger: manual, style: synchronous, blocking: "yes", concurrency: inline, delivery: request_response }
+    effect: { domain: billing, operation: update, mutates_state: "yes", durability: durable }
+    reality: *present_unobserved
+    evidence:
+      - { artifact: file.app.cli.account, lines: [94, 223], role: implementation, supports: Credit, plan, and payment commands call domain services and commit. }
+      - { artifact: file.app.cli.payments, lines: [35, 212], role: implementation, supports: Reconciliation and cleanup mutate payment state. }
+    generated: *ai_high
+
+  - id: relation.landing-to-missing-analytics
+    from: component.landing-ui
+    to: expected.endpoint.analytics
+    kind: http_request
+    summary: Landing JavaScript sends best-effort analytics events to an endpoint absent from the scoped Flask routes.
+    protocol: http
+    execution: *async_http
+    effect: { domain: network, operation: invoke, mutates_state: unknown, durability: external }
+    reality:
+      intent: required
+      implementation: partial
+      runtime: not_observed
+    evidence:
+      - { artifact: file.app.static.landing, symbol: trackEvent, lines: [201, 218], role: implementation, supports: The client fetch target is /api/analytics. }
+    generated:
+      method: ai_inferred
+      confidence: high
+      rationale: The client call is explicit and the complete scoped Flask route inventory has no matching endpoint.
+
+flows:
+  - id: flow.technical-analysis
+    name: Technical image analysis
+    summary: Browser upload is stored, analyzed synchronously, recorded as a completed job, and returned in one request.
+    trigger: operation.api.technical-analysis
+    execution: *sync_request
+    steps:
+      - { id: request, relation: relation.tool-to-technical-api, next: [store] }
+      - { id: store, relation: relation.technical-api-to-lifecycle, next: [analyze] }
+      - { id: analyze, relation: relation.technical-api-to-image-analysis, next: [record] }
+      - { id: record, relation: relation.technical-api-to-jobs, next: [persist] }
+      - { id: persist, relation: relation.jobs-to-database }
+    generated: *ai_high
+
+  - id: flow.ai-analysis
+    name: AI-assisted image analysis
+    summary: Authenticated upload reserves credits, blocks on Gemini and technical analysis, settles billing, records results, and responds.
+    trigger: operation.api.ai-analysis
+    execution: *sync_request
+    steps:
+      - { id: request, relation: relation.tool-to-ai-api, next: [reserve] }
+      - { id: reserve, relation: relation.ai-api-to-billing, next: [provider] }
+      - { id: provider, relation: relation.ai-api-to-ai-analysis, next: [external] }
+      - { id: external, relation: relation.ai-analysis-to-gemini, next: [technical] }
+      - { id: technical, relation: relation.ai-api-to-image-analysis, next: [record] }
+      - { id: record, relation: relation.ai-api-to-jobs, next: [persist] }
+      - { id: persist, relation: relation.jobs-to-database }
+    generated: *ai_high
+
+  - id: flow.edge-background-removal
+    name: Browser edge background removal
+    summary: Browser loads runtime and model with IndexedDB caching, runs local inference, then optionally uploads both images for durable tracking.
+    trigger: operation.client.edge-background-removal
+    execution: { trigger: event, style: asynchronous, blocking: mixed, concurrency: browser_event_loop, delivery: request_response }
+    steps:
+      - { id: start, relation: relation.tool-to-edge-operation, next: [runtime, model] }
+      - { id: runtime, relation: relation.edge-operation-to-runtime-cdn, next: [cache] }
+      - { id: model, relation: relation.edge-operation-to-model-host, next: [cache] }
+      - { id: cache, relation: relation.edge-operation-to-browser-cache, next: [upload] }
+      - { id: upload, relation: relation.edge-operation-to-background-upload, next: [store, record] }
+      - { id: store, relation: relation.background-upload-to-lifecycle }
+      - { id: record, relation: relation.background-upload-to-jobs, next: [persist] }
+      - { id: persist, relation: relation.jobs-to-database }
+    generated: *ai_high
+
+  - id: flow.paycom-payment
+    name: Paycom credit purchase
+    summary: Account UI starts checkout, Paycom calls the merchant endpoint, and billing logic settles durable payment and credit records.
+    trigger: operation.api.paycom-callback
+    execution: { trigger: callback, style: synchronous, blocking: "yes", concurrency: request_thread, delivery: request_response }
+    steps:
+      - { id: checkout, relation: relation.account-ui-to-paycom, next: [callback] }
+      - { id: callback, relation: relation.paycom-to-callback, next: [settle] }
+      - { id: settle, relation: relation.paycom-callback-to-billing, next: [persist] }
+      - { id: persist, relation: relation.billing-to-database }
+    generated: *ai_high
+
+architecture:
+  styles:
+    - id: style.modular-monolith
+      scope: deployable.flask-web
+      name: Modular monolith
+      fit: primary
+      summary: One Flask deployable contains interface, service, data, and infrastructure modules connected by in-process calls.
+      exceptions:
+        - The API blueprint concentrates several unrelated feature boundaries and substantial orchestration.
+        - Image lifecycle code still assumes local paths in important flows despite storage adapters.
+      evidence:
+        - { artifact: file.app.init, lines: [16, 112], role: implementation, supports: One application factory registers all server modules. }
+        - { artifact: file.app.views.api, lines: [1, 3649], role: implementation, supports: One deployable API boundary reaches all major services. }
+      generated: *ai_high
+
+    - id: style.layered-service
+      scope: deployable.flask-web
+      name: Layered service architecture
+      fit: partial
+      summary: Blueprints generally call services and services use ORM models, but major route handlers still own business workflow and persistence decisions.
+      exceptions:
+        - analyze_with_ai, enhance_image, background upload, and Paycom callback contain long cross-service workflows.
+      evidence:
+        - { artifact: file.agents, lines: [33, 48], role: contract, supports: The declared structure assigns business logic to services. }
+        - { artifact: file.agents, lines: [141, 141], role: contract, supports: The guide says view functions should remain thin. }
+        - { artifact: file.app.views.api, lines: [483, 872], role: implementation, supports: AI route coordinates validation, storage, billing, provider, analysis, and jobs. }
+      generated: *ai_high
+
+    - id: style.mvc-like
+      scope: system.photochecker
+      name: MVC-like server-rendered web architecture
+      fit: supporting
+      summary: SQLAlchemy models, Flask route controllers, and Jinja templates form an MVC-like base augmented by large stateful browser controllers.
+      exceptions:
+        - Browser JavaScript implements substantial application workflow and client ML, so this is not classic server-only MVC.
+      evidence:
+        - { artifact: file.app.models, lines: [1, 548], role: implementation, supports: ORM models define durable state. }
+        - { artifact: file.app.views.main, lines: [47, 56], role: implementation, supports: Controllers render Jinja templates. }
+        - { artifact: file.app.static.tool, lines: [1, 2425], role: implementation, supports: Browser code owns substantial interaction state. }
+      generated: *ai_high
+
+    - id: style.strategy-adapters
+      scope: layer.application-services
+      name: Strategy and adapter patterns
+      fit: supporting
+      summary: Enhancement strategies and storage backends expose explicit polymorphic contracts with selectable implementations.
+      evidence:
+        - { artifact: file.app.services.enhancement.core, lines: [47, 63], role: contract, supports: EnhancementStrategy defines the strategy contract. }
+        - { artifact: file.app.services.storage.base, lines: [12, 97], role: contract, supports: StorageBackend defines the adapter contract. }
+      generated: *ai_high
+
+  constraints:
+    - id: constraint.thin-routes
+      scope: layer.server-interfaces
+      statement: Route handlers should remain thin and business logic should live in services.
+      severity: warning
+      enforcement: review
+      evidence:
+        - { artifact: file.agents, lines: [141, 141], role: contract, supports: The repository guide states this rule directly. }
+
+    - id: constraint.storage-portability
+      scope: component.storage-adapters
+      statement: Application flows intended to support cloud storage should use storage-relative keys and the StorageBackend contract rather than absolute local paths.
+      severity: warning
+      enforcement: review
+      evidence:
+        - { artifact: file.config, lines: [105, 110], role: contract, supports: Local, GCS, and S3 backends are declared deployment options. }
+        - { artifact: file.app.views.api, lines: [355, 358], role: evidence, supports: The source records the current absolute-path limitation. }
+
+findings:
+  - id: finding.api-responsibility-concentration
+    kind: responsibility_concentration
+    severity: high
+    summary: The 3,649-line API module owns at least analysis, enhancement, downloads, job history, edge upload, billing, Paycom callback, cleanup, and payment statistics.
+    subjects: [component.api-blueprint, file.app.views.api]
+    impact: Unrelated changes converge on one module and route layer, increasing review cost and making feature boundaries difficult to see or enforce.
+    evidence:
+      - { artifact: file.app.views.api, lines: [291, 3649], role: evidence, supports: Route definitions span all listed feature families. }
+    generated: *ai_high
+
+  - id: finding.frontend-responsibility-concentration
+    kind: responsibility_concentration
+    severity: warning
+    summary: The 2,425-line main browser script combines upload, analysis, result rendering, enhancement, localization, account state, capability detection, and edge-ML workflow.
+    subjects: [component.tool-ui, file.app.static.tool]
+    impact: UI feature changes share implicit mutable state and a large review surface even though the backend is divided into services.
+    evidence:
+      - { artifact: file.app.static.tool, lines: [1, 2425], role: evidence, supports: Endpoint calls and state-management sections for all listed concerns are present. }
+    generated: *ai_high
+
+  - id: finding.dangling-analytics-call
+    kind: dangling_interaction
+    severity: warning
+    summary: Landing analytics calls /api/analytics, but no matching Flask route exists in the complete scoped route inventory.
+    subjects: [component.landing-ui, expected.endpoint.analytics, relation.landing-to-missing-analytics]
+    impact: Analytics events are silently discarded, and the client-server contract appears more complete than it is.
+    evidence:
+      - { artifact: file.app.static.landing, lines: [201, 218], role: evidence, supports: The explicit fetch target is /api/analytics. }
+      - { artifact: file.app.views.api, lines: [1, 3649], role: evidence, supports: No route registers that path. }
+      - { artifact: file.app.views.main, lines: [1, 281], role: evidence, supports: No route registers that path. }
+    generated:
+      method: ai_inferred
+      confidence: high
+      rationale: Direct client URL comparison against all scoped Flask route decorators yields no match.
+
+  - id: finding.ai-work-is-inline
+    kind: hidden_synchronous_work
+    severity: warning
+    summary: AI analysis and Gemini enhancement execute synchronously inside Gunicorn request threads despite durable records being named jobs.
+    subjects: [operation.api.ai-analysis, operation.api.enhance-image, component.ai-analysis, component.jobs]
+    impact: Provider latency and image processing occupy request capacity; job status does not provide queue isolation, retries, or independent completion.
+    evidence:
+      - { artifact: file.app.views.api, lines: [664, 668], role: evidence, supports: AIAnalyzer is called directly in the route. }
+      - { artifact: file.app.services.ai.gemini, lines: [83, 88], role: evidence, supports: The synchronous SDK call returns before the route proceeds. }
+      - { artifact: file.app.services.job, lines: [32, 141], role: evidence, supports: Job methods only persist and commit records. }
+      - { artifact: file.gunicorn, lines: [15, 31], role: configuration, supports: Request concurrency is based on gthread workers. }
+    generated: *ai_high
+
+  - id: finding.storage-abstraction-partial
+    kind: abstraction_bypass
+    severity: warning
+    summary: A storage-port abstraction exists, but important API and lifecycle paths persist and resolve absolute local filesystem paths.
+    subjects: [component.storage-adapters, component.image-lifecycle, resource.image-storage]
+    impact: Configuring GCS or S3 does not by itself guarantee that upload, asset, and download flows are portable.
+    evidence:
+      - { artifact: file.app.views.api, lines: [350, 360], role: evidence, supports: A source TODO states that an absolute local path is stored. }
+      - { artifact: file.app.views.api, lines: [2448, 2465], role: evidence, supports: Download logic contains a cloud-storage TODO. }
+      - { artifact: file.app.services.storage.base, lines: [12, 97], role: contract, supports: The intended generalized storage operations exist. }
+    generated: *ai_high
+
+  - id: finding.process-local-enhancement-limit
+    kind: shared_state_risk
+    severity: warning
+    summary: Enhancement daily limits are stored in an in-memory dictionary owned by each orchestrator instance rather than a shared durable counter.
+    subjects: [component.enhancement, process.flask-request-workers]
+    impact: Limits can differ across worker processes, reset on restart, and race across request threads.
+    evidence:
+      - { artifact: file.app.services.enhancement.orchestrator, lines: [55, 61], role: evidence, supports: daily_usage is initialized as process memory. }
+      - { artifact: file.app.services.enhancement.orchestrator, lines: [452, 479], role: evidence, supports: Checks and increments use the dictionary without shared persistence. }
+      - { artifact: file.gunicorn, lines: [19, 24], role: configuration, supports: Deployment can run multiple processes and threads. }
+    generated: *ai_high
+
+views:
+  - id: view.logical
+    name: Logical architecture
+    roots: [system.photochecker]
+    include:
+      element_kinds: [system, deployable, layer, component, interface, data_store, resource, external_system]
+      relation_kinds: [invokes, depends_on, implements]
+    group_by: facets.layer
+    depth: 4
+    overlays: [findings, source, reality]
+
+  - id: view.runtime
+    name: Runtime and communication
+    roots: [system.photochecker]
+    include:
+      element_kinds: [actor, deployable, process, component, operation, data_store, resource, external_system, expected_component]
+      relation_kinds: [http_request, calls, invokes, reads, writes, persists, loads, redirects_to, callback_from, authenticates_with, rate_limits_with]
+    group_by: facets.runtime
+    depth: 5
+    overlays: [execution, effects, findings, reality, source]
+
+  - id: view.effects
+    name: State and side effects
+    roots: [system.photochecker]
+    include:
+      element_kinds: [component, operation, data_store, resource, external_system]
+      relation_kinds: [reads, writes, deletes, persists, calls, http_request, redirects_to]
+    group_by: facets.runtime
+    depth: 5
+    overlays: [effects, execution, source]
+
+  - id: view.conformance
+    name: Structure and conformance
+    roots: [system.photochecker]
+    include:
+      element_kinds: [deployable, layer, component, operation, expected_component]
+      relation_kinds: [invokes, http_request, implements]
+    group_by: facets.layer
+    depth: 5
+    overlays: [findings, reality, confidence, source]
