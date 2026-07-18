@@ -298,6 +298,34 @@ The current Three.js experiment compresses this to three camera levels:
 - files;
 - selected file, top functions, and bounded dependency ports.
 
+### 7.1 Interaction-projection contract
+
+Interaction topology is a separate projection over the same elements,
+relations, and flows. It must not be implemented as permanent whole-repository
+lines laid over the condition landscape.
+
+- L0 shows actors, deployables, major external systems, and durable resources
+  connected by aggregated, directed corridors.
+- L1 shows components and interfaces grouped by runtime or ownership boundary.
+- A component selection shows a bounded incoming/outgoing ego graph; unrelated
+  relations are removed rather than left as a faint hairball.
+- A flow selection shows only its referenced relations and preserves declared
+  step order or branching.
+- Every visible relation exposes direction, kind, protocol when known,
+  sync/async style, blocking behavior, trigger, delivery semantics, effect, and
+  evidence status. Unknown fields remain unknown.
+- Line style and arrow shape carry execution meaning alongside color. External
+  systems and state/resources also have stable non-color forms.
+- Selecting an internal endpoint resolves to exact source. Selecting a relation
+  resolves to evidence for both endpoints and the call/effect claim.
+- Names cannot manufacture runtime machinery: a `Job` model is not rendered as
+  a queue or worker without queue dispatch, worker consumption, configuration,
+  or runtime evidence.
+
+This projection should support two review tasks before it attempts a universal
+call graph: trace a representative user flow end to end, and isolate everything
+that directly communicates with or is affected by one selected component.
+
 ## 8. Stable 3D grammar
 
 ### 8.1 Geometry that remains stable

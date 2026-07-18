@@ -1,0 +1,1184 @@
+<div id="uzum-pipe-city">
+  <style>
+    #uzum-pipe-city {
+      width: 100%;
+      color: var(--foreground);
+    }
+    #uzum-pipe-city .vcm-stage {
+      position: relative;
+      height: 560px;
+      overflow: hidden;
+      padding: 0;
+    }
+    #uzum-pipe-city canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+    #uzum-pipe-city .vcm-label-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    #uzum-pipe-city .vcm-label {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+    }
+    #uzum-pipe-city .vcm-tooltip {
+      position: absolute;
+      display: none;
+      max-width: 290px;
+      pointer-events: none;
+      z-index: 4;
+    }
+    #uzum-pipe-city .vcm-hint {
+      position: absolute;
+      left: 50%;
+      bottom: 0.75rem;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    #uzum-pipe-city .vcm-detail {
+      margin-top: 0.75rem;
+    }
+    #uzum-pipe-city .vcm-detail-copy {
+      min-width: 0;
+      flex: 1 1 30rem;
+    }
+    #uzum-pipe-city .vcm-detail-copy code {
+      overflow-wrap: anywhere;
+    }
+    #uzum-pipe-city .vcm-detail-metrics {
+      margin-top: 0.25rem;
+    }
+    #uzum-pipe-city .vcm-key {
+      display: grid;
+      gap: 0.35rem;
+      margin: 0.35rem 0 0.55rem;
+    }
+    #uzum-pipe-city .vcm-key-row,
+    #uzum-pipe-city .vcm-key-item {
+      display: flex;
+      align-items: center;
+    }
+    #uzum-pipe-city .vcm-key-row {
+      flex-wrap: wrap;
+      gap: 0.35rem 0.7rem;
+    }
+    #uzum-pipe-city .vcm-key-item {
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+    #uzum-pipe-city .vcm-heat-scale {
+      display: inline-block;
+      width: 6.5rem;
+      height: 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--muted-foreground), var(--viz-series-1), var(--destructive));
+    }
+    #uzum-pipe-city .vcm-node-mark {
+      display: inline-block;
+      flex: none;
+      width: 0.7rem;
+      height: 0.7rem;
+      border: 1px solid var(--border);
+      background: var(--muted);
+    }
+    #uzum-pipe-city .vcm-node-interface {
+      transform: rotate(45deg);
+    }
+    #uzum-pipe-city .vcm-node-utility {
+      border-radius: 50%;
+    }
+    #uzum-pipe-city .vcm-node-state {
+      width: 0.9rem;
+      border-radius: 999px;
+    }
+    #uzum-pipe-city .vcm-node-external {
+      clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+    }
+    #uzum-pipe-city .vcm-node-missing {
+      background: transparent;
+      border-style: dashed;
+    }
+    #uzum-pipe-city .vcm-pipe-mark {
+      display: inline-block;
+      flex: none;
+      width: 1.55rem;
+      height: 0.18rem;
+      border-radius: 999px;
+    }
+    #uzum-pipe-city .vcm-pipe-call { background: var(--viz-series-1); }
+    #uzum-pipe-city .vcm-pipe-import { background: var(--viz-series-2); }
+    #uzum-pipe-city .vcm-pipe-event { background: var(--viz-series-3); }
+    #uzum-pipe-city .vcm-pipe-state { background: var(--viz-series-4); }
+    #uzum-pipe-city .vcm-pipe-provider { background: var(--viz-series-5); }
+    #uzum-pipe-city .vcm-pipe-segmented {
+      background: repeating-linear-gradient(90deg, var(--foreground) 0 0.28rem, transparent 0.28rem 0.45rem);
+    }
+    #uzum-pipe-city .vcm-float-mark {
+      transform: translateY(-0.15rem);
+      opacity: 0.68;
+      box-shadow: 0 0.28rem 0 -0.08rem var(--muted-foreground);
+    }
+    @media (max-width: 520px) {
+      #uzum-pipe-city .vcm-stage {
+        height: 470px;
+      }
+      #uzum-pipe-city .vcm-hint {
+        width: calc(100% - 2rem);
+        white-space: normal;
+        text-align: center;
+      }
+    }
+  </style>
+
+  <div class="viz-controls" aria-label="Software pipe city controls">
+    <label class="form-label" for="vcm-pipe-layout">
+      Districts
+      <select id="vcm-pipe-layout" class="form-select">
+        <option value="declared">Declared runtime boundaries</option>
+        <option value="feature">Feature affinity sketch</option>
+      </select>
+    </label>
+    <label class="form-label" for="vcm-pipe-family">
+      Pipes
+      <select id="vcm-pipe-family" class="form-select">
+        <option value="all">All relation families</option>
+        <option value="call">Call / control</option>
+        <option value="event">Event / message</option>
+        <option value="state">State / storage</option>
+        <option value="provider">External / provider</option>
+        <option value="import">Import / type</option>
+      </select>
+    </label>
+    <label class="form-label" for="vcm-pipe-lens">
+      Building heat
+      <select id="vcm-pipe-lens" class="form-select">
+        <option value="attention">Review priority</option>
+        <option value="coverage">Missing coverage</option>
+        <option value="complexity">Complexity</option>
+        <option value="effects">Mutating side effects</option>
+      </select>
+    </label>
+    <label class="form-label" for="vcm-pipe-focus">
+      Focus source
+      <select id="vcm-pipe-focus" class="form-select"></select>
+    </label>
+    <div class="viz-row" aria-label="Camera presets">
+      <button type="button" class="btn" data-pipe-view="overview">Overview</button>
+      <button type="button" class="btn" data-pipe-view="buildings">Buildings</button>
+      <button type="button" class="btn btn-primary" data-pipe-view="detail">Detail</button>
+    </div>
+  </div>
+
+  <div class="vcm-key text-small" aria-label="Visual encoding legend" aria-live="polite">
+    <div class="vcm-key-row">
+      <span id="vcm-pipe-level" class="viz-badge">Loading 3D city…</span>
+      <span id="vcm-pipe-lens-name">Review priority</span>
+      <span id="vcm-pipe-lens-low" class="text-muted">lower</span>
+      <span class="vcm-heat-scale" role="img" aria-label="Heat scale from lower to higher"></span>
+      <span id="vcm-pipe-lens-high" class="text-muted">higher</span>
+    </div>
+    <div class="vcm-key-row" aria-label="Building forms">
+      <span class="text-muted">Forms:</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark" aria-hidden="true"></span>component</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark vcm-node-interface" aria-hidden="true"></span>interface</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark vcm-node-utility" aria-hidden="true"></span>shared utility</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark vcm-node-state" aria-hidden="true"></span>state</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark vcm-node-external" aria-hidden="true"></span>external</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark vcm-node-missing" aria-hidden="true"></span>missing</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark vcm-float-mark" aria-hidden="true"></span>floating: no direct mutation detected</span>
+    </div>
+    <div class="vcm-key-row" aria-label="Pipe relation families">
+      <span class="text-muted">Pipe sheath:</span>
+      <span class="vcm-key-item"><span class="vcm-pipe-mark vcm-pipe-call" aria-hidden="true"></span>call/control</span>
+      <span class="vcm-key-item"><span class="vcm-pipe-mark vcm-pipe-event" aria-hidden="true"></span>event/message</span>
+      <span class="vcm-key-item"><span class="vcm-pipe-mark vcm-pipe-state" aria-hidden="true"></span>state/storage</span>
+      <span class="vcm-key-item"><span class="vcm-pipe-mark vcm-pipe-provider" aria-hidden="true"></span>provider/callback</span>
+      <span class="vcm-key-item"><span class="vcm-pipe-mark vcm-pipe-import" aria-hidden="true"></span>import/type</span>
+      <span class="vcm-key-item"><span class="vcm-pipe-mark vcm-pipe-segmented" aria-hidden="true"></span>segmented: async/callback</span>
+    </div>
+    <div id="vcm-pipe-mode-note" class="text-muted"></div>
+  </div>
+
+  <div class="card vcm-stage" id="vcm-pipe-stage">
+    <div id="vcm-pipe-label-layer" class="vcm-label-layer" aria-hidden="true"></div>
+    <div id="vcm-pipe-tooltip" class="tooltip vcm-tooltip text-small"></div>
+    <div class="vcm-hint text-small text-muted">Drag to rotate · zoom changes city detail · select a building, district, or pipe</div>
+    <span class="sr-only">Interactive 3D code city for Uzumtools. Far zoom shows clustered districts and aggregated directed pipe corridors. Middle zoom shows source-backed buildings while keeping bundled corridors. Near zoom replaces the corridor network with a bounded set of pipes connected to the selected building. Building form identifies software kind, heat identifies one selected quality lens, footprint and height use representative source-file size and complexity, and floating internal buildings have no directly detected mutating side effects. Pipe color identifies relation family, segmentation identifies asynchronous or callback execution, thickness identifies mapped strength, and arrow collars identify direction. No particles move because runtime traces have not been observed.</span>
+  </div>
+
+  <div class="card vcm-detail viz-row" aria-live="polite">
+    <div class="vcm-detail-copy">
+      <div><code id="vcm-pipe-path"></code> <span id="vcm-pipe-subject" class="text-muted text-small"></span></div>
+      <div id="vcm-pipe-summary" class="text-small"></div>
+      <div id="vcm-pipe-metrics" class="vcm-detail-metrics text-small text-muted"></div>
+    </div>
+    <button type="button" id="vcm-pipe-open" class="btn">Inspect source</button>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'https://esm.sh/three@0.185.1';
+    import { OrbitControls } from 'https://esm.sh/three@0.185.1/examples/jsm/controls/OrbitControls.js';
+
+    const root = document.getElementById('uzum-pipe-city');
+    const stage = root.querySelector('#vcm-pipe-stage');
+    const labelLayer = root.querySelector('#vcm-pipe-label-layer');
+    const tooltip = root.querySelector('#vcm-pipe-tooltip');
+    const layoutSelect = root.querySelector('#vcm-pipe-layout');
+    const familySelect = root.querySelector('#vcm-pipe-family');
+    const lensSelect = root.querySelector('#vcm-pipe-lens');
+    const focusSelect = root.querySelector('#vcm-pipe-focus');
+    const levelBadge = root.querySelector('#vcm-pipe-level');
+    const lensName = root.querySelector('#vcm-pipe-lens-name');
+    const lensLow = root.querySelector('#vcm-pipe-lens-low');
+    const lensHigh = root.querySelector('#vcm-pipe-lens-high');
+    const modeNote = root.querySelector('#vcm-pipe-mode-note');
+    const pathCopy = root.querySelector('#vcm-pipe-path');
+    const subjectCopy = root.querySelector('#vcm-pipe-subject');
+    const summaryCopy = root.querySelector('#vcm-pipe-summary');
+    const metricsCopy = root.querySelector('#vcm-pipe-metrics');
+    const openButton = root.querySelector('#vcm-pipe-open');
+    const basePath = '/Users/mirolim/projects/uzumtools/photochecker/';
+
+    function cssColor(variable) {
+      const probe = document.createElement('span');
+      probe.style.color = `var(${variable})`;
+      probe.style.display = 'none';
+      root.appendChild(probe);
+      const value = getComputedStyle(probe).color;
+      probe.remove();
+      const rgb = value.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/);
+      if (rgb) return `rgb(${rgb[1]}, ${rgb[2]}, ${rgb[3]})`;
+      const srgb = value.match(/^color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+      if (srgb) return `rgb(${Math.round(Number(srgb[1]) * 255)}, ${Math.round(Number(srgb[2]) * 255)}, ${Math.round(Number(srgb[3]) * 255)})`;
+      return value;
+    }
+
+    const colors = {
+      background: cssColor('--background'),
+      foreground: cssColor('--foreground'),
+      border: cssColor('--border'),
+      muted: cssColor('--muted'),
+      mutedForeground: cssColor('--muted-foreground'),
+      selected: cssColor('--primary'),
+      low: cssColor('--muted-foreground'),
+      middle: cssColor('--viz-series-1'),
+      high: cssColor('--destructive'),
+      call: cssColor('--viz-series-1'),
+      import: cssColor('--viz-series-2'),
+      event: cssColor('--viz-series-3'),
+      state: cssColor('--viz-series-4'),
+      provider: cssColor('--viz-series-5'),
+      effect: cssColor('--viz-series-6')
+    };
+
+    const metricRows = {
+      api: [3649,96,0.1247,5827,32,1.0,1,18],
+      auth: [352,14,0.223,478,3,0.7864,1,5],
+      cli: [289,13,0.2637,715,9,0.8455,1,6],
+      image: [798,41,0.0901,1402,1,0.8761,2,2],
+      ai: [344,7,0.1894,400,0,0.6259,1,5],
+      enhancement: [480,22,0.157,1044,6,0.9113,2,4],
+      lifecycle: [584,14,0.2076,1374,9,0.88,4,2],
+      jobs: [141,5,0.2545,149,0,0.4645,2,3],
+      billing: [573,14,0.3896,885,0,0.6766,2,3],
+      payments: [184,13,null,184,0,0.4732,3,2],
+      identity: [450,20,0.1837,512,0,0.7842,7,3],
+      security: [46,3,0.9048,50,0,0.3406,15,0],
+      models: [548,6,0.8697,664,0,0.5938,13,2],
+      storage: [141,6,0.3626,141,10,0.5722,2,1],
+      config: [152,2,0.8723,168,0,0.3602,4,0]
+    };
+    const metricByKey = new Map(Object.entries(metricRows).map(([key, row]) => [key, {
+      lines: row[0], complexity: row[1], coverage: row[2], churn: row[3], effects: row[4], attention: row[5], fanIn: row[6], fanOut: row[7]
+    }]));
+
+    const nodeRows = [
+      ['tool-ui','Photo tool UI','interface','app/templates/index.html',1,null,'connector','Uploads images, requests analysis and enhancement, and coordinates browser-side background removal.'],
+      ['account-ui','Account and payment UI','interface','app/templates/auth/profile.html',1,null,'connector','Displays account and billing state and initiates Paycom checkout.'],
+      ['landing-ui','Landing UI','interface','app/templates/landing.html',1,null,'private helper','Acquisition interface that also calls an analytics endpoint missing from the scoped Flask routes.'],
+      ['edge-ml','Browser background removal','component','app/static/js/edge-ml-background-removal.js',1368,null,'cluster hub','Runs ONNX segmentation in the browser and optionally uploads processed images.'],
+      ['browser-cache','Browser model cache','state','app/static/js/edge-ml-background-removal.js',440,null,'private state','IndexedDB cache for downloaded ONNX model bytes.'],
+      ['api','Flask API gateway','interface','app/views/api.py',291,'api','connector','Large HTTP boundary containing analysis, enhancement, upload, download, and Paycom callback operations.'],
+      ['auth','Authentication blueprint','interface','app/views/auth.py',27,'auth','connector','Handles local, Telegram, and Google login flows and profile changes.'],
+      ['operator-cli','Operator CLI','interface','app/cli/account.py',1,'cli','connector','Manual administration surface for accounts, credits, payments, and cleanup.'],
+      ['missing-analytics','Missing analytics endpoint','missing','app/static/landing.js',201,null,'orphan','The landing page calls POST /api/analytics, but no matching Flask route was found in scope.'],
+      ['image-analysis','Technical image analysis','component','app/services/image_service.py',24,'image','cluster hub','Validates uploads and computes technical, border, quality, and requirement results.'],
+      ['ai-analysis','AI image analysis','component','app/services/ai_analysis/ai_analyzer.py',19,'ai','cluster hub','Builds prompts, calls Gemini synchronously, and validates provider responses.'],
+      ['enhancement','Image enhancement','component','app/services/enhancement/orchestrator.py',25,'enhancement','cluster hub','Selects and sequences deterministic or provider-backed enhancement strategies.'],
+      ['image-lifecycle','Image lifecycle','component','app/services/image_lifecycle_manager.py',36,'lifecycle','connector','Stores image versions, resolves downloads, and deletes expired assets.'],
+      ['jobs','Job record service','component','app/services/job_service.py',21,'jobs','connector','Persists records for work performed inline; no queue dispatch or worker consumption was found.'],
+      ['billing','Credits and billing','component','app/services/credit_service.py',46,'billing','cluster hub','Reserves and settles credits and manages durable operation records.'],
+      ['payments','Payment records','component','app/services/payment_service.py',21,'payments','cluster hub','Grants or reverses credits while linking durable payment transactions.'],
+      ['identity','Identity and accounts','component','app/services/user_service.py',42,'identity','cluster hub','Manages users, sessions, external identities, profiles, and audits.'],
+      ['security','Security and extensions','utility','app/extensions.py',1,'security','shared utility','Initializes cross-cutting security, database, login, CSRF, and rate-limit facilities.'],
+      ['models','Shared data models','utility','app/models/__init__.py',1,'models','shared utility','Defines durable entities imported by interfaces, services, and operator tooling.'],
+      ['storage-adapter','Storage adapter','utility','app/services/storage/local.py',1,'storage','connector','Implements the storage boundary; this quality proxy uses the local backend source.'],
+      ['config','Enhancement config','utility','app/config/enhancement_config.py',1,'config','shared utility','Provides enhancement strategy limits and configuration consumed across the enhancement subsystem.'],
+      ['image-storage','Image storage','state','config.py',105,null,'external state','Local, GCS, or S3-compatible storage for original and derived images.'],
+      ['database','Relational database','state','config.py',84,null,'external state','SQLAlchemy-backed PostgreSQL or local SQLite durable state.'],
+      ['rate-limit','Rate-limit state','state','app/extensions.py',20,null,'external state','Redis-backed counters with a process-memory fallback.'],
+      ['gemini','Google Gemini','external','app/services/ai_analysis/gemini_service.py',8,null,'external platform','External multimodal analysis and image-generation provider.'],
+      ['model-host','Hugging Face model','external','app/static/js/edge-ml-background-removal.js',24,null,'external platform','Hosts the ONNX segmentation model downloaded by browser code.'],
+      ['onnx-cdn','ONNX Runtime CDN','external','app/static/js/edge-ml-background-removal.js',367,null,'external platform','Supplies browser ONNX Runtime builds.'],
+      ['paycom','Paycom','external','config.py',149,null,'external platform','External checkout and merchant callback provider.'],
+      ['google-oauth','Google OAuth','external','app/services/google_auth_service.py',41,null,'external platform','External OAuth authorization and identity provider.'],
+      ['telegram','Telegram Login','external','app/templates/auth/_telegram_auth_card.html',25,null,'external platform','Supplies signed identity data verified by the server.']
+    ];
+    const nodes = nodeRows.map(([id,name,kind,path,line,metricKey,role,summary]) => ({ id,name,kind,path,line,metricKey,metrics: metricKey ? metricByKey.get(metricKey) : null,role,summary }));
+    const nodeById = new Map(nodes.map(node => [node.id, node]));
+
+    const relationRows = [
+      ['tool-api','tool-ui','api','event','async',4,'Browser HTTP requests','mapped flow'],
+      ['tool-edge','tool-ui','edge-ml','event','async',3,'Browser operation','mapped flow'],
+      ['account-paycom','account-ui','paycom','provider','async',3,'Checkout redirect and polling','mapped flow'],
+      ['landing-analytics','landing-ui','missing-analytics','event','async',2,'HTTP request without receiver','static call-site evidence'],
+      ['edge-api','edge-ml','api','event','async',2,'Optional background-removal upload','mapped flow'],
+      ['edge-model','edge-ml','model-host','event','async',3,'Model download','mapped flow'],
+      ['edge-runtime','edge-ml','onnx-cdn','event','async',3,'Runtime download','mapped flow'],
+      ['edge-cache','edge-ml','browser-cache','state','async',3,'IndexedDB access','mapped flow'],
+      ['api-image','api','image-analysis','call','sync',4,'Technical analysis paths','static dependency plus mapped flow'],
+      ['api-ai','api','ai-analysis','call','sync',4,'AI analysis path','static dependency plus mapped flow'],
+      ['api-enhancement','api','enhancement','call','sync',4,'Enhancement path','static dependency plus mapped flow'],
+      ['api-lifecycle','api','image-lifecycle','call','sync',4,'Upload and asset lifecycle','static dependency plus mapped flow'],
+      ['api-jobs','api','jobs','call','sync',3,'Inline job persistence','static dependency plus mapped flow'],
+      ['api-billing','api','billing','call','sync',3,'Credit reservation and settlement','static dependency plus mapped flow'],
+      ['api-payments','api','payments','call','sync',2,'Merchant callback processing','static dependency'],
+      ['api-models','api','models','import','sync',4,'Shared entity imports','referenced import'],
+      ['api-extensions','api','security','import','sync',4,'Cross-cutting extension imports','referenced import'],
+      ['api-config','api','config','import','sync',2,'Enhancement configuration import','referenced import'],
+      ['auth-identity','auth','identity','call','sync',3,'Account and login operations','static dependency plus mapped flow'],
+      ['auth-models','auth','models','import','sync',2,'Shared entity imports','referenced import'],
+      ['auth-extensions','auth','security','import','sync',2,'Login and database extensions','referenced import'],
+      ['auth-google','auth','google-oauth','provider','sync',2,'OAuth exchange','mapped flow'],
+      ['auth-telegram','auth','telegram','provider','sync',2,'Signed login verification','mapped flow'],
+      ['cli-billing','operator-cli','billing','call','sync',2,'Manual credit operations','static dependency'],
+      ['cli-payments','operator-cli','payments','call','sync',2,'Manual payment operations','static dependency'],
+      ['cli-identity','operator-cli','identity','call','sync',2,'Manual account operations','static dependency'],
+      ['cli-models','operator-cli','models','import','sync',2,'Shared entity imports','referenced import'],
+      ['image-lifecycle-call','image-analysis','image-lifecycle','call','sync',2,'Asset lifecycle access','static dependency'],
+      ['ai-gemini','ai-analysis','gemini','provider','sync',3,'Blocking provider call','mapped flow'],
+      ['enhancement-gemini','enhancement','gemini','provider','sync',3,'Blocking provider call','mapped flow'],
+      ['enhancement-config','enhancement','config','import','sync',2,'Strategy configuration','referenced import'],
+      ['lifecycle-storage','image-lifecycle','storage-adapter','state','sync',4,'Storage boundary access','static dependency plus mapped flow'],
+      ['adapter-storage','storage-adapter','image-storage','state','sync',4,'Durable object access','mapped boundary'],
+      ['jobs-db','jobs','database','state','sync',4,'Synchronous durable write','mapped flow'],
+      ['jobs-models','jobs','models','import','sync',2,'Job entity imports','referenced import'],
+      ['billing-db','billing','database','state','sync',4,'Synchronous durable write','mapped flow'],
+      ['billing-models','billing','models','import','sync',2,'Billing entity imports','referenced import'],
+      ['payments-db','payments','database','state','sync',4,'Synchronous durable write','mapped flow'],
+      ['payments-models','payments','models','import','sync',2,'Payment entity imports','referenced import'],
+      ['identity-db','identity','database','state','sync',4,'Synchronous durable access','mapped flow'],
+      ['identity-models','identity','models','import','sync',2,'Account entity imports','referenced import'],
+      ['security-rate','security','rate-limit','state','sync',3,'Synchronous counter access','mapped flow'],
+      ['paycom-callback','paycom','api','provider','callback',3,'Merchant callback','mapped flow']
+    ];
+    const relations = relationRows.map(([id,from,to,family,execution,strength,label,evidence]) => ({ id,from,to,family,execution,strength,label,evidence }));
+
+    const layouts = {
+      declared: {
+        name: 'Declared runtime boundaries',
+        note: 'Proximity shows curated runtime and ownership boundaries. Pipes remain evidence-linked and do not determine placement.',
+        districts: [
+          { id:'browser', name:'Browser runtime', x:-19, z:-4, w:11, d:22, members:['tool-ui','account-ui','landing-ui','edge-ml','browser-cache'] },
+          { id:'boundary', name:'HTTP + operator boundary', x:-7, z:-3, w:11, d:22, members:['api','auth','operator-cli','missing-analytics'] },
+          { id:'services', name:'Application services', x:7, z:-3, w:15, d:22, members:['image-analysis','ai-analysis','enhancement','image-lifecycle','jobs','billing','payments','identity'] },
+          { id:'shared', name:'Shared infrastructure', x:5, z:12, w:19, d:8, members:['security','models','storage-adapter','config','image-storage','database','rate-limit'] },
+          { id:'external', name:'External platforms', x:23, z:-3, w:10, d:25, members:['gemini','model-host','onnx-cdn','paycom','google-oauth','telegram'] }
+        ]
+      },
+      feature: {
+        name: 'Feature affinity sketch',
+        note: 'Illustrative curated affinity layout—not a computed cluster run. Shared utilities and external platforms stay distinct instead of becoming feature centroids.',
+        districts: [
+          { id:'experience', name:'Experience + interfaces', x:-19, z:-3, w:11, d:25, members:['tool-ui','account-ui','landing-ui','api','auth','operator-cli','missing-analytics'] },
+          { id:'analysis', name:'Analysis + browser ML', x:-7, z:-8, w:10, d:12, members:['edge-ml','browser-cache','image-analysis','ai-analysis'] },
+          { id:'enhancement', name:'Enhancement + assets', x:5, z:-8, w:10, d:12, members:['enhancement','image-lifecycle','storage-adapter','image-storage'] },
+          { id:'accounts', name:'Identity + billing', x:7, z:5, w:13, d:11, members:['billing','payments','identity'] },
+          { id:'shared', name:'Shared utility belt', x:-5, z:10, w:16, d:9, members:['jobs','security','models','config','database','rate-limit'] },
+          { id:'external', name:'External platforms', x:23, z:-3, w:10, d:25, members:['gemini','model-host','onnx-cdn','paycom','google-oauth','telegram'] }
+        ]
+      }
+    };
+
+    const familyNames = {
+      call: 'call / control',
+      event: 'event / message',
+      state: 'state / storage',
+      provider: 'external / provider',
+      import: 'import / type'
+    };
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 180);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.domElement.setAttribute('role', 'img');
+    renderer.domElement.setAttribute('aria-label', 'Zoomable 3D software city with clustered districts, quality-coded buildings, and typed communication pipes');
+    stage.prepend(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = false;
+    controls.minDistance = 6;
+    controls.maxDistance = 110;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.screenSpacePanning = true;
+
+    scene.add(new THREE.HemisphereLight(colors.foreground, colors.background, 1.65));
+    const keyLight = new THREE.DirectionalLight(colors.foreground, 1.85);
+    keyLight.position.set(20, 34, 24);
+    scene.add(keyLight);
+
+    const grid = new THREE.GridHelper(64, 32, colors.border, colors.border);
+    grid.position.y = -0.02;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.18;
+    scene.add(grid);
+
+    const districtGroup = new THREE.Group();
+    const nodeGroup = new THREE.Group();
+    const macroPipeGroup = new THREE.Group();
+    const egoPipeGroup = new THREE.Group();
+    scene.add(districtGroup, nodeGroup, macroPipeGroup, egoPipeGroup);
+
+    const nodeRecords = new Map();
+    const districtRecords = new Map();
+    const nodePickables = [];
+    let districtPickables = [];
+    let pipePickables = [];
+    let clusterByNode = new Map();
+    let currentLayout = 'declared';
+    let selectedNode = nodeById.get('api');
+    let selectedSubject = { kind:'node', value:selectedNode };
+    let selectedSource = null;
+    let lod = 'overview';
+
+    function rank(values, value) {
+      const sorted = [...values].sort((a, b) => a - b);
+      const index = sorted.findIndex(item => item >= value);
+      return sorted.length < 2 ? 0 : Math.max(0, index) / (sorted.length - 1);
+    }
+
+    const measuredNodes = nodes.filter(node => node.metrics);
+    const metricDomains = {
+      complexity: measuredNodes.map(node => node.metrics.complexity),
+      effects: measuredNodes.map(node => node.metrics.effects)
+    };
+
+    function rawMetric(node, lens = lensSelect.value) {
+      if (!node.metrics) return null;
+      if (lens === 'attention') return node.metrics.attention;
+      if (lens === 'coverage') return node.metrics.coverage === null ? null : 1 - node.metrics.coverage;
+      return node.metrics[lens];
+    }
+
+    function normalizedMetric(node, lens = lensSelect.value) {
+      const raw = rawMetric(node, lens);
+      if (raw === null) return null;
+      if (lens === 'attention' || lens === 'coverage') return THREE.MathUtils.clamp(raw, 0, 1);
+      return rank(metricDomains[lens], raw);
+    }
+
+    function heatColor(value) {
+      if (value === null) return new THREE.Color(colors.muted);
+      const low = new THREE.Color(colors.low);
+      const middle = new THREE.Color(colors.middle);
+      const high = new THREE.Color(colors.high);
+      return value <= 0.55 ? low.lerp(middle, value / 0.55) : middle.lerp(high, (value - 0.55) / 0.45);
+    }
+
+    function neutralColor(kind) {
+      const base = new THREE.Color(colors.muted);
+      if (kind === 'external') return base.lerp(new THREE.Color(colors.foreground), 0.18);
+      if (kind === 'state') return base.lerp(new THREE.Color(colors.foreground), 0.1);
+      return base;
+    }
+
+    function nodeDimensions(node) {
+      const lines = node.metrics?.lines ?? 110;
+      const complexity = node.metrics?.complexity ?? 3;
+      let width = THREE.MathUtils.clamp(0.9 + Math.sqrt(lines) / 28, 1.05, 2.65);
+      let height = THREE.MathUtils.clamp(1.05 + Math.log2(complexity + 1) * 0.66 + Math.log2(lines + 1) * 0.08, 1.45, 6.1);
+      if (node.kind === 'state') { width = 1.65; height = 1.35; }
+      if (node.kind === 'external') { width = 1.55; height = 2.55; }
+      if (node.kind === 'missing') { width = 1.5; height = 2.1; }
+      return { width, height };
+    }
+
+    function nodeGeometry(node, width, height) {
+      if (node.kind === 'interface') return new THREE.CylinderGeometry(width * 0.48, width * 0.66, height, 4);
+      if (node.kind === 'utility') return new THREE.CylinderGeometry(width * 0.43, width * 0.6, height, 10);
+      if (node.kind === 'state') return new THREE.CylinderGeometry(width * 0.58, width * 0.58, height, 18);
+      if (node.kind === 'external') return new THREE.CylinderGeometry(width * 0.52, width * 0.62, height, 6);
+      return new THREE.BoxGeometry(width, height, width);
+    }
+
+    function makeLabel(text) {
+      const label = document.createElement('span');
+      label.className = 'viz-badge vcm-label text-small';
+      label.textContent = text;
+      labelLayer.appendChild(label);
+      return label;
+    }
+
+    nodes.forEach(node => {
+      const { width, height } = nodeDimensions(node);
+      const floats = Boolean(node.metrics && node.metrics.effects === 0);
+      const elevation = floats ? 0.68 : 0;
+      const material = new THREE.MeshStandardMaterial({
+        color: node.metrics ? colors.middle : neutralColor(node.kind),
+        roughness: 0.76,
+        metalness: node.kind === 'external' ? 0.16 : 0.04,
+        transparent: floats || node.kind === 'missing',
+        opacity: node.kind === 'missing' ? 0.42 : floats ? 0.7 : 0.96,
+        wireframe: node.kind === 'missing'
+      });
+      const mesh = new THREE.Mesh(nodeGeometry(node, width, height), material);
+      mesh.userData.nodeId = node.id;
+      mesh.userData.kind = 'node';
+      nodeGroup.add(mesh);
+      nodePickables.push(mesh);
+
+      const edges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(mesh.geometry),
+        new THREE.LineBasicMaterial({ color: colors.border, transparent: true, opacity: node.kind === 'missing' ? 0.95 : 0.64 })
+      );
+      nodeGroup.add(edges);
+
+      let effectMarker = null;
+      if (node.metrics?.effects > 0) {
+        const radius = THREE.MathUtils.clamp(0.11 + Math.sqrt(node.metrics.effects) * 0.047, 0.13, 0.4);
+        effectMarker = new THREE.Mesh(new THREE.SphereGeometry(radius, 12, 9), new THREE.MeshBasicMaterial({ color: colors.effect }));
+        effectMarker.userData.nodeId = node.id;
+        effectMarker.userData.kind = 'node';
+        nodeGroup.add(effectMarker);
+        nodePickables.push(effectMarker);
+      }
+
+      let unknownMarker = null;
+      if (!node.metrics && !['external','state','missing'].includes(node.kind)) {
+        unknownMarker = new THREE.Mesh(
+          new THREE.ConeGeometry(0.2, 0.5, 5),
+          new THREE.MeshBasicMaterial({ color: colors.mutedForeground })
+        );
+        unknownMarker.userData.nodeId = node.id;
+        unknownMarker.userData.kind = 'node';
+        nodeGroup.add(unknownMarker);
+        nodePickables.push(unknownMarker);
+      }
+
+      let shadow = null;
+      if (floats) {
+        shadow = new THREE.Mesh(
+          new THREE.CircleGeometry(width * 0.38, 20),
+          new THREE.MeshBasicMaterial({ color: colors.mutedForeground, transparent: true, opacity: 0.18, depthWrite: false })
+        );
+        shadow.rotation.x = -Math.PI / 2;
+        nodeGroup.add(shadow);
+      }
+
+      nodeRecords.set(node.id, { node, mesh, edges, effectMarker, unknownMarker, shadow, width, height, elevation });
+    });
+
+    const selectedLabel = makeLabel(selectedNode.name);
+    selectedLabel.style.display = 'none';
+    const selectionBox = new THREE.BoxHelper(nodeRecords.get(selectedNode.id).mesh, colors.selected);
+    scene.add(selectionBox);
+
+    function positionsFor(layoutKey) {
+      const positions = new Map();
+      layouts[layoutKey].districts.forEach(district => {
+        const count = district.members.length;
+        const usableW = Math.max(3, district.w - 2.2);
+        const usableD = Math.max(3, district.d - 2.2);
+        const columns = Math.max(1, Math.ceil(Math.sqrt(count * usableW / usableD)));
+        const rows = Math.ceil(count / columns);
+        const gapX = columns === 1 ? 0 : Math.min(3.25, usableW / Math.max(1, columns - 1));
+        const gapZ = rows === 1 ? 0 : Math.min(3.25, usableD / Math.max(1, rows - 1));
+        district.members.forEach((nodeId, index) => {
+          const column = index % columns;
+          const row = Math.floor(index / columns);
+          positions.set(nodeId, new THREE.Vector3(
+            district.x + (column - (columns - 1) / 2) * gapX,
+            0,
+            district.z + (row - (rows - 1) / 2) * gapZ
+          ));
+        });
+      });
+      return positions;
+    }
+
+    function setNodeXZ(record, x, z) {
+      const y = record.height / 2 + 0.13 + record.elevation;
+      record.mesh.position.set(x, y, z);
+      record.edges.position.copy(record.mesh.position);
+      if (record.effectMarker) record.effectMarker.position.set(x, record.height + 0.32 + record.effectMarker.geometry.parameters.radius, z);
+      if (record.unknownMarker) record.unknownMarker.position.set(x, record.height + 0.48 + record.elevation, z);
+      if (record.shadow) record.shadow.position.set(x, 0.08, z);
+    }
+
+    function disposeObject(object) {
+      object.traverse(child => {
+        child.geometry?.dispose();
+        if (Array.isArray(child.material)) child.material.forEach(material => material.dispose());
+        else child.material?.dispose();
+      });
+    }
+
+    function clearGroup(group) {
+      [...group.children].forEach(child => {
+        group.remove(child);
+        disposeObject(child);
+      });
+    }
+
+    function buildDistricts(layoutKey) {
+      districtRecords.forEach(record => record.label.remove());
+      districtRecords.clear();
+      districtPickables = [];
+      clearGroup(districtGroup);
+      clusterByNode = new Map();
+
+      layouts[layoutKey].districts.forEach(district => {
+        district.members.forEach(nodeId => clusterByNode.set(nodeId, district.id));
+        const plate = new THREE.Mesh(
+          new THREE.BoxGeometry(district.w, 0.15, district.d),
+          new THREE.MeshStandardMaterial({ color: colors.muted, roughness: 0.95, transparent: true, opacity: 0.42 })
+        );
+        plate.position.set(district.x, 0, district.z);
+        districtGroup.add(plate);
+
+        const perimeter = new THREE.LineSegments(
+          new THREE.EdgesGeometry(plate.geometry),
+          new THREE.LineBasicMaterial({ color: colors.border, transparent: true, opacity: 0.72 })
+        );
+        perimeter.position.copy(plate.position);
+        districtGroup.add(perimeter);
+
+        const beaconHeight = 1.2 + Math.log2(district.members.length + 1) * 0.85;
+        const beaconWidth = Math.min(4.6, 2.3 + Math.sqrt(district.members.length) * 0.5);
+        const beacon = new THREE.Mesh(
+          new THREE.BoxGeometry(beaconWidth, beaconHeight, beaconWidth * 0.78),
+          new THREE.MeshStandardMaterial({ color: colors.middle, roughness: 0.72, metalness: 0.05 })
+        );
+        beacon.position.set(district.x, beaconHeight / 2 + 0.12, district.z);
+        beacon.userData.districtId = district.id;
+        beacon.userData.kind = 'district';
+        districtGroup.add(beacon);
+        districtPickables.push(beacon);
+
+        const beaconEdges = new THREE.LineSegments(
+          new THREE.EdgesGeometry(beacon.geometry),
+          new THREE.LineBasicMaterial({ color: colors.border, transparent: true, opacity: 0.76 })
+        );
+        beaconEdges.position.copy(beacon.position);
+        districtGroup.add(beaconEdges);
+
+        const label = makeLabel(district.name);
+        districtRecords.set(district.id, {
+          district,
+          plate,
+          perimeter,
+          beacon,
+          beaconEdges,
+          label,
+          labelPosition: new THREE.Vector3(district.x, beaconHeight + 0.75, district.z)
+        });
+      });
+    }
+
+    function nodeAnchor(nodeId) {
+      const record = nodeRecords.get(nodeId);
+      return record.mesh.position.clone().add(new THREE.Vector3(0, Math.min(0.75, record.height * 0.18), 0));
+    }
+
+    function pipeCurve(start, end, laneOffset = 0) {
+      const direction = end.clone().sub(start);
+      const distance = Math.max(1, Math.hypot(direction.x, direction.z));
+      const perpendicular = new THREE.Vector3(-direction.z, 0, direction.x).normalize().multiplyScalar(laneOffset);
+      start = start.clone().add(perpendicular);
+      end = end.clone().add(perpendicular);
+      const lift = Math.max(start.y, end.y) + 1.15 + Math.min(3.4, distance * 0.085);
+      const first = start.clone().lerp(end, 0.32); first.y = lift;
+      const second = start.clone().lerp(end, 0.68); second.y = lift;
+      return new THREE.CatmullRomCurve3([start, first, second, end], false, 'catmullrom', 0.35);
+    }
+
+    function addPipe(group, start, end, data, radius, laneOffset = 0) {
+      const curve = pipeCurve(start, end, laneOffset);
+      const color = colors[data.family];
+      const materialOptions = { color, roughness: 0.56, metalness: 0.14, transparent: true, opacity: data.family === 'import' ? 0.62 : 0.84 };
+      const segmented = data.execution === 'async' || data.execution === 'callback';
+      const spans = segmented
+        ? Array.from({ length: 8 }, (_, index) => [index / 8, Math.min(1, index / 8 + (data.execution === 'callback' ? 0.065 : 0.085))])
+        : [[0, 1]];
+
+      spans.forEach(([fromT, toT]) => {
+        const segmentCurve = segmented
+          ? new THREE.LineCurve3(curve.getPoint(fromT), curve.getPoint(toT))
+          : curve;
+        const mesh = new THREE.Mesh(
+          new THREE.TubeGeometry(segmentCurve, segmented ? 4 : 28, radius, 8, false),
+          new THREE.MeshStandardMaterial(materialOptions)
+        );
+        mesh.userData.pipeData = data;
+        mesh.userData.kind = 'pipe';
+        group.add(mesh);
+        pipePickables.push(mesh);
+      });
+
+      const arrowPoint = curve.getPoint(0.78);
+      const tangent = curve.getTangent(0.78).normalize();
+      const arrow = new THREE.Mesh(
+        new THREE.ConeGeometry(radius * 2.5, radius * 5, 8),
+        new THREE.MeshStandardMaterial(materialOptions)
+      );
+      arrow.position.copy(arrowPoint);
+      arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), tangent);
+      arrow.userData.pipeData = data;
+      arrow.userData.kind = 'pipe';
+      group.add(arrow);
+      pipePickables.push(arrow);
+
+      [0.18, 0.58].forEach(position => {
+        const collar = new THREE.Mesh(
+          new THREE.TorusGeometry(radius * 1.45, radius * 0.28, 6, 12),
+          new THREE.MeshStandardMaterial(materialOptions)
+        );
+        collar.position.copy(curve.getPoint(position));
+        collar.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), curve.getTangent(position).normalize());
+        collar.userData.pipeData = data;
+        collar.userData.kind = 'pipe';
+        group.add(collar);
+        pipePickables.push(collar);
+      });
+    }
+
+    function activeRelations() {
+      return relations.filter(relation => familySelect.value === 'all' || relation.family === familySelect.value);
+    }
+
+    function buildMacroPipes() {
+      const aggregates = new Map();
+      activeRelations().forEach(relation => {
+        const fromCluster = clusterByNode.get(relation.from);
+        const toCluster = clusterByNode.get(relation.to);
+        if (!fromCluster || !toCluster || fromCluster === toCluster) return;
+        const key = `${fromCluster}|${toCluster}|${relation.family}`;
+        if (!aggregates.has(key)) aggregates.set(key, { fromCluster, toCluster, family:relation.family, count:0, strength:0, executions:new Set(), relations:[] });
+        const aggregate = aggregates.get(key);
+        aggregate.count += 1;
+        aggregate.strength += relation.strength;
+        aggregate.executions.add(relation.execution);
+        aggregate.relations.push(relation);
+      });
+
+      const corridors = [...aggregates.values()].sort((a, b) => b.strength - a.strength);
+      const lanes = new Map();
+      corridors.forEach(corridor => {
+        const pair = [corridor.fromCluster, corridor.toCluster].sort().join('|');
+        if (!lanes.has(pair)) lanes.set(pair, []);
+        lanes.get(pair).push(corridor);
+      });
+
+      corridors.forEach(corridor => {
+        const fromRecord = districtRecords.get(corridor.fromCluster);
+        const toRecord = districtRecords.get(corridor.toCluster);
+        if (!fromRecord || !toRecord) return;
+        const pair = [corridor.fromCluster, corridor.toCluster].sort().join('|');
+        const peers = lanes.get(pair);
+        const lane = (peers.indexOf(corridor) - (peers.length - 1) / 2) * 0.48;
+        const data = {
+          kind:'corridor',
+          from:corridor.fromCluster,
+          to:corridor.toCluster,
+          family:corridor.family,
+          execution:corridor.executions.size === 1 ? [...corridor.executions][0] : 'mixed',
+          count:corridor.count,
+          strength:corridor.strength,
+          relations:corridor.relations
+        };
+        const start = fromRecord.beacon.position.clone().add(new THREE.Vector3(0, fromRecord.beacon.geometry.parameters.height * 0.25, 0));
+        const end = toRecord.beacon.position.clone().add(new THREE.Vector3(0, toRecord.beacon.geometry.parameters.height * 0.25, 0));
+        addPipe(macroPipeGroup, start, end, data, THREE.MathUtils.clamp(0.09 + Math.sqrt(corridor.strength) * 0.035, 0.12, 0.28), lane);
+      });
+    }
+
+    function buildEgoPipes() {
+      const related = activeRelations()
+        .filter(relation => relation.from === selectedNode.id || relation.to === selectedNode.id)
+        .sort((a, b) => b.strength - a.strength || a.id.localeCompare(b.id));
+      const shown = related.slice(0, 14);
+      shown.forEach((relation, index) => {
+        const data = { ...relation, kind:'relation', shown:shown.length, total:related.length };
+        const samePair = shown.filter(candidate =>
+          (candidate.from === relation.from && candidate.to === relation.to) ||
+          (candidate.from === relation.to && candidate.to === relation.from)
+        );
+        const lane = (samePair.indexOf(relation) - (samePair.length - 1) / 2) * 0.25 + ((index % 3) - 1) * 0.035;
+        addPipe(
+          egoPipeGroup,
+          nodeAnchor(relation.from),
+          nodeAnchor(relation.to),
+          data,
+          THREE.MathUtils.clamp(0.075 + Math.sqrt(relation.strength) * 0.025, 0.09, 0.16),
+          lane
+        );
+      });
+      egoPipeGroup.userData.shown = shown.length;
+      egoPipeGroup.userData.total = related.length;
+    }
+
+    function rebuildPipes() {
+      pipePickables = [];
+      clearGroup(macroPipeGroup);
+      clearGroup(egoPipeGroup);
+      buildMacroPipes();
+      buildEgoPipes();
+      updateVisibility();
+    }
+
+    function aggregateHeat(district) {
+      const values = district.members.map(nodeId => normalizedMetric(nodeById.get(nodeId))).filter(value => value !== null);
+      return values.length ? Math.max(...values) : null;
+    }
+
+    function updateColors() {
+      nodeRecords.forEach(record => {
+        record.mesh.material.color.copy(record.node.metrics ? heatColor(normalizedMetric(record.node)) : neutralColor(record.node.kind));
+      });
+      districtRecords.forEach(record => record.beacon.material.color.copy(heatColor(aggregateHeat(record.district))));
+
+      const legends = {
+        attention: ['Review priority','lower','higher','Weighted relative priority from complexity, uncovered lines, churn, direct effects, and coupling. It is not a defect verdict.'],
+        coverage: ['Missing coverage','0% uncovered','100% uncovered','Unknown coverage remains neutral; it is not converted to zero coverage. The embedded scan is a point-in-time fixture.'],
+        complexity: ['Maximum complexity','CC 2','CC 96','Heat ranks representative files by maximum per-function cyclomatic complexity. Height uses the same stable structural metric plus a small size term.'],
+        effects: ['Mutating side effects','none detected','32 sites','Grounded internal buildings with roof spheres contain directly detected mutation sites. Floating means none directly detected, not transitive purity.']
+      };
+      const legend = legends[lensSelect.value];
+      lensName.textContent = legend[0];
+      lensLow.textContent = legend[1];
+      lensHigh.textContent = legend[2];
+      modeNote.textContent = `${layouts[currentLayout].note} ${legend[3]} Pipe collars show direction; no flow particles are shown because runtime traces are absent.`;
+      updateDetail(selectedSubject);
+      render();
+    }
+
+    function districtForNode(nodeId) {
+      const districtId = clusterByNode.get(nodeId);
+      return layouts[currentLayout].districts.find(district => district.id === districtId);
+    }
+
+    function updateNodeDetail(node) {
+      const district = districtForNode(node.id);
+      selectedSource = node.path ? { path:`${basePath}${node.path}`, line:node.line || 1, node } : null;
+      pathCopy.textContent = selectedSource ? selectedSource.path : node.name;
+      subjectCopy.textContent = `${node.kind} · ${node.role} · ${district?.name || 'unassigned'}`;
+      summaryCopy.textContent = node.summary;
+      if (node.metrics) {
+        const coverage = node.metrics.coverage === null ? 'coverage unknown' : `${Math.round(node.metrics.coverage * 100)}% line coverage`;
+        const effect = node.metrics.effects > 0 ? `${node.metrics.effects} directly detected mutating sites · grounded` : 'no direct mutating sites detected · floating';
+        metricsCopy.textContent = `${node.metrics.lines.toLocaleString()} representative-file lines · max CC ${node.metrics.complexity} · ${coverage} · ${node.metrics.churn.toLocaleString()} changed lines · ${effect} · ${node.metrics.fanIn} in / ${node.metrics.fanOut} out · ${egoPipeGroup.userData.shown || 0}/${egoPipeGroup.userData.total || 0} selected-neighborhood pipes shown`;
+      } else {
+        metricsCopy.textContent = ['state','external'].includes(node.kind)
+          ? 'Semantic resource: source quality heat is intentionally not assigned to this non-owned runtime element.'
+          : node.kind === 'missing'
+            ? 'Expected receiver missing from the scoped Flask routes; the source target is the observed caller.'
+            : 'No comparable Python quality metrics are embedded for this source; neutral heat means unknown, not healthy.';
+      }
+      openButton.disabled = !selectedSource;
+      focusSelect.value = node.id;
+      selectionBox.setFromObject(nodeRecords.get(node.id).mesh);
+      selectedLabel.textContent = node.name;
+    }
+
+    function updatePipeDetail(pipe) {
+      selectedSource = null;
+      openButton.disabled = true;
+      if (pipe.kind === 'corridor') {
+        const from = districtRecords.get(pipe.from)?.district.name || pipe.from;
+        const to = districtRecords.get(pipe.to)?.district.name || pipe.to;
+        pathCopy.textContent = `${from} → ${to}`;
+        subjectCopy.textContent = `aggregated ${familyNames[pipe.family]} corridor`;
+        summaryCopy.textContent = `${pipe.count} mapped relations are bundled into this macro pipe.`;
+        metricsCopy.textContent = `combined strength ${pipe.strength} · ${pipe.execution} execution evidence · select Buildings or zoom closer to expose source-backed structures; Detail shows only one building's neighborhood`;
+      } else {
+        const from = nodeById.get(pipe.from);
+        const to = nodeById.get(pipe.to);
+        pathCopy.textContent = `${from.name} → ${to.name}`;
+        subjectCopy.textContent = `${familyNames[pipe.family]} · ${pipe.execution}`;
+        summaryCopy.textContent = pipe.label;
+        metricsCopy.textContent = `mapped strength ${pipe.strength} · evidence: ${pipe.evidence} · direction follows the arrow collar`;
+      }
+    }
+
+    function updateDistrictDetail(districtId) {
+      selectedSource = null;
+      openButton.disabled = true;
+      const record = districtRecords.get(districtId);
+      const district = record.district;
+      const memberNames = district.members.map(nodeId => nodeById.get(nodeId).name);
+      const crossing = activeRelations().filter(relation => {
+        const from = clusterByNode.get(relation.from);
+        const to = clusterByNode.get(relation.to);
+        return from !== to && (from === districtId || to === districtId);
+      });
+      pathCopy.textContent = district.name;
+      subjectCopy.textContent = `${district.members.length} members · ${layouts[currentLayout].name}`;
+      summaryCopy.textContent = memberNames.join(' · ');
+      metricsCopy.textContent = `${crossing.length} filtered cross-district relations; corridor thickness aggregates mapped relation strength without hiding the underlying evidence.`;
+      selectionBox.setFromObject(record.beacon);
+      selectedLabel.textContent = district.name;
+    }
+
+    function updateDetail(subject) {
+      selectedSubject = subject;
+      if (subject.kind === 'node') updateNodeDetail(subject.value);
+      if (subject.kind === 'pipe') updatePipeDetail(subject.value);
+      if (subject.kind === 'district') updateDistrictDetail(subject.value);
+    }
+
+    function selectNode(nodeId, move = false) {
+      const node = nodeById.get(nodeId);
+      if (!node) return;
+      selectedNode = node;
+      rebuildPipes();
+      updateDetail({ kind:'node', value:node });
+      if (move) moveCamera('detail');
+      render();
+    }
+
+    function projectLabel(element, position) {
+      const point = position.clone().project(camera);
+      const visible = point.z > -1 && point.z < 1;
+      element.style.visibility = visible ? 'visible' : 'hidden';
+      if (!visible) return;
+      element.style.left = `${(point.x * 0.5 + 0.5) * stage.clientWidth}px`;
+      element.style.top = `${(-point.y * 0.5 + 0.5) * stage.clientHeight}px`;
+    }
+
+    function updateVisibility() {
+      const distance = controls.getDistance();
+      lod = distance > 55 ? 'overview' : distance > 17 ? 'buildings' : 'detail';
+      districtRecords.forEach(record => {
+        record.beacon.visible = lod === 'overview';
+        record.beaconEdges.visible = lod === 'overview';
+        record.label.style.display = lod === 'detail' ? 'none' : '';
+      });
+      nodeRecords.forEach(record => {
+        const visible = lod !== 'overview';
+        record.mesh.visible = visible;
+        record.edges.visible = visible;
+        if (record.effectMarker) record.effectMarker.visible = visible;
+        if (record.unknownMarker) record.unknownMarker.visible = visible;
+        if (record.shadow) record.shadow.visible = visible;
+      });
+      macroPipeGroup.visible = lod !== 'detail';
+      egoPipeGroup.visible = lod === 'detail';
+      selectionBox.visible = lod === 'overview' ? selectedSubject.kind === 'district' : selectedSubject.kind === 'node';
+      selectedLabel.style.display = lod !== 'overview' && selectedSubject.kind === 'node' ? '' : 'none';
+      levelBadge.textContent = lod === 'overview' ? 'L0 · districts + bundled pipes' : lod === 'buildings' ? 'L1 · source buildings + corridors' : 'L2 · selected building + bounded pipes';
+    }
+
+    function render() {
+      updateVisibility();
+      selectionBox.update();
+      renderer.render(scene, camera);
+      districtRecords.forEach(record => projectLabel(record.label, record.labelPosition));
+      if (selectedSubject.kind === 'node') {
+        const record = nodeRecords.get(selectedNode.id);
+        projectLabel(selectedLabel, record.mesh.position.clone().add(new THREE.Vector3(0, record.height / 2 + 0.75, 0)));
+      }
+    }
+
+    const center = new THREE.Vector3(1.5, 1.2, 0);
+    camera.position.set(46, 43, 54);
+    controls.target.copy(center);
+    controls.update();
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function animateCamera(position, target) {
+      const fromPosition = camera.position.clone();
+      const fromTarget = controls.target.clone();
+      const duration = reducedMotion ? 0 : 380;
+      const started = performance.now();
+      function frame(now) {
+        const t = duration ? Math.min(1, (now - started) / duration) : 1;
+        const eased = 1 - Math.pow(1 - t, 3);
+        camera.position.lerpVectors(fromPosition, position, eased);
+        controls.target.lerpVectors(fromTarget, target, eased);
+        controls.update();
+        render();
+        if (t < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function moveCamera(view) {
+      if (view === 'overview') animateCamera(new THREE.Vector3(46, 43, 54), center);
+      if (view === 'buildings') animateCamera(new THREE.Vector3(30, 24, 34), center);
+      if (view === 'detail') {
+        const record = nodeRecords.get(selectedNode.id);
+        const target = record.mesh.position.clone().add(new THREE.Vector3(0, record.height * 0.18, 0));
+        animateCamera(target.clone().add(new THREE.Vector3(8, 7, 10)), target);
+      }
+    }
+
+    function changeLayout(layoutKey) {
+      if (!layouts[layoutKey]) return;
+      currentLayout = layoutKey;
+      const targets = positionsFor(layoutKey);
+      const starts = new Map([...nodeRecords.entries()].map(([id, record]) => [id, record.mesh.position.clone()]));
+      buildDistricts(layoutKey);
+      rebuildPipes();
+      egoPipeGroup.visible = false;
+      const duration = reducedMotion ? 0 : 520;
+      const started = performance.now();
+      function frame(now) {
+        const t = duration ? Math.min(1, (now - started) / duration) : 1;
+        const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        nodeRecords.forEach((record, id) => {
+          const target = targets.get(id);
+          const start = starts.get(id);
+          const x = THREE.MathUtils.lerp(start.x, target.x, eased);
+          const z = THREE.MathUtils.lerp(start.z, target.z, eased);
+          setNodeXZ(record, x, z);
+        });
+        render();
+        if (t < 1) requestAnimationFrame(frame);
+        else {
+          rebuildPipes();
+          updateColors();
+          updateDetail({ kind:'node', value:selectedNode });
+          render();
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    focusSelect.replaceChildren(...nodes
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(node => {
+        const option = document.createElement('option');
+        option.value = node.id;
+        option.textContent = `${node.name} · ${node.kind}`;
+        return option;
+      }));
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    function intersections(event) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      return raycaster.intersectObjects([...nodePickables, ...districtPickables, ...pipePickables].filter(object => object.visible && object.parent?.visible !== false), false);
+    }
+
+    function tooltipCopy(object) {
+      if (object.userData.nodeId) {
+        const node = nodeById.get(object.userData.nodeId);
+        const metric = rawMetric(node);
+        const metricText = metric === null ? 'quality unknown/not applicable' : lensSelect.value === 'coverage' ? `${Math.round(metric * 100)}% uncovered` : `${metric.toLocaleString()}`;
+        return `${node.name} · ${node.kind} · ${lensName.textContent}: ${metricText}`;
+      }
+      if (object.userData.districtId) {
+        const district = districtRecords.get(object.userData.districtId).district;
+        return `${district.name} · ${district.members.length} members · select to inspect boundary crossings`;
+      }
+      const pipe = object.userData.pipeData;
+      if (pipe?.kind === 'corridor') {
+        const from = districtRecords.get(pipe.from)?.district.name || pipe.from;
+        const to = districtRecords.get(pipe.to)?.district.name || pipe.to;
+        return `${from} → ${to} · ${pipe.count} ${familyNames[pipe.family]} relations · strength ${pipe.strength}`;
+      }
+      if (pipe) return `${nodeById.get(pipe.from).name} → ${nodeById.get(pipe.to).name} · ${familyNames[pipe.family]} · ${pipe.execution}`;
+      return '';
+    }
+
+    renderer.domElement.addEventListener('pointermove', event => {
+      const hit = intersections(event)[0];
+      if (!hit) {
+        tooltip.style.display = 'none';
+        renderer.domElement.style.cursor = 'grab';
+        return;
+      }
+      renderer.domElement.style.cursor = 'pointer';
+      tooltip.textContent = tooltipCopy(hit.object);
+      tooltip.style.display = 'block';
+      const stageRect = stage.getBoundingClientRect();
+      const left = Math.min(event.clientX - stageRect.left + 12, stage.clientWidth - 302);
+      const top = Math.max(8, event.clientY - stageRect.top - 34);
+      tooltip.style.left = `${Math.max(8, left)}px`;
+      tooltip.style.top = `${top}px`;
+    });
+
+    renderer.domElement.addEventListener('pointerleave', () => { tooltip.style.display = 'none'; });
+    renderer.domElement.addEventListener('click', event => {
+      const hit = intersections(event)[0];
+      if (!hit) return;
+      const object = hit.object;
+      if (object.userData.nodeId) {
+        selectNode(object.userData.nodeId, lod === 'detail');
+      } else if (object.userData.districtId) {
+        updateDetail({ kind:'district', value:object.userData.districtId });
+        render();
+      } else if (object.userData.pipeData) {
+        updateDetail({ kind:'pipe', value:object.userData.pipeData });
+        render();
+      }
+    });
+
+    controls.addEventListener('change', render);
+    layoutSelect.addEventListener('change', () => changeLayout(layoutSelect.value));
+    familySelect.addEventListener('change', () => {
+      rebuildPipes();
+      updateDetail({ kind:'node', value:selectedNode });
+      render();
+    });
+    lensSelect.addEventListener('change', updateColors);
+    focusSelect.addEventListener('change', () => selectNode(focusSelect.value, lod === 'detail'));
+    root.querySelectorAll('[data-pipe-view]').forEach(button => button.addEventListener('click', () => moveCamera(button.dataset.pipeView)));
+    openButton.addEventListener('click', async () => {
+      if (!selectedSource) return;
+      if (window.openai?.sendFollowUpMessage) {
+        await window.openai.sendFollowUpMessage({
+          title: `Inspect ${selectedSource.node.name}`,
+          prompt: `Open ${selectedSource.path}:${selectedSource.line}. Explain this selected city element using the exact source, including its architectural role, incoming and outgoing interactions, complexity, direct and transitive side effects, and test evidence. Distinguish measured facts from inference and do not assume a heat metric proves defective code.`
+        });
+      } else {
+        modeNote.textContent = `Source target: ${selectedSource.path}:${selectedSource.line}`;
+      }
+    });
+
+    const resizeObserver = new ResizeObserver(() => {
+      const width = Math.max(1, stage.clientWidth);
+      const height = Math.max(1, stage.clientHeight);
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      render();
+    });
+    resizeObserver.observe(stage);
+
+    buildDistricts(currentLayout);
+    const initialPositions = positionsFor(currentLayout);
+    nodeRecords.forEach((record, id) => {
+      const position = initialPositions.get(id);
+      setNodeXZ(record, position.x, position.z);
+    });
+    rebuildPipes();
+    updateColors();
+    selectNode(selectedNode.id);
+    render();
+  </script>
+</div>

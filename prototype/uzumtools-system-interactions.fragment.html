@@ -1,0 +1,735 @@
+<div id="vcm-system-interactions">
+  <style>
+    #vcm-system-interactions {
+      width: 100%;
+      color: var(--foreground);
+    }
+    #vcm-system-interactions .vcm-stage {
+      position: relative;
+      height: 540px;
+      overflow: hidden;
+      padding: 0;
+    }
+    #vcm-system-interactions svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      user-select: none;
+    }
+    #vcm-system-interactions .vcm-legend {
+      margin: 0.4rem 0 0.55rem;
+      gap: 0.35rem 0.75rem;
+    }
+    #vcm-system-interactions .vcm-key {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+    #vcm-system-interactions .vcm-line-key {
+      position: relative;
+      display: inline-block;
+      width: 1.8rem;
+      height: 0;
+      color: var(--viz-series-1);
+      border-top: 2px solid currentColor;
+    }
+    #vcm-system-interactions .vcm-line-key::after {
+      position: absolute;
+      right: -1px;
+      top: -5px;
+      width: 0;
+      height: 0;
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      border-left: 6px solid currentColor;
+      content: '';
+    }
+    #vcm-system-interactions .vcm-line-key.async {
+      color: var(--viz-series-3);
+      border-top-style: dashed;
+    }
+    #vcm-system-interactions .vcm-line-key.callback {
+      color: var(--viz-series-5);
+      border-top-style: dotted;
+    }
+    #vcm-system-interactions .vcm-line-key.state {
+      color: var(--viz-series-4);
+      border-top-width: 3px;
+    }
+    #vcm-system-interactions .vcm-node-key {
+      display: inline-block;
+      width: 0.75rem;
+      height: 0.55rem;
+      background: color-mix(in srgb, var(--viz-series-2) 24%, transparent);
+      border: 1px solid var(--viz-series-2);
+    }
+    #vcm-system-interactions .vcm-node-key.external {
+      transform: skewX(-18deg);
+    }
+    #vcm-system-interactions .vcm-node-key.state {
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--viz-series-4) 24%, transparent);
+      border-color: var(--viz-series-4);
+    }
+    #vcm-system-interactions .vcm-tooltip {
+      position: absolute;
+      display: none;
+      max-width: 300px;
+      pointer-events: none;
+      z-index: 4;
+    }
+    #vcm-system-interactions .vcm-detail {
+      margin-top: 0.75rem;
+    }
+    #vcm-system-interactions .vcm-detail-copy {
+      flex: 1 1 30rem;
+      min-width: 0;
+    }
+    #vcm-system-interactions .vcm-detail-copy code,
+    #vcm-system-interactions .vcm-detail-copy span {
+      overflow-wrap: anywhere;
+    }
+    #vcm-system-interactions .lane-shape {
+      fill: color-mix(in srgb, var(--foreground) 4%, transparent);
+      stroke: var(--border);
+      stroke-width: 1.5;
+    }
+    #vcm-system-interactions .lane-label {
+      fill: var(--muted-foreground);
+      font-size: var(--font-size-base);
+      font-weight: 500;
+    }
+    #vcm-system-interactions .edge-visible {
+      fill: none;
+      stroke-width: 2.2;
+      opacity: 0.14;
+      transition: opacity 160ms ease, stroke-width 160ms ease;
+    }
+    #vcm-system-interactions .edge-hit {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 14;
+      pointer-events: stroke;
+      cursor: pointer;
+    }
+    #vcm-system-interactions .edge.active .edge-visible {
+      opacity: 0.94;
+      stroke-width: 2.8;
+    }
+    #vcm-system-interactions .edge.inactive {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #vcm-system-interactions .edge.sync .edge-visible {
+      stroke: var(--viz-series-1);
+      marker-end: url(#vcm-arrow-sync);
+    }
+    #vcm-system-interactions .edge.async .edge-visible {
+      stroke: var(--viz-series-3);
+      stroke-dasharray: 8 5;
+      marker-end: url(#vcm-arrow-async);
+    }
+    #vcm-system-interactions .edge.callback .edge-visible {
+      stroke: var(--viz-series-5);
+      stroke-dasharray: 2 5;
+      marker-end: url(#vcm-arrow-callback);
+    }
+    #vcm-system-interactions .edge.state .edge-visible {
+      stroke: var(--viz-series-4);
+      stroke-width: 3;
+      marker-end: url(#vcm-arrow-state);
+    }
+    #vcm-system-interactions .node {
+      cursor: pointer;
+      transition: opacity 160ms ease;
+    }
+    #vcm-system-interactions .node.dim {
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    #vcm-system-interactions .node .node-shape {
+      fill: color-mix(in srgb, var(--viz-series-1) 14%, var(--background));
+      stroke: color-mix(in srgb, var(--viz-series-1) 66%, var(--border));
+      stroke-width: 1.5;
+    }
+    #vcm-system-interactions .node.operation .node-shape {
+      fill: color-mix(in srgb, var(--viz-series-3) 13%, var(--background));
+      stroke: color-mix(in srgb, var(--viz-series-3) 68%, var(--border));
+    }
+    #vcm-system-interactions .node.external .node-shape {
+      fill: color-mix(in srgb, var(--viz-series-2) 14%, var(--background));
+      stroke: color-mix(in srgb, var(--viz-series-2) 68%, var(--border));
+    }
+    #vcm-system-interactions .node.state .node-shape {
+      fill: color-mix(in srgb, var(--viz-series-4) 14%, var(--background));
+      stroke: color-mix(in srgb, var(--viz-series-4) 68%, var(--border));
+    }
+    #vcm-system-interactions .node.actor .node-shape {
+      fill: color-mix(in srgb, var(--viz-series-6) 14%, var(--background));
+      stroke: color-mix(in srgb, var(--viz-series-6) 68%, var(--border));
+    }
+    #vcm-system-interactions .node.missing .node-shape {
+      fill: color-mix(in srgb, var(--destructive) 8%, var(--background));
+      stroke: var(--destructive);
+      stroke-dasharray: 5 4;
+    }
+    #vcm-system-interactions .node.selected .node-shape {
+      stroke: var(--primary);
+      stroke-width: 3.5;
+    }
+    #vcm-system-interactions .node-label {
+      fill: var(--foreground);
+      font-size: var(--font-size-base);
+      font-weight: 500;
+      pointer-events: none;
+      text-anchor: middle;
+    }
+    #vcm-system-interactions .step-marker circle {
+      fill: var(--primary);
+      stroke: var(--primary-foreground);
+      stroke-width: 1;
+    }
+    #vcm-system-interactions .step-marker text {
+      fill: var(--primary-foreground);
+      font-size: var(--font-size-base);
+      font-weight: 500;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+    #vcm-system-interactions .overview-edge-label {
+      fill: var(--muted-foreground);
+      stroke: var(--background);
+      stroke-width: 4px;
+      stroke-linejoin: round;
+      paint-order: stroke fill;
+      font-size: var(--font-size-base);
+      text-anchor: middle;
+      pointer-events: none;
+    }
+    @media (max-width: 520px) {
+      #vcm-system-interactions .vcm-stage {
+        height: 500px;
+      }
+      #vcm-system-interactions .vcm-key {
+        white-space: normal;
+      }
+    }
+  </style>
+
+  <div class="viz-controls" aria-label="System interaction controls">
+    <label class="form-label" for="vcm-interaction-focus">
+      Focus
+      <select id="vcm-interaction-focus" class="form-select"></select>
+    </label>
+    <button type="button" id="vcm-interaction-fit" class="btn">Fit view</button>
+  </div>
+
+  <div class="viz-row vcm-legend text-small" aria-label="Interaction legend">
+    <span class="vcm-key"><span class="vcm-line-key"></span>synchronous / blocking</span>
+    <span class="vcm-key"><span class="vcm-line-key async"></span>asynchronous client event</span>
+    <span class="vcm-key"><span class="vcm-line-key callback"></span>external callback</span>
+    <span class="vcm-key"><span class="vcm-line-key state"></span>state or storage access</span>
+    <span class="vcm-key"><span class="vcm-node-key external"></span>external system</span>
+    <span class="vcm-key"><span class="vcm-node-key state"></span>state/resource</span>
+  </div>
+
+  <div class="card vcm-stage" id="vcm-interaction-stage">
+    <svg id="vcm-interaction-svg" viewBox="0 0 840 560" role="img" aria-label="Directed system and component interaction topology for Uzum Photo Checker">
+      <defs>
+        <marker id="vcm-arrow-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--viz-series-1)"></path>
+        </marker>
+        <marker id="vcm-arrow-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--viz-series-3)"></path>
+        </marker>
+        <marker id="vcm-arrow-callback" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--viz-series-5)"></path>
+        </marker>
+        <marker id="vcm-arrow-state" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--viz-series-4)"></path>
+        </marker>
+      </defs>
+      <g id="vcm-interaction-lanes"></g>
+      <g id="vcm-interaction-edges"></g>
+      <g id="vcm-interaction-steps"></g>
+      <g id="vcm-interaction-nodes"></g>
+    </svg>
+    <div id="vcm-interaction-tooltip" class="tooltip vcm-tooltip text-small"></div>
+    <span class="sr-only" id="vcm-interaction-summary">System overview showing the browser, Flask application, external providers, and durable resources with directed typed connections.</span>
+  </div>
+
+  <div class="card vcm-detail viz-row" aria-live="polite">
+    <div class="vcm-detail-copy">
+      <div><code id="vcm-interaction-title"></code> <span id="vcm-interaction-kind" class="text-small text-muted"></span></div>
+      <div id="vcm-interaction-copy" class="text-small"></div>
+      <div id="vcm-interaction-source" class="text-small text-muted"></div>
+    </div>
+    <button type="button" id="vcm-interaction-open" class="btn">Open source</button>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.getElementById('vcm-system-interactions');
+      const stage = root.querySelector('#vcm-interaction-stage');
+      const svg = root.querySelector('#vcm-interaction-svg');
+      const laneLayer = root.querySelector('#vcm-interaction-lanes');
+      const edgeLayer = root.querySelector('#vcm-interaction-edges');
+      const stepLayer = root.querySelector('#vcm-interaction-steps');
+      const nodeLayer = root.querySelector('#vcm-interaction-nodes');
+      const tooltip = root.querySelector('#vcm-interaction-tooltip');
+      const focusSelect = root.querySelector('#vcm-interaction-focus');
+      const fitButton = root.querySelector('#vcm-interaction-fit');
+      const detailTitle = root.querySelector('#vcm-interaction-title');
+      const detailKind = root.querySelector('#vcm-interaction-kind');
+      const detailCopy = root.querySelector('#vcm-interaction-copy');
+      const detailSource = root.querySelector('#vcm-interaction-source');
+      const openButton = root.querySelector('#vcm-interaction-open');
+      const accessibleSummary = root.querySelector('#vcm-interaction-summary');
+      const basePath = '/Users/mirolim/projects/uzumtools/photochecker/';
+
+      const nodeRows = [
+        ['actor.seller','Seller','actor',95,70,120,'AGENTS.md',1,'End user who checks, improves, and pays for product-photo operations.'],
+        ['component.tool-ui','Photo tool UI','component',95,130,140,'app/templates/index.html',1,'Uploads images, requests analysis and enhancement, and coordinates browser-side background removal.'],
+        ['component.account-ui','Account and payment UI','component',95,215,145,'app/templates/auth/profile.html',1,'Displays account and billing state and initiates Paycom checkout.'],
+        ['component.landing-ui','Landing UI','component',95,285,135,'app/templates/landing.html',1,'Marketing and acquisition UI; it also calls an analytics endpoint that is missing.'],
+        ['operation.client.edge-background-removal','Browser background removal','operation',95,360,150,'app/static/js/edge-ml-background-removal.js',1368,'Loads ONNX runtime and model, runs local segmentation, and optionally uploads the result.'],
+        ['resource.browser-model-cache','Browser model cache','state',95,440,135,'app/static/js/edge-ml-background-removal.js',440,'IndexedDB cache for downloaded ONNX model bytes.'],
+
+        ['operation.api.technical-analysis','POST /api/analyze','operation',290,80,145,'app/views/api.py',291,'Stores an upload, runs technical analysis inline, persists records, and returns the completed result.'],
+        ['operation.api.ai-analysis','POST /api/analyze-with-ai','operation',290,140,160,'app/views/api.py',483,'Reserves credits, calls Gemini inline, runs technical analysis, and persists the result.'],
+        ['operation.api.enhance-image','POST /api/enhance-image','operation',290,200,155,'app/views/api.py',1605,'Runs selected enhancement strategies inline with billing and persistence.'],
+        ['operation.api.background-upload','POST /api/bg-removal/upload','operation',290,260,170,'app/views/api.py',2726,'Receives browser-processed images and records a completed background-removal job.'],
+        ['operation.api.paycom-callback','POST /api/paycom/merchant','operation',290,325,165,'app/views/api.py',3159,'Authenticates and processes Paycom merchant callbacks.'],
+        ['component.auth-blueprint','Authentication blueprint','component',290,390,150,'app/views/auth.py',27,'Handles local, Telegram, and Google login flows and profile changes.'],
+        ['interface.operator-cli','Operator CLI','component',290,450,120,'app/cli/account.py',1,'Manual administrative surface for accounts, credits, payments, and cleanup.'],
+        ['expected.endpoint.analytics','POST /api/analytics','missing',290,515,145,'app/static/landing.js',201,'Called by the landing page but not implemented by a Flask route in the scoped source.'],
+
+        ['component.image-analysis','Technical image analysis','component',490,80,150,'app/services/image_service.py',24,'Validates uploads and calculates technical, quality, border, and requirement results.'],
+        ['component.ai-analysis','AI image analysis','component',490,140,135,'app/services/ai_analysis/ai_analyzer.py',19,'Builds prompts, calls Gemini synchronously, and validates the provider response.'],
+        ['component.enhancement','Image enhancement','component',490,200,135,'app/services/enhancement/orchestrator.py',25,'Selects and sequences deterministic or provider-backed enhancement strategies.'],
+        ['component.image-lifecycle','Image lifecycle','component',490,260,130,'app/services/image_lifecycle_manager.py',36,'Stores image versions, resolves downloads, and deletes expired assets.'],
+        ['component.jobs','Job record service','component',490,325,130,'app/services/job_service.py',21,'Persists records for work performed inline; no queue dispatch or worker consumption exists.'],
+        ['component.billing','Credits and payments','component',490,390,140,'app/services/credit_service.py',46,'Reserves and settles credits and processes durable payment records.'],
+        ['component.identity','Identity and accounts','component',490,450,140,'app/services/user_service.py',42,'Manages users, sessions, profiles, external identities, and audits.'],
+        ['component.security','Security and rate limits','component',490,515,145,'app/extensions.py',1,'Applies CSRF, login protection, rate limiting, validation, and security policies.'],
+
+        ['external.gemini','Google Gemini','external',705,145,120,'app/services/ai_analysis/gemini_service.py',8,'External multimodal analysis and image-generation provider.'],
+        ['external.huggingface-model','Hugging Face model','external',650,225,120,'app/static/js/edge-ml-background-removal.js',24,'Hosts the browser-downloaded ONNX segmentation model.'],
+        ['external.onnx-runtime-cdn','ONNX Runtime CDN','external',770,275,120,'app/static/js/edge-ml-background-removal.js',367,'Supplies browser ONNX Runtime builds.'],
+        ['resource.image-storage','Image storage','state',650,315,120,'config.py',105,'Local, GCS, or S3-compatible storage for original and derived images.'],
+        ['datastore.relational','Relational database','state',650,370,125,'config.py',84,'SQLAlchemy-backed PostgreSQL or local SQLite durable state.'],
+        ['external.paycom','Paycom','external',650,425,105,'config.py',149,'External checkout and merchant callback provider.'],
+        ['external.google-oauth','Google OAuth','external',650,480,115,'app/services/google_auth_service.py',41,'External OAuth authorization and identity provider.'],
+        ['external.telegram','Telegram Login','external',650,530,115,'app/templates/auth/_telegram_auth_card.html',25,'Supplies signed identity data verified by the server.'],
+        ['datastore.rate-limit','Rate-limit state','state',770,515,115,'app/extensions.py',20,'Redis-backed counters with a process-memory fallback.']
+      ];
+
+      const nodes = nodeRows.map(([id,name,kind,x,y,w,path,line,summary]) => ({ id,name,kind,x,y,w,h:38,path,line,summary }));
+      const nodeById = new Map(nodes.map(node => [node.id, node]));
+
+      const relationRows = [
+        ['relation.seller-to-tool','actor.seller','component.tool-ui','async','event','browser event'],
+        ['relation.tool-to-technical-api','component.tool-ui','operation.api.technical-analysis','async','event','HTTP request/response'],
+        ['relation.technical-api-to-image-analysis','operation.api.technical-analysis','component.image-analysis','sync','request','blocking request thread'],
+        ['relation.technical-api-to-lifecycle','operation.api.technical-analysis','component.image-lifecycle','sync','request','blocking request thread'],
+        ['relation.technical-api-to-jobs','operation.api.technical-analysis','component.jobs','sync','request','blocking request thread'],
+        ['relation.tool-to-ai-api','component.tool-ui','operation.api.ai-analysis','async','event','HTTP request/response'],
+        ['relation.ai-api-to-billing','operation.api.ai-analysis','component.billing','sync','request','blocking request thread'],
+        ['relation.ai-api-to-ai-analysis','operation.api.ai-analysis','component.ai-analysis','sync','request','blocking request thread'],
+        ['relation.ai-analysis-to-gemini','component.ai-analysis','external.gemini','sync','request','blocking external SDK call'],
+        ['relation.ai-api-to-image-analysis','operation.api.ai-analysis','component.image-analysis','sync','request','blocking request thread'],
+        ['relation.ai-api-to-jobs','operation.api.ai-analysis','component.jobs','sync','request','blocking request thread'],
+        ['relation.tool-to-enhance-api','component.tool-ui','operation.api.enhance-image','async','event','HTTP request/response'],
+        ['relation.enhance-api-to-enhancement','operation.api.enhance-image','component.enhancement','sync','request','blocking request thread'],
+        ['relation.enhancement-to-gemini','component.enhancement','external.gemini','sync','request','blocking provider call'],
+        ['relation.image-lifecycle-to-storage','component.image-lifecycle','resource.image-storage','state','request','synchronous storage access'],
+        ['relation.jobs-to-database','component.jobs','datastore.relational','state','request','synchronous durable write'],
+        ['relation.billing-to-database','component.billing','datastore.relational','state','request','synchronous durable write'],
+        ['relation.identity-to-database','component.identity','datastore.relational','state','request','synchronous durable access'],
+        ['relation.auth-to-google','component.identity','external.google-oauth','sync','request','blocking OAuth exchange'],
+        ['relation.auth-to-telegram','component.auth-blueprint','external.telegram','sync','request','signed login verification'],
+        ['relation.account-ui-to-paycom','component.account-ui','external.paycom','async','event','checkout redirect/polling'],
+        ['relation.paycom-to-callback','external.paycom','operation.api.paycom-callback','callback','callback','merchant callback'],
+        ['relation.paycom-callback-to-billing','operation.api.paycom-callback','component.billing','sync','request','blocking request thread'],
+        ['relation.tool-to-edge-operation','component.tool-ui','operation.client.edge-background-removal','async','event','browser event'],
+        ['relation.edge-operation-to-model-host','operation.client.edge-background-removal','external.huggingface-model','async','event','model download'],
+        ['relation.edge-operation-to-runtime-cdn','operation.client.edge-background-removal','external.onnx-runtime-cdn','async','event','runtime download'],
+        ['relation.edge-operation-to-browser-cache','operation.client.edge-background-removal','resource.browser-model-cache','state','event','IndexedDB access'],
+        ['relation.edge-operation-to-background-upload','operation.client.edge-background-removal','operation.api.background-upload','async','event','optional HTTP upload'],
+        ['relation.background-upload-to-lifecycle','operation.api.background-upload','component.image-lifecycle','sync','request','blocking request thread'],
+        ['relation.background-upload-to-jobs','operation.api.background-upload','component.jobs','sync','request','blocking request thread'],
+        ['relation.security-to-rate-limit-store','component.security','datastore.rate-limit','state','request','synchronous counter access'],
+        ['relation.operator-cli-to-billing','interface.operator-cli','component.billing','sync','manual','inline CLI call'],
+        ['relation.landing-to-missing-analytics','component.landing-ui','expected.endpoint.analytics','async','event','HTTP request to missing endpoint']
+      ];
+      const relations = relationRows.map(([id,from,to,style,trigger,execution]) => ({ id,from,to,style,trigger,execution }));
+      const relationById = new Map(relations.map(relation => [relation.id, relation]));
+
+      const flows = [
+        { id:'flow.technical-analysis', name:'Technical image analysis', summary:'Browser upload is stored, analyzed synchronously, recorded as a completed job, and persisted during one request.', relations:['relation.tool-to-technical-api','relation.technical-api-to-lifecycle','relation.technical-api-to-image-analysis','relation.technical-api-to-jobs','relation.jobs-to-database'] },
+        { id:'flow.ai-analysis', name:'AI-assisted image analysis', summary:'The request reserves credits, blocks on Gemini and technical analysis, records results, and persists job state before responding.', relations:['relation.tool-to-ai-api','relation.ai-api-to-billing','relation.ai-api-to-ai-analysis','relation.ai-analysis-to-gemini','relation.ai-api-to-image-analysis','relation.ai-api-to-jobs','relation.jobs-to-database'] },
+        { id:'flow.edge-background-removal', name:'Browser edge background removal', summary:'The browser downloads runtime and model, caches model bytes, runs local inference, and optionally uploads both images for durable tracking.', relations:['relation.tool-to-edge-operation','relation.edge-operation-to-runtime-cdn','relation.edge-operation-to-model-host','relation.edge-operation-to-browser-cache','relation.edge-operation-to-background-upload','relation.background-upload-to-lifecycle','relation.background-upload-to-jobs','relation.jobs-to-database'] },
+        { id:'flow.paycom-payment', name:'Paycom credit purchase', summary:'The account UI starts checkout, Paycom calls the merchant endpoint, and billing logic persists payment and credit records.', relations:['relation.account-ui-to-paycom','relation.paycom-to-callback','relation.paycom-callback-to-billing','relation.billing-to-database'] }
+      ];
+      const flowById = new Map(flows.map(flow => [flow.id, flow]));
+
+      const overviewNodes = [
+        { id:'overview.seller', name:'Seller', kind:'actor', x:70, y:275, w:105, h:46, summary:'End user operating the product.' },
+        { id:'overview.browser', name:'Browser application', kind:'component', x:230, y:275, w:150, h:64, summary:'UI, localization, payment polling, and optional local ML inference.' },
+        { id:'overview.flask', name:'Flask web application', kind:'component', x:445, y:275, w:165, h:72, summary:'HTTP request workers, application services, policies, and data access.' },
+        { id:'overview.gemini', name:'Google Gemini', kind:'external', x:690, y:85, w:130, h:48, summary:'Blocking server-side AI analysis and enhancement calls.' },
+        { id:'overview.edge-supply', name:'Model + runtime supply', kind:'external', x:690, y:180, w:155, h:50, summary:'Hugging Face model hosting and ONNX Runtime CDN.' },
+        { id:'overview.paycom', name:'Paycom', kind:'external', x:690, y:285, w:115, h:48, summary:'Browser checkout and server merchant callbacks.' },
+        { id:'overview.identity', name:'Identity providers', kind:'external', x:690, y:385, w:145, h:50, summary:'Google OAuth and Telegram Login.' },
+        { id:'overview.state', name:'Durable state + storage', kind:'state', x:690, y:490, w:165, h:58, summary:'Relational database, image storage, and rate-limit state.' },
+        { id:'overview.browser-cache', name:'Browser model cache', kind:'state', x:230, y:440, w:145, h:48, summary:'IndexedDB model-byte cache.' }
+      ];
+      const overviewEdges = [
+        { id:'overview.use', from:'overview.seller', to:'overview.browser', style:'async', label:'interactive use', labelX:150, labelY:215 },
+        { id:'overview.http', from:'overview.browser', to:'overview.flask', style:'async', label:'HTTP APIs · 4 mapped flows', labelX:340, labelY:205 },
+        { id:'overview.ai', from:'overview.flask', to:'overview.gemini', style:'sync', label:'2 blocking provider paths', labelX:600, labelY:130 },
+        { id:'overview.edge', from:'overview.browser', to:'overview.edge-supply', style:'async', label:'runtime + model downloads', labelX:505, labelY:160 },
+        { id:'overview.cache', from:'overview.browser', to:'overview.browser-cache', style:'state', label:'IndexedDB cache', labelX:290, labelY:365 },
+        { id:'overview.checkout', from:'overview.browser', to:'overview.paycom', style:'async', label:'checkout redirect', labelX:500, labelY:335 },
+        { id:'overview.callback', from:'overview.paycom', to:'overview.flask', style:'callback', label:'merchant callback', labelX:580, labelY:235 },
+        { id:'overview.oauth', from:'overview.flask', to:'overview.identity', style:'sync', label:'OAuth / signed login', labelX:540, labelY:420 },
+        { id:'overview.persist', from:'overview.flask', to:'overview.state', style:'state', label:'DB + images + counters', labelX:545, labelY:450 }
+      ];
+
+      const lanes = [
+        { x:10, y:35, w:170, h:515, label:'Browser runtime' },
+        { x:200, y:35, w:180, h:515, label:'HTTP / interface boundary' },
+        { x:400, y:35, w:180, h:515, label:'Application services' },
+        { x:600, y:35, w:230, h:515, label:'External systems + state' }
+      ];
+
+      const svgNS = 'http://www.w3.org/2000/svg';
+      function element(name, attrs = {}) {
+        const node = document.createElementNS(svgNS, name);
+        Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+        return node;
+      }
+
+      function shapeFor(node) {
+        if (node.kind === 'actor') return element('ellipse', { class:'node-shape', cx:node.x, cy:node.y, rx:node.w/2, ry:node.h/2 });
+        if (node.kind === 'external') {
+          const half = node.w / 2;
+          const top = node.y - node.h / 2;
+          const bottom = node.y + node.h / 2;
+          return element('polygon', { class:'node-shape', points:`${node.x-half+12},${top} ${node.x+half-12},${top} ${node.x+half},${node.y} ${node.x+half-12},${bottom} ${node.x-half+12},${bottom} ${node.x-half},${node.y}` });
+        }
+        return element('rect', { class:'node-shape', x:node.x-node.w/2, y:node.y-node.h/2, width:node.w, height:node.h, rx:node.kind === 'state' ? node.h/2 : 8 });
+      }
+
+      function labelLines(name) {
+        if (name.length <= 23) return [name];
+        const words = name.split(' ');
+        let first = '';
+        let second = '';
+        words.forEach(word => {
+          if ((first + ' ' + word).trim().length <= 21 && !second) first = (first + ' ' + word).trim();
+          else second = (second + ' ' + word).trim();
+        });
+        return second ? [first, second] : [name];
+      }
+
+      function drawNode(node, { dim = false, selected = false, overview = false } = {}) {
+        const group = element('g', { class:`node ${node.kind} ${dim ? 'dim' : ''} ${selected ? 'selected' : ''}`, 'data-node':node.id });
+        group.appendChild(shapeFor(node));
+        const lines = labelLines(node.name);
+        const text = element('text', { class:'node-label', x:node.x, y:node.y - (lines.length - 1) * 8 });
+        lines.forEach((line, index) => {
+          const span = element('tspan', { x:node.x, dy:index ? 16 : 0 });
+          span.textContent = line;
+          text.appendChild(span);
+        });
+        group.appendChild(text);
+        group.addEventListener('pointerenter', event => showNodeTooltip(event, node, overview));
+        group.addEventListener('pointermove', moveTooltip);
+        group.addEventListener('pointerleave', hideTooltip);
+        group.addEventListener('click', () => selectNode(node, overview));
+        nodeLayer.appendChild(group);
+      }
+
+      function endpoints(from, to) {
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        if (Math.abs(dx) >= Math.abs(dy)) {
+          return {
+            start:{ x:from.x + Math.sign(dx) * from.w/2, y:from.y },
+            end:{ x:to.x - Math.sign(dx) * to.w/2, y:to.y }
+          };
+        }
+        return {
+          start:{ x:from.x, y:from.y + Math.sign(dy) * from.h/2 },
+          end:{ x:to.x, y:to.y - Math.sign(dy) * to.h/2 }
+        };
+      }
+
+      function pathFor(from, to) {
+        const { start, end } = endpoints(from, to);
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        if (Math.abs(dx) > Math.abs(dy)) {
+          return { d:`M ${start.x} ${start.y} C ${start.x + dx*0.42} ${start.y}, ${end.x - dx*0.42} ${end.y}, ${end.x} ${end.y}`, mid:{ x:(start.x+end.x)/2, y:(start.y+end.y)/2 } };
+        }
+        return { d:`M ${start.x} ${start.y} C ${start.x} ${start.y + dy*0.42}, ${end.x} ${end.y - dy*0.42}, ${end.x} ${end.y}`, mid:{ x:(start.x+end.x)/2, y:(start.y+end.y)/2 } };
+      }
+
+      function drawEdge(relation, from, to, active, step, label) {
+        const curve = pathFor(from, to);
+        const group = element('g', { class:`edge ${relation.style} ${active ? 'active' : 'inactive'}`, 'data-edge':relation.id });
+        group.appendChild(element('path', { class:'edge-visible', d:curve.d }));
+        const hit = element('path', { class:'edge-hit', d:curve.d });
+        hit.addEventListener('pointerenter', event => showEdgeTooltip(event, relation, from, to));
+        hit.addEventListener('pointermove', moveTooltip);
+        hit.addEventListener('pointerleave', hideTooltip);
+        hit.addEventListener('click', () => selectRelation(relation, from, to));
+        group.appendChild(hit);
+        edgeLayer.appendChild(group);
+
+        if (step) {
+          const marker = element('g', { class:'step-marker' });
+          marker.appendChild(element('circle', { cx:curve.mid.x, cy:curve.mid.y, r:10 }));
+          const number = element('text', { x:curve.mid.x, y:curve.mid.y });
+          number.textContent = step;
+          marker.appendChild(number);
+          stepLayer.appendChild(marker);
+        } else if (label && active) {
+          const text = element('text', { class:'overview-edge-label', x:relation.labelX ?? curve.mid.x, y:relation.labelY ?? curve.mid.y - 7 });
+          text.textContent = label;
+          stepLayer.appendChild(text);
+        }
+      }
+
+      function drawLanes() {
+        lanes.forEach(lane => {
+          laneLayer.appendChild(element('rect', { class:'lane-shape', x:lane.x, y:lane.y, width:lane.w, height:lane.h, rx:10 }));
+          const label = element('text', { class:'lane-label', x:lane.x+10, y:lane.y+20 });
+          label.textContent = lane.label;
+          laneLayer.appendChild(label);
+        });
+      }
+
+      function clearDiagram() {
+        laneLayer.replaceChildren();
+        edgeLayer.replaceChildren();
+        stepLayer.replaceChildren();
+        nodeLayer.replaceChildren();
+      }
+
+      function relationNodes(relationIds) {
+        const ids = new Set();
+        relationIds.forEach(id => {
+          const relation = relationById.get(id);
+          if (relation) { ids.add(relation.from); ids.add(relation.to); }
+        });
+        return ids;
+      }
+
+      let selected = null;
+      let focus = 'overview';
+      let viewBox = { x:0, y:0, w:840, h:560 };
+
+      function renderOverview() {
+        clearDiagram();
+        const map = new Map(overviewNodes.map(node => [node.id, node]));
+        overviewEdges.forEach(edge => drawEdge(edge, map.get(edge.from), map.get(edge.to), true, null, edge.label));
+        overviewNodes.forEach(node => drawNode(node, { selected:selected?.id === node.id, overview:true }));
+        accessibleSummary.textContent = 'System overview: seller to browser, browser to Flask APIs, browser to model supply and Paycom, Paycom callback to Flask, Flask to Gemini, identity providers, and durable state.';
+        updateDetail({ name:'System interaction overview', kind:'aggregated deployables', summary:'The browser and Flask application are separate runtimes. Browser calls are asynchronous from the UI, but the mapped Flask analysis, provider, storage, and database work is performed inline on request threads.', path:null });
+      }
+
+      function renderDetailed(mode, id) {
+        clearDiagram();
+        drawLanes();
+        let activeRelations = new Set(relations.map(relation => relation.id));
+        let activeNodes = new Set(nodes.map(node => node.id));
+        let stepByRelation = new Map();
+        let summary = 'All 33 typed relations. Select a flow or component to remove unrelated edges.';
+
+        if (mode === 'flow') {
+          const flow = flowById.get(id);
+          activeRelations = new Set(flow.relations);
+          activeNodes = relationNodes(flow.relations);
+          stepByRelation = new Map(flow.relations.map((relationId, index) => [relationId, index + 1]));
+          summary = flow.summary;
+          updateDetail({ name:flow.name, kind:'end-to-end flow', summary:flow.summary, path:null });
+        } else if (mode === 'node') {
+          const node = nodeById.get(id);
+          const ego = relations.filter(relation => relation.from === id || relation.to === id);
+          activeRelations = new Set(ego.map(relation => relation.id));
+          activeNodes = relationNodes([...activeRelations]);
+          activeNodes.add(id);
+          summary = `${node.name}: ${ego.filter(r => r.to === id).length} incoming and ${ego.filter(r => r.from === id).length} outgoing mapped relations.`;
+          selected = node;
+          updateDetail(node);
+        }
+
+        relations.forEach(relation => {
+          const from = nodeById.get(relation.from);
+          const to = nodeById.get(relation.to);
+          drawEdge(relation, from, to, activeRelations.has(relation.id), stepByRelation.get(relation.id));
+        });
+        nodes.forEach(node => drawNode(node, { dim:!activeNodes.has(node.id), selected:selected?.id === node.id }));
+        accessibleSummary.textContent = summary;
+      }
+
+      function render() {
+        const [mode, id] = focus.split(':');
+        if (mode === 'overview') renderOverview();
+        else renderDetailed(mode, id);
+      }
+
+      function selectNode(node, overview) {
+        selected = node;
+        if (overview) {
+          renderOverview();
+          updateDetail(node);
+          return;
+        }
+        focus = `node:${node.id}`;
+        focusSelect.value = focus;
+        render();
+      }
+
+      function selectRelation(relation, from, to) {
+        selected = relation;
+        updateDetail({
+          name:`${from.name} → ${to.name}`,
+          kind:`${relation.style} relation`,
+          summary:`${relation.execution}; trigger: ${relation.trigger}.`,
+          path:from.path,
+          line:from.line
+        });
+        root.querySelectorAll('.node').forEach(node => node.classList.toggle('selected', node.dataset.node === from.id || node.dataset.node === to.id));
+      }
+
+      function updateDetail(item) {
+        detailTitle.textContent = item.name;
+        detailKind.textContent = item.kind ? `· ${item.kind.replaceAll('_',' ')}` : '';
+        detailCopy.textContent = item.summary || '';
+        const source = item.path ? `${basePath}${item.path}:${item.line || 1}` : '';
+        detailSource.textContent = source;
+        openButton.disabled = !source;
+        openButton.dataset.path = item.path || '';
+        openButton.dataset.line = item.line || 1;
+      }
+
+      function showNodeTooltip(event, node, overview) {
+        tooltip.textContent = `${node.name} · ${node.kind.replaceAll('_',' ')}${overview ? '' : ' · click to isolate its mapped interactions'}`;
+        tooltip.style.display = 'block';
+        moveTooltip(event);
+      }
+
+      function showEdgeTooltip(event, relation, from, to) {
+        tooltip.textContent = `${from.name} → ${to.name} · ${relation.execution || relation.label} · ${relation.style}`;
+        tooltip.style.display = 'block';
+        moveTooltip(event);
+      }
+
+      function moveTooltip(event) {
+        const bounds = stage.getBoundingClientRect();
+        const left = Math.min(event.clientX - bounds.left + 12, stage.clientWidth - 312);
+        const top = Math.max(8, event.clientY - bounds.top - 40);
+        tooltip.style.left = `${Math.max(8, left)}px`;
+        tooltip.style.top = `${top}px`;
+      }
+
+      function hideTooltip() {
+        tooltip.style.display = 'none';
+      }
+
+      const overviewGroup = document.createElement('optgroup');
+      overviewGroup.label = 'Architecture';
+      [{ value:'overview', label:'System overview' }, { value:'all:', label:'All component interactions' }].forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.value;
+        option.textContent = item.label;
+        overviewGroup.appendChild(option);
+      });
+      focusSelect.appendChild(overviewGroup);
+
+      const flowGroup = document.createElement('optgroup');
+      flowGroup.label = 'End-to-end flows';
+      flows.forEach(flow => {
+        const option = document.createElement('option');
+        option.value = `flow:${flow.id}`;
+        option.textContent = flow.name;
+        flowGroup.appendChild(option);
+      });
+      focusSelect.appendChild(flowGroup);
+
+      const componentGroup = document.createElement('optgroup');
+      componentGroup.label = 'Components, systems, and resources';
+      nodes.sort((a,b) => a.name.localeCompare(b.name)).forEach(node => {
+        const option = document.createElement('option');
+        option.value = `node:${node.id}`;
+        option.textContent = node.name;
+        componentGroup.appendChild(option);
+      });
+      focusSelect.appendChild(componentGroup);
+
+      focusSelect.value = focus;
+      focusSelect.addEventListener('change', () => {
+        focus = focusSelect.value;
+        selected = null;
+        render();
+      });
+
+      function setViewBox(next) {
+        viewBox = next;
+        svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
+      }
+      fitButton.addEventListener('click', () => setViewBox({ x:0, y:0, w:840, h:560 }));
+
+      svg.addEventListener('wheel', event => {
+        event.preventDefault();
+        const bounds = svg.getBoundingClientRect();
+        const px = viewBox.x + ((event.clientX - bounds.left) / bounds.width) * viewBox.w;
+        const py = viewBox.y + ((event.clientY - bounds.top) / bounds.height) * viewBox.h;
+        const factor = event.deltaY > 0 ? 1.12 : 0.88;
+        const width = Math.min(1100, Math.max(280, viewBox.w * factor));
+        const height = width * (560 / 840);
+        setViewBox({ x:px - ((event.clientX-bounds.left)/bounds.width)*width, y:py - ((event.clientY-bounds.top)/bounds.height)*height, w:width, h:height });
+      }, { passive:false });
+
+      let drag = null;
+      svg.addEventListener('pointerdown', event => {
+        if (event.target.closest('.node,.edge-hit')) return;
+        drag = { x:event.clientX, y:event.clientY, box:{...viewBox} };
+        svg.setPointerCapture(event.pointerId);
+      });
+      svg.addEventListener('pointermove', event => {
+        if (!drag) return;
+        const bounds = svg.getBoundingClientRect();
+        setViewBox({
+          x:drag.box.x - (event.clientX-drag.x) / bounds.width * drag.box.w,
+          y:drag.box.y - (event.clientY-drag.y) / bounds.height * drag.box.h,
+          w:drag.box.w,
+          h:drag.box.h
+        });
+      });
+      svg.addEventListener('pointerup', () => { drag = null; });
+      svg.addEventListener('pointercancel', () => { drag = null; });
+
+      openButton.addEventListener('click', async () => {
+        if (!openButton.dataset.path) return;
+        const absolutePath = `${basePath}${openButton.dataset.path}`;
+        const line = Number(openButton.dataset.line || 1);
+        if (window.openai?.sendFollowUpMessage) {
+          await window.openai.sendFollowUpMessage({
+            title:`Inspect ${detailTitle.textContent}`,
+            prompt:`Open ${absolutePath}:${line}. Explain this selected system/component interaction using exact source evidence, including callers, callees, execution style, side effects, and whether the map omits any runtime path.`
+          });
+        } else {
+          detailSource.textContent = `${absolutePath}:${line}`;
+        }
+      });
+
+      render();
+    })();
+  </script>
+</div>

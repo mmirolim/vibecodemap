@@ -1,0 +1,556 @@
+<div id="vcm-clustering-grammar">
+  <style>
+    #vcm-clustering-grammar {
+      width: 100%;
+      color: var(--foreground);
+    }
+    #vcm-clustering-grammar .vcm-stage {
+      position: relative;
+      height: 500px;
+      overflow: hidden;
+      padding: 0;
+    }
+    #vcm-clustering-grammar .vcm-stage svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      user-select: none;
+    }
+    #vcm-clustering-grammar .vcm-legend {
+      margin: 0.45rem 0 0.6rem;
+      gap: 0.35rem 0.7rem;
+    }
+    #vcm-clustering-grammar .vcm-key {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+    #vcm-clustering-grammar .vcm-line-key {
+      position: relative;
+      display: inline-block;
+      width: 1.65rem;
+      height: 0;
+      color: var(--viz-series-1);
+      border-top: 2px solid currentColor;
+    }
+    #vcm-clustering-grammar .vcm-line-key::after {
+      position: absolute;
+      right: -1px;
+      top: -4px;
+      width: 0;
+      height: 0;
+      border-top: 3px solid transparent;
+      border-bottom: 3px solid transparent;
+      border-left: 5px solid currentColor;
+      content: '';
+    }
+    #vcm-clustering-grammar .vcm-line-key.import { color: var(--viz-series-2); }
+    #vcm-clustering-grammar .vcm-line-key.event {
+      color: var(--viz-series-3);
+      border-top-style: dashed;
+    }
+    #vcm-clustering-grammar .vcm-line-key.data { color: var(--viz-series-4); }
+    #vcm-clustering-grammar .vcm-line-key.provider { color: var(--viz-series-5); }
+    #vcm-clustering-grammar .vcm-node-key {
+      display: inline-block;
+      width: 0.8rem;
+      height: 0.6rem;
+      background: color-mix(in srgb, var(--foreground) 9%, var(--background));
+      border: 1px solid var(--muted-foreground);
+    }
+    #vcm-clustering-grammar .vcm-node-key.interface {
+      clip-path: polygon(12% 0, 88% 0, 100% 50%, 88% 100%, 12% 100%, 0 50%);
+    }
+    #vcm-clustering-grammar .vcm-node-key.class { height: 0.8rem; }
+    #vcm-clustering-grammar .vcm-node-key.function { border-radius: 50%; }
+    #vcm-clustering-grammar .vcm-node-key.utility {
+      width: 0.65rem;
+      height: 0.65rem;
+      transform: rotate(45deg);
+    }
+    #vcm-clustering-grammar .vcm-node-key.state { border-radius: 999px; }
+    #vcm-clustering-grammar .vcm-node-key.external {
+      clip-path: polygon(18% 0, 82% 0, 100% 50%, 82% 100%, 18% 100%, 0 50%);
+    }
+    #vcm-clustering-grammar .cluster-hull {
+      fill: color-mix(in srgb, var(--foreground) 3%, transparent);
+      stroke: var(--border);
+      stroke-width: 1.5;
+    }
+    #vcm-clustering-grammar .cluster-hull.shared {
+      fill: transparent;
+      stroke-dasharray: 7 5;
+    }
+    #vcm-clustering-grammar .cluster-label {
+      fill: var(--muted-foreground);
+      font-size: var(--font-size-base);
+      font-weight: 500;
+    }
+    #vcm-clustering-grammar .edge {
+      cursor: pointer;
+      transition: opacity 160ms ease;
+    }
+    #vcm-clustering-grammar .edge.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #vcm-clustering-grammar .edge-visible {
+      fill: none;
+      stroke-width: var(--edge-width, 2);
+      opacity: var(--edge-opacity, 0.72);
+      transition: stroke-width 160ms ease, opacity 160ms ease;
+    }
+    #vcm-clustering-grammar .edge.selected .edge-visible {
+      stroke-width: calc(var(--edge-width, 2) + 2px);
+      opacity: 1;
+    }
+    #vcm-clustering-grammar .edge-hit {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 14;
+      pointer-events: stroke;
+    }
+    #vcm-clustering-grammar .edge.call .edge-visible {
+      stroke: var(--viz-series-1);
+      marker-end: url(#vcm-cluster-arrow-call);
+    }
+    #vcm-clustering-grammar .edge.import .edge-visible {
+      stroke: var(--viz-series-2);
+      marker-end: url(#vcm-cluster-arrow-import);
+    }
+    #vcm-clustering-grammar .edge.data .edge-visible {
+      stroke: var(--viz-series-4);
+      marker-end: url(#vcm-cluster-arrow-data);
+    }
+    #vcm-clustering-grammar .edge.event .edge-visible {
+      stroke: var(--viz-series-3);
+      marker-end: url(#vcm-cluster-arrow-event);
+    }
+    #vcm-clustering-grammar .edge.provider .edge-visible {
+      stroke: var(--viz-series-5);
+      marker-end: url(#vcm-cluster-arrow-provider);
+    }
+    #vcm-clustering-grammar .edge.async .edge-visible { stroke-dasharray: 8 5; }
+    #vcm-clustering-grammar .edge.callback .edge-visible { stroke-dasharray: 2 5; }
+    #vcm-clustering-grammar .node {
+      cursor: pointer;
+      transition: opacity 160ms ease;
+    }
+    #vcm-clustering-grammar .node .node-shape {
+      fill: color-mix(in srgb, var(--foreground) 8%, var(--background));
+      stroke: color-mix(in srgb, var(--foreground) 48%, var(--border));
+      stroke-width: 1.4;
+    }
+    #vcm-clustering-grammar .node.utility .node-shape {
+      fill: url(#vcm-cluster-utility-pattern);
+      stroke: var(--muted-foreground);
+    }
+    #vcm-clustering-grammar .node.state .node-shape {
+      fill: color-mix(in srgb, var(--viz-series-4) 12%, var(--background));
+      stroke: color-mix(in srgb, var(--viz-series-4) 64%, var(--border));
+    }
+    #vcm-clustering-grammar .node.external .node-shape {
+      fill: color-mix(in srgb, var(--viz-series-5) 10%, var(--background));
+      stroke: color-mix(in srgb, var(--viz-series-5) 60%, var(--border));
+    }
+    #vcm-clustering-grammar .node.selected .node-shape {
+      stroke: var(--primary);
+      stroke-width: 3.2;
+    }
+    #vcm-clustering-grammar .node-label {
+      fill: var(--foreground);
+      font-size: var(--font-size-base);
+      font-weight: 500;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+    #vcm-clustering-grammar .role-label {
+      fill: var(--muted-foreground);
+      font-size: var(--font-size-base);
+      text-anchor: middle;
+      pointer-events: none;
+    }
+    #vcm-clustering-grammar .vcm-tooltip {
+      position: absolute;
+      display: none;
+      max-width: 300px;
+      pointer-events: none;
+      z-index: 4;
+    }
+    #vcm-clustering-grammar .vcm-detail {
+      margin-top: 0.7rem;
+    }
+    #vcm-clustering-grammar .vcm-detail code,
+    #vcm-clustering-grammar .vcm-detail span {
+      overflow-wrap: anywhere;
+    }
+    @media (max-width: 520px) {
+      #vcm-clustering-grammar .vcm-stage { height: 460px; }
+      #vcm-clustering-grammar .vcm-key { white-space: normal; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #vcm-clustering-grammar .edge,
+      #vcm-clustering-grammar .edge-visible,
+      #vcm-clustering-grammar .node { transition: none; }
+    }
+  </style>
+
+  <div class="viz-controls" aria-label="Clustering grammar controls">
+    <label class="form-label" for="vcm-cluster-decomposition">
+      Decomposition
+      <select id="vcm-cluster-decomposition" class="form-select">
+        <option value="declared">Declared ownership</option>
+        <option value="inferred">Inferred static affinity</option>
+      </select>
+    </label>
+    <label class="form-label" for="vcm-cluster-relation">
+      Relationships
+      <select id="vcm-cluster-relation" class="form-select">
+        <option value="all">All relationships</option>
+        <option value="call">Calls and control</option>
+        <option value="import">Imports and types</option>
+        <option value="data">State and storage</option>
+        <option value="event">Client events</option>
+        <option value="provider">External providers</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="viz-row vcm-legend text-small" aria-label="Relationship and node grammar">
+    <span class="vcm-key"><span class="vcm-line-key"></span>call/control</span>
+    <span class="vcm-key"><span class="vcm-line-key import"></span>import/type</span>
+    <span class="vcm-key"><span class="vcm-line-key data"></span>state/storage</span>
+    <span class="vcm-key"><span class="vcm-line-key event"></span>client event</span>
+    <span class="vcm-key"><span class="vcm-line-key provider"></span>provider/callback</span>
+    <span class="vcm-key"><span class="vcm-node-key"></span>component</span>
+    <span class="vcm-key"><span class="vcm-node-key interface"></span>interface</span>
+    <span class="vcm-key"><span class="vcm-node-key class"></span>class</span>
+    <span class="vcm-key"><span class="vcm-node-key function"></span>function</span>
+    <span class="vcm-key"><span class="vcm-node-key utility"></span>shared utility</span>
+    <span class="vcm-key"><span class="vcm-node-key state"></span>state</span>
+    <span class="vcm-key"><span class="vcm-node-key external"></span>external</span>
+  </div>
+
+  <div class="card vcm-stage" id="vcm-cluster-stage">
+    <svg id="vcm-cluster-svg" viewBox="0 0 840 470" role="img" aria-label="Software clustering and relationship visual grammar">
+      <defs>
+        <pattern id="vcm-cluster-utility-pattern" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="7" height="7" fill="var(--background)"></rect>
+          <line x1="0" y1="0" x2="0" y2="7" stroke="var(--muted-foreground)" stroke-width="2" opacity="0.36"></line>
+        </pattern>
+        <marker id="vcm-cluster-arrow-call" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--viz-series-1)"></path>
+        </marker>
+        <marker id="vcm-cluster-arrow-import" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--viz-series-2)"></path>
+        </marker>
+        <marker id="vcm-cluster-arrow-data" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--viz-series-4)"></path>
+        </marker>
+        <marker id="vcm-cluster-arrow-event" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--viz-series-3)"></path>
+        </marker>
+        <marker id="vcm-cluster-arrow-provider" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--viz-series-5)"></path>
+        </marker>
+      </defs>
+      <g id="vcm-cluster-hulls"></g>
+      <g id="vcm-cluster-edges"></g>
+      <g id="vcm-cluster-nodes"></g>
+    </svg>
+    <div id="vcm-cluster-tooltip" class="tooltip vcm-tooltip text-small"></div>
+    <span id="vcm-cluster-summary" class="sr-only">Declared ownership layout with typed relationships and shared utility roles.</span>
+  </div>
+
+  <div class="card vcm-detail" aria-live="polite">
+    <code id="vcm-cluster-detail-title">Declared ownership</code>
+    <span id="vcm-cluster-detail-copy"> · proximity follows runtime and ownership boundaries; relationship semantics remain independent.</span>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.getElementById('vcm-clustering-grammar');
+      const svg = root.querySelector('#vcm-cluster-svg');
+      const stage = root.querySelector('#vcm-cluster-stage');
+      const hullLayer = root.querySelector('#vcm-cluster-hulls');
+      const edgeLayer = root.querySelector('#vcm-cluster-edges');
+      const nodeLayer = root.querySelector('#vcm-cluster-nodes');
+      const tooltip = root.querySelector('#vcm-cluster-tooltip');
+      const decompositionSelect = root.querySelector('#vcm-cluster-decomposition');
+      const relationSelect = root.querySelector('#vcm-cluster-relation');
+      const detailTitle = root.querySelector('#vcm-cluster-detail-title');
+      const detailCopy = root.querySelector('#vcm-cluster-detail-copy');
+      const accessibleSummary = root.querySelector('#vcm-cluster-summary');
+      const svgNS = 'http://www.w3.org/2000/svg';
+
+      const nodes = [
+        { id:'tool-ui', name:'Photo tool UI', kind:'interface', role:'feature entry', declared:'browser runtime', inferred:'browser ML', w:112, h:38 },
+        { id:'edge-ml', name:'Browser ML', kind:'component', role:'cluster hub', declared:'browser runtime', inferred:'browser ML', w:105, h:38 },
+        { id:'analyze-api', name:'Analyze API', kind:'interface', role:'connector', declared:'HTTP boundary', inferred:'analysis', w:105, h:38 },
+        { id:'enhance-api', name:'Enhance API', kind:'interface', role:'feature entry', declared:'HTTP boundary', inferred:'enhancement', w:108, h:38 },
+        { id:'image-analysis', name:'Image analysis', kind:'component', role:'cluster hub', declared:'application services', inferred:'analysis', w:118, h:38 },
+        { id:'ai-analysis', name:'AI analysis', kind:'component', role:'connector', declared:'application services', inferred:'analysis', w:105, h:38 },
+        { id:'enhancer', name:'Enhancement', kind:'component', role:'cluster hub', declared:'application services', inferred:'enhancement', w:110, h:38 },
+        { id:'billing', name:'Billing', kind:'component', role:'cluster hub', declared:'application services', inferred:'payment + identity', w:92, h:38 },
+        { id:'identity', name:'Identity', kind:'component', role:'cluster member', declared:'application services', inferred:'payment + identity', w:92, h:38 },
+        { id:'jobs', name:'Job records', kind:'utility', role:'shared utility', declared:'application services', inferred:'shared utility belt', w:92, h:44 },
+        { id:'config', name:'Config + logger', kind:'utility', role:'omnipresent utility', declared:'application services', inferred:'shared utility belt', w:100, h:46 },
+        { id:'database', name:'Database', kind:'state', role:'shared state', declared:'platform + external', inferred:'shared utility belt', w:96, h:38 },
+        { id:'storage', name:'Image storage', kind:'state', role:'shared state', declared:'platform + external', inferred:'shared utility belt', w:108, h:38 },
+        { id:'gemini', name:'Gemini', kind:'external', role:'external connector', declared:'platform + external', inferred:'shared utility belt', w:92, h:40 },
+        { id:'paycom', name:'Paycom', kind:'external', role:'external member', declared:'platform + external', inferred:'payment + identity', w:92, h:40 }
+      ];
+      const nodeById = new Map(nodes.map(node => [node.id, node]));
+
+      const positions = {
+        declared: {
+          'tool-ui':[95,120], 'edge-ml':[95,225],
+          'analyze-api':[275,120], 'enhance-api':[275,225],
+          'image-analysis':[445,95], 'ai-analysis':[555,95], 'enhancer':[445,185],
+          'billing':[555,185], 'identity':[445,275], 'jobs':[555,275], 'config':[500,375],
+          'database':[700,95], 'storage':[775,180], 'gemini':[700,275], 'paycom':[775,365]
+        },
+        inferred: {
+          'analyze-api':[75,105], 'image-analysis':[180,105], 'ai-analysis':[125,185],
+          'enhance-api':[375,105], 'enhancer':[480,105],
+          'billing':[630,105], 'identity':[735,105], 'paycom':[690,195],
+          'tool-ui':[70,335], 'edge-ml':[180,335],
+          'jobs':[315,365], 'config':[425,365], 'database':[545,365],
+          'gemini':[660,335], 'storage':[775,395]
+        }
+      };
+
+      const clusterLayouts = {
+        declared: [
+          { label:'Browser runtime', x:20, y:45, w:150, h:270 },
+          { label:'HTTP boundary', x:195, y:45, w:160, h:270 },
+          { label:'Application services', x:375, y:45, w:250, h:390 },
+          { label:'Platform + external', x:645, y:45, w:180, h:390 }
+        ],
+        inferred: [
+          { label:'Analysis affinity', x:20, y:45, w:275, h:205 },
+          { label:'Enhancement affinity', x:320, y:45, w:235, h:205 },
+          { label:'Payment + identity', x:580, y:45, w:240, h:225 },
+          { label:'Browser ML affinity', x:20, y:285, w:225, h:145 },
+          { label:'Shared utilities + connectors', x:270, y:295, w:550, h:140, shared:true }
+        ]
+      };
+
+      const edges = [
+        { id:'ui-analyze', from:'tool-ui', to:'analyze-api', family:'event', execution:'async', strength:3, confidence:1, summary:'Browser request starts analysis.' },
+        { id:'ui-enhance', from:'tool-ui', to:'enhance-api', family:'event', execution:'async', strength:2, confidence:1, summary:'Browser request starts enhancement.' },
+        { id:'ui-edge', from:'tool-ui', to:'edge-ml', family:'event', execution:'async', strength:3, confidence:1, summary:'Browser event invokes local ML.' },
+        { id:'analyze-image', from:'analyze-api', to:'image-analysis', family:'call', execution:'sync', strength:4, confidence:1, summary:'Blocking service invocation.' },
+        { id:'analyze-ai', from:'analyze-api', to:'ai-analysis', family:'call', execution:'sync', strength:3, confidence:1, summary:'Blocking AI-analysis invocation.' },
+        { id:'enhance-orchestrator', from:'enhance-api', to:'enhancer', family:'call', execution:'sync', strength:4, confidence:1, summary:'Blocking enhancement orchestration.' },
+        { id:'ai-gemini', from:'ai-analysis', to:'gemini', family:'provider', execution:'sync', strength:3, confidence:0.92, summary:'Blocking external provider call.' },
+        { id:'enhance-gemini', from:'enhancer', to:'gemini', family:'provider', execution:'sync', strength:2, confidence:0.92, summary:'Optional external enhancement provider.' },
+        { id:'edge-storage', from:'edge-ml', to:'storage', family:'data', execution:'async', strength:2, confidence:0.86, summary:'Processed image may be uploaded for durable storage.' },
+        { id:'analyze-jobs', from:'analyze-api', to:'jobs', family:'call', execution:'sync', strength:3, confidence:1, summary:'Persists a completed job record inline; this is not queue dispatch.' },
+        { id:'enhance-jobs', from:'enhance-api', to:'jobs', family:'call', execution:'sync', strength:2, confidence:1, summary:'Persists enhancement work inline.' },
+        { id:'jobs-db', from:'jobs', to:'database', family:'data', execution:'sync', strength:4, confidence:1, summary:'Durable job-record write.' },
+        { id:'billing-db', from:'billing', to:'database', family:'data', execution:'sync', strength:4, confidence:1, summary:'Durable payment and credit state.' },
+        { id:'identity-db', from:'identity', to:'database', family:'data', execution:'sync', strength:3, confidence:1, summary:'Durable user and identity state.' },
+        { id:'billing-paycom', from:'billing', to:'paycom', family:'provider', execution:'async', strength:2, confidence:0.94, summary:'Checkout handoff to Paycom.' },
+        { id:'paycom-billing', from:'paycom', to:'billing', family:'provider', execution:'callback', strength:3, confidence:0.94, summary:'Merchant callback returns to billing.' },
+        { id:'analysis-config', from:'analyze-api', to:'config', family:'import', execution:'static', strength:2, confidence:1, count:3, summary:'Three static configuration/helper dependencies; clustering weight is attenuated by broad fan-in.' },
+        { id:'enhance-config', from:'enhance-api', to:'config', family:'import', execution:'static', strength:2, confidence:1, count:2, summary:'Two static helper dependencies; relation remains visible although utility affinity is weak.' },
+        { id:'billing-config', from:'billing', to:'config', family:'import', execution:'static', strength:1, confidence:1, count:2, summary:'Shared configuration dependency.' },
+        { id:'edge-config', from:'edge-ml', to:'config', family:'import', execution:'static', strength:1, confidence:0.78, count:1, summary:'Illustrative shared helper dependency.' }
+      ];
+
+      function element(name, attrs = {}) {
+        const item = document.createElementNS(svgNS, name);
+        Object.entries(attrs).forEach(([key, value]) => item.setAttribute(key, value));
+        return item;
+      }
+
+      function nodeShape(node) {
+        const w = node.w;
+        const h = node.h;
+        if (node.kind === 'interface') {
+          return element('polygon', { class:'node-shape', points:`${-w/2+10},${-h/2} ${w/2-10},${-h/2} ${w/2},0 ${w/2-10},${h/2} ${-w/2+10},${h/2} ${-w/2},0` });
+        }
+        if (node.kind === 'utility') {
+          return element('polygon', { class:'node-shape', points:`0,${-h/2} ${w/2},0 0,${h/2} ${-w/2},0` });
+        }
+        if (node.kind === 'external') {
+          return element('polygon', { class:'node-shape', points:`${-w/2+12},${-h/2} ${w/2-12},${-h/2} ${w/2},0 ${w/2-12},${h/2} ${-w/2+12},${h/2} ${-w/2},0` });
+        }
+        return element('rect', { class:'node-shape', x:-w/2, y:-h/2, width:w, height:h, rx:node.kind === 'state' ? h/2 : 8 });
+      }
+
+      function makeNode(node) {
+        const group = element('g', { class:`node ${node.kind}`, 'data-node':node.id });
+        group.appendChild(nodeShape(node));
+        const label = element('text', { class:'node-label', x:0, y:4 });
+        label.textContent = node.name;
+        group.appendChild(label);
+        group.addEventListener('pointerenter', event => showNodeTooltip(event, node));
+        group.addEventListener('pointermove', moveTooltip);
+        group.addEventListener('pointerleave', hideTooltip);
+        group.addEventListener('click', () => selectNode(node));
+        nodeLayer.appendChild(group);
+      }
+
+      function makeEdge(edge) {
+        const group = element('g', {
+          class:`edge ${edge.family} ${edge.execution}`,
+          'data-edge':edge.id,
+          style:`--edge-width:${1.2 + edge.strength * 0.58}px;--edge-opacity:${0.32 + edge.confidence * 0.58}`
+        });
+        group.appendChild(element('path', { class:'edge-visible' }));
+        const hit = element('path', { class:'edge-hit' });
+        hit.addEventListener('pointerenter', event => showEdgeTooltip(event, edge));
+        hit.addEventListener('pointermove', moveTooltip);
+        hit.addEventListener('pointerleave', hideTooltip);
+        hit.addEventListener('click', () => selectEdge(edge));
+        group.appendChild(hit);
+        edgeLayer.appendChild(group);
+      }
+
+      function drawHulls(mode) {
+        hullLayer.replaceChildren();
+        clusterLayouts[mode].forEach(cluster => {
+          hullLayer.appendChild(element('rect', {
+            class:`cluster-hull ${cluster.shared ? 'shared' : ''}`,
+            x:cluster.x, y:cluster.y, width:cluster.w, height:cluster.h, rx:12
+          }));
+          const label = element('text', { class:'cluster-label', x:cluster.x+10, y:cluster.y+20 });
+          label.textContent = cluster.label;
+          hullLayer.appendChild(label);
+        });
+      }
+
+      function edgePath(edge, current) {
+        const from = current[edge.from];
+        const to = current[edge.to];
+        const dx = to[0] - from[0];
+        const dy = to[1] - from[1];
+        const bend = Math.min(42, Math.max(-42, (edge.id.length % 5 - 2) * 10));
+        const cx = (from[0] + to[0]) / 2 - (Math.abs(dy) > Math.abs(dx) ? bend : 0);
+        const cy = (from[1] + to[1]) / 2 + (Math.abs(dx) >= Math.abs(dy) ? bend : 0);
+        return `M ${from[0]} ${from[1]} Q ${cx} ${cy} ${to[0]} ${to[1]}`;
+      }
+
+      function renderPositions(current) {
+        nodes.forEach(node => {
+          const group = nodeLayer.querySelector(`[data-node="${node.id}"]`);
+          const [x, y] = current[node.id];
+          group.setAttribute('transform', `translate(${x} ${y})`);
+        });
+        edges.forEach(edge => {
+          const path = edgePath(edge, current);
+          const group = edgeLayer.querySelector(`[data-edge="${edge.id}"]`);
+          group.querySelector('.edge-visible').setAttribute('d', path);
+          group.querySelector('.edge-hit').setAttribute('d', path);
+        });
+      }
+
+      let mode = 'declared';
+      let currentPositions = Object.fromEntries(Object.entries(positions.declared).map(([id, value]) => [id, [...value]]));
+      let animationFrame = null;
+
+      function animateMode(nextMode) {
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+        drawHulls(nextMode);
+        const start = Object.fromEntries(Object.entries(currentPositions).map(([id, value]) => [id, [...value]]));
+        const target = positions[nextMode];
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const duration = reduced ? 0 : 420;
+        const startedAt = performance.now();
+
+        function frame(now) {
+          const raw = duration ? Math.min(1, (now - startedAt) / duration) : 1;
+          const progress = 1 - Math.pow(1 - raw, 3);
+          Object.keys(target).forEach(id => {
+            currentPositions[id] = [
+              start[id][0] + (target[id][0] - start[id][0]) * progress,
+              start[id][1] + (target[id][1] - start[id][1]) * progress
+            ];
+          });
+          renderPositions(currentPositions);
+          if (raw < 1) animationFrame = requestAnimationFrame(frame);
+          else animationFrame = null;
+        }
+        animationFrame = requestAnimationFrame(frame);
+      }
+
+      function applyRelationFilter() {
+        const family = relationSelect.value;
+        edgeLayer.querySelectorAll('.edge').forEach(group => {
+          group.classList.toggle('hidden', family !== 'all' && !group.classList.contains(family));
+        });
+        accessibleSummary.textContent = `${mode === 'declared' ? 'Declared ownership' : 'Inferred static affinity'} layout showing ${family === 'all' ? 'all typed relationships' : family + ' relationships'} and explicit shared utility roles.`;
+      }
+
+      function selectNode(node) {
+        root.querySelectorAll('.node').forEach(group => group.classList.toggle('selected', group.dataset.node === node.id));
+        root.querySelectorAll('.edge').forEach(group => group.classList.remove('selected'));
+        detailTitle.textContent = node.name;
+        const cluster = mode === 'declared' ? node.declared : node.inferred;
+        detailCopy.textContent = ` · ${node.kind}; ${node.role}; ${mode === 'declared' ? 'owned by' : 'placed with'} ${cluster}. Shape encodes kind; proximity encodes the selected decomposition.`;
+      }
+
+      function selectEdge(edge) {
+        root.querySelectorAll('.edge').forEach(group => group.classList.toggle('selected', group.dataset.edge === edge.id));
+        root.querySelectorAll('.node').forEach(group => group.classList.remove('selected'));
+        const from = nodeById.get(edge.from);
+        const to = nodeById.get(edge.to);
+        detailTitle.textContent = `${from.name} → ${to.name}`;
+        detailCopy.textContent = ` · ${edge.family}; ${edge.execution}; strength ${edge.strength}/4; evidence ${Math.round(edge.confidence*100)}%. ${edge.summary}`;
+      }
+
+      function showNodeTooltip(event, node) {
+        tooltip.textContent = `${node.name} · ${node.kind} · ${node.role} · click for placement meaning`;
+        tooltip.style.display = 'block';
+        moveTooltip(event);
+      }
+
+      function showEdgeTooltip(event, edge) {
+        const from = nodeById.get(edge.from);
+        const to = nodeById.get(edge.to);
+        tooltip.textContent = `${from.name} → ${to.name} · ${edge.family} · ${edge.execution}${edge.count ? ` · ${edge.count} aggregated dependencies` : ''}`;
+        tooltip.style.display = 'block';
+        moveTooltip(event);
+      }
+
+      function moveTooltip(event) {
+        const bounds = stage.getBoundingClientRect();
+        const left = Math.min(event.clientX - bounds.left + 12, stage.clientWidth - 312);
+        const top = Math.max(8, event.clientY - bounds.top - 42);
+        tooltip.style.left = `${Math.max(8, left)}px`;
+        tooltip.style.top = `${top}px`;
+      }
+
+      function hideTooltip() {
+        tooltip.style.display = 'none';
+      }
+
+      nodes.forEach(makeNode);
+      edges.forEach(makeEdge);
+      drawHulls(mode);
+      renderPositions(currentPositions);
+      applyRelationFilter();
+
+      decompositionSelect.addEventListener('change', () => {
+        mode = decompositionSelect.value;
+        root.querySelectorAll('.node,.edge').forEach(group => group.classList.remove('selected'));
+        animateMode(mode);
+        detailTitle.textContent = mode === 'declared' ? 'Declared ownership' : 'Inferred static affinity';
+        detailCopy.textContent = mode === 'declared'
+          ? ' · proximity follows runtime and ownership boundaries; relationship semantics remain independent.'
+          : ' · proximity follows feature affinity; broad utilities and shared connectors stay outside ordinary feature clusters.';
+        applyRelationFilter();
+      });
+
+      relationSelect.addEventListener('change', () => {
+        root.querySelectorAll('.edge').forEach(group => group.classList.remove('selected'));
+        applyRelationFilter();
+        detailTitle.textContent = relationSelect.options[relationSelect.selectedIndex].textContent;
+        detailCopy.textContent = ' · edge color encodes relation family; dash pattern encodes execution; width encodes normalized strength; arrowheads encode direction.';
+      });
+    })();
+  </script>
+</div>

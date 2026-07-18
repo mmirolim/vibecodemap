@@ -11,15 +11,22 @@ supports that conclusion.
 - VCM 0.1 structural DSL and JSON Schema;
 - VCM 0.2 draft for measurements, findings, provenance, freshness, review
   priority, semantic zoom, and visual lenses;
+- VCM 0.3 draft for multi-signal affinity, software clustering, hub roles,
+  revision stability, and relationship-aware visual grammar;
+- a Go affinity foundation with per-layer normalization, explainable SArF
+  Dedication attenuation, connector/hub role metrics, and a replaceable cluster
+  engine boundary;
 - conservative Python structure and quality extractors;
 - validators for the structural and quality models;
 - a source-linked Uzumtools fixture;
-- a [Three.js interaction experiment](prototype/README.md) covering package,
-  file, and function detail.
+- [interaction experiments](prototype/README.md) covering a Three.js condition
+  landscape, a clustered 3D pipe city, and directed system, component,
+  external-provider, and state flows.
 
-The current prototype uses Python for the Python-specific evidence adapters and
-plain JavaScript with Three.js for the visual experiment. That is experimental
-code, not the intended production boundary.
+The current prototype uses Go for the first renderer-independent affinity core,
+Python for Python-specific evidence adapters, and plain JavaScript with Three.js
+or SVG for visual experiments. The concrete Leiden/Infomap engines and generic
+TypeScript renderer do not exist yet.
 
 ## Implementation direction
 
@@ -36,6 +43,8 @@ The proposed production split is:
   metrics.
 
 See [ADR-001](docs/ADR-001-IMPLEMENTATION-STACK.md) for the decision and tradeoffs.
+The clustering and visual-channel design is specified in
+[VCM 0.3](dsl/VIBECODEMAP_CLUSTERING_AND_VISUAL_GRAMMAR_0_3.md).
 
 ## Validate the current models
 
@@ -45,6 +54,8 @@ python3 tools/validate_vcm.py examples/uzumtools/uzumtools.vcm.yaml
 python3 tools/validate_quality_vcm.py \
   examples/uzumtools/uzumtools.quality.vcm.yaml \
   --core examples/uzumtools/uzumtools.vcm.yaml
+
+go test ./...
 ```
 
 The example-specific commands and limitations are documented in
@@ -52,10 +63,13 @@ The example-specific commands and limitations are documented in
 
 ## Near-term implementation
 
-1. Define the versioned Go-to-adapter process contract.
-2. Make the TypeScript renderer consume validated VCM JSON instead of embedded
+1. Resolve Python imports and candidate calls into source-linked affinity-layer
+   edges at file, class, and function granularity.
+2. Add a Leiden/CPM engine adapter behind the Go cluster interface and emit
+   reproducible cluster-run records.
+3. Make the TypeScript renderer consume validated VCM JSON instead of embedded
    fixture data.
-3. Add a Go CLI that runs adapters, validates evidence, computes aggregates,
+4. Add a Go CLI that runs adapters, validates evidence, computes aggregates,
    and serves the renderer locally.
-4. Compare the 3D landscape with a 2D treemap/matrix on concrete review tasks.
-5. Map a second repository without changing the DSL.
+5. Compare declared ownership with inferred clusters across Uzumtools revisions,
+   then map a second structurally different repository.
