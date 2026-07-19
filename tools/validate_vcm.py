@@ -418,7 +418,10 @@ def main() -> int:
         result.error("model.repository.root must be a non-empty path")
         root = Path("/")
     else:
-        root = Path(root_value).resolve()
+        root = Path(root_value)
+        if not root.is_absolute():
+            root = args.model.resolve().parent / root
+        root = root.resolve()
         if not root.is_dir():
             result.error(f"repository root is not a directory: {root}")
 

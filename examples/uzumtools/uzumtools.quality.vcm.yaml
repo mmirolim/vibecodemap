@@ -78,7 +78,7 @@ measurements:
       producer: coverage.py
       producer_version: "7.4.0"
       method: runtime_observed
-      report: /Users/mirolim/projects/uzumtools/coverage.xml
+      report: ../../../uzumtools/coverage.xml
       configuration: branch-enabled Cobertura XML
       scope: 41 Python files recorded by the report
       limitations:

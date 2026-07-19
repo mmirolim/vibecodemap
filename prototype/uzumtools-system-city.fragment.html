@@ -1,0 +1,2052 @@
+<div id="uzum-system-city">
+  <style>
+    #uzum-system-city {
+      width: 100%;
+      color: var(--foreground);
+    }
+    #uzum-system-city .vcm-stage {
+      position: relative;
+      height: 560px;
+      overflow: hidden;
+      padding: 0;
+    }
+    #uzum-system-city canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+    #uzum-system-city .vcm-label-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    #uzum-system-city .vcm-label {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+    }
+    #uzum-system-city .vcm-system-sign {
+      min-width: 1.75rem;
+      text-align: center;
+    }
+    #uzum-system-city .vcm-tooltip {
+      position: absolute;
+      display: none;
+      max-width: 290px;
+      pointer-events: none;
+      z-index: 4;
+    }
+    #uzum-system-city .vcm-hint {
+      position: absolute;
+      left: 50%;
+      bottom: 0.75rem;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    #uzum-system-city .vcm-detail {
+      margin-top: 0.75rem;
+    }
+    #uzum-system-city .vcm-detail-copy {
+      min-width: 0;
+      flex: 1 1 30rem;
+    }
+    #uzum-system-city .vcm-detail-copy code {
+      overflow-wrap: anywhere;
+    }
+    #uzum-system-city .vcm-detail-metrics {
+      margin-top: 0.25rem;
+    }
+    #uzum-system-city .vcm-key {
+      display: grid;
+      gap: 0.35rem;
+      margin: 0.35rem 0 0.55rem;
+    }
+    #uzum-system-city .vcm-key-row,
+    #uzum-system-city .vcm-key-item {
+      display: flex;
+      align-items: center;
+    }
+    #uzum-system-city .vcm-key-row {
+      flex-wrap: wrap;
+      gap: 0.35rem 0.7rem;
+    }
+    #uzum-system-city .vcm-key-item {
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+    #uzum-system-city .vcm-heat-scale {
+      display: inline-block;
+      width: 6.5rem;
+      height: 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--muted-foreground), var(--viz-series-1), var(--destructive));
+    }
+    #uzum-system-city .vcm-band-stack {
+      display: inline-grid;
+      width: 1rem;
+      height: 1rem;
+      border: 1px solid var(--border);
+      background:
+        linear-gradient(to bottom,
+          var(--destructive) 0 22%, transparent 22% 27%,
+          var(--viz-series-1) 27% 49%, transparent 49% 54%,
+          var(--muted-foreground) 54% 76%, transparent 76% 81%,
+          var(--viz-series-1) 81% 100%);
+    }
+    #uzum-system-city .vcm-unknown-band {
+      display: inline-block;
+      width: 1rem;
+      height: 0.42rem;
+      border: 1px dashed var(--muted-foreground);
+      background: transparent;
+    }
+    #uzum-system-city .vcm-node-mark {
+      display: inline-block;
+      flex: none;
+      width: 0.7rem;
+      height: 0.7rem;
+      border: 1px solid var(--border);
+      background: var(--muted);
+    }
+    #uzum-system-city .vcm-node-interface {
+      transform: rotate(45deg);
+    }
+    #uzum-system-city .vcm-node-utility {
+      border-radius: 50%;
+    }
+    #uzum-system-city .vcm-node-state {
+      width: 0.9rem;
+      border-radius: 999px;
+    }
+    #uzum-system-city .vcm-node-external {
+      clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+    }
+    #uzum-system-city .vcm-node-missing {
+      background: transparent;
+      border-style: dashed;
+    }
+    #uzum-system-city .vcm-system-mark {
+      display: inline-block;
+      flex: none;
+      width: 1.55rem;
+      height: 0.18rem;
+      border-radius: 999px;
+    }
+    #uzum-system-city .vcm-system-call { background: var(--viz-series-1); }
+    #uzum-system-city .vcm-system-import { background: var(--viz-series-2); }
+    #uzum-system-city .vcm-system-event { background: var(--viz-series-3); }
+    #uzum-system-city .vcm-system-state { background: var(--viz-series-4); }
+    #uzum-system-city .vcm-system-provider { background: var(--viz-series-5); }
+    #uzum-system-city .vcm-system-segmented {
+      background: repeating-linear-gradient(90deg, var(--foreground) 0 0.28rem, transparent 0.28rem 0.45rem);
+    }
+    #uzum-system-city .vcm-security-mark,
+    #uzum-system-city .vcm-input-mark,
+    #uzum-system-city .vcm-output-mark,
+    #uzum-system-city .vcm-persist-mark {
+      display: inline-block;
+      flex: none;
+      width: 0.72rem;
+      height: 0.72rem;
+    }
+    #uzum-system-city .vcm-security-mark {
+      border-radius: 50%;
+      background: var(--destructive);
+      box-shadow: inset 0 0 0 1px var(--border);
+    }
+    #uzum-system-city .vcm-input-mark {
+      background: var(--viz-series-2);
+      clip-path: polygon(0 0, 100% 50%, 0 100%);
+    }
+    #uzum-system-city .vcm-output-mark {
+      background: var(--viz-series-5);
+      clip-path: polygon(100% 0, 0 50%, 100% 100%);
+    }
+    #uzum-system-city .vcm-persist-mark {
+      width: 0.95rem;
+      border-radius: 999px;
+      background: var(--viz-series-4);
+    }
+    #uzum-system-city .vcm-float-mark {
+      transform: translateY(-0.15rem);
+      opacity: 0.68;
+      box-shadow: 0 0.28rem 0 -0.08rem var(--muted-foreground);
+    }
+    @media (max-width: 520px) {
+      #uzum-system-city .vcm-key,
+      #uzum-system-city .vcm-key-row {
+        min-width: 0;
+      }
+      #uzum-system-city .vcm-key-item {
+        min-width: 0;
+        white-space: normal;
+      }
+      #uzum-system-city .vcm-stage {
+        height: 470px;
+      }
+      #uzum-system-city .vcm-hint {
+        width: calc(100% - 2rem);
+        white-space: normal;
+        text-align: center;
+      }
+    }
+  </style>
+
+  <div class="viz-controls" aria-label="Software system city controls">
+    <label class="form-label" for="vcm-system-layout">
+      Districts
+      <select id="vcm-system-layout" class="form-select">
+        <option value="declared">Declared runtime boundaries</option>
+        <option value="feature">Feature affinity sketch</option>
+      </select>
+    </label>
+    <label class="form-label" for="vcm-system-family">
+      Roads
+      <select id="vcm-system-family" class="form-select">
+        <option value="behavior">Behavior + state (default)</option>
+        <option value="all">All, including static dependencies</option>
+        <option value="call">Call / control</option>
+        <option value="event">Event / message</option>
+        <option value="state">State / storage</option>
+        <option value="provider">External / provider</option>
+        <option value="import">Static import / type dependency</option>
+      </select>
+    </label>
+    <label class="form-label" for="vcm-system-surface">
+      Building surface
+      <select id="vcm-system-surface" class="form-select">
+        <option value="bands">Four review bands</option>
+        <option value="attention">Review priority</option>
+        <option value="coverage">Missing coverage</option>
+        <option value="complexity">Complexity</option>
+        <option value="coupling">Mapped coupling</option>
+        <option value="effects">Mutating side effects</option>
+      </select>
+    </label>
+    <label class="form-label" for="vcm-system-labels">
+      District labels
+      <select id="vcm-system-labels" class="form-select">
+        <option value="code">Codes</option>
+        <option value="full">Code + name</option>
+        <option value="hidden">Hidden</option>
+      </select>
+    </label>
+    <label class="form-label" for="vcm-system-focus">
+      Focus source
+      <select id="vcm-system-focus" class="form-select"></select>
+    </label>
+    <label class="form-label" for="vcm-system-security">
+      Security audit
+      <select id="vcm-system-security" class="form-select">
+        <option value="all">All review markers</option>
+        <option value="high">High severity only</option>
+        <option value="hidden">Hidden</option>
+      </select>
+    </label>
+    <div class="viz-row" aria-label="Camera presets">
+      <button type="button" class="btn" data-system-view="overview">Overview</button>
+      <button type="button" class="btn" data-system-view="buildings">Buildings</button>
+      <button type="button" class="btn btn-primary" data-system-view="detail">Detail</button>
+    </div>
+  </div>
+
+  <div class="vcm-key text-small" aria-label="Visual encoding legend" aria-live="polite">
+    <div class="vcm-key-row">
+      <span id="vcm-system-level" class="viz-badge">Loading 3D city…</span>
+      <span id="vcm-system-surface-name">Four review bands</span>
+      <span id="vcm-system-surface-low" class="text-muted">lower</span>
+      <span class="vcm-heat-scale" role="img" aria-label="Heat scale from lower to higher"></span>
+      <span id="vcm-system-surface-high" class="text-muted">higher</span>
+      <span class="vcm-key-item"><span class="vcm-band-stack" aria-hidden="true"></span>bottom→top: coverage · complexity · coupling · effects</span>
+      <span class="vcm-key-item"><span class="vcm-unknown-band" aria-hidden="true"></span>unknown</span>
+    </div>
+    <div class="vcm-key-row" aria-label="Building forms">
+      <span class="text-muted">Forms:</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark" aria-hidden="true"></span>component</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark vcm-node-interface" aria-hidden="true"></span>interface</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark vcm-node-utility" aria-hidden="true"></span>shared utility</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark vcm-node-state" aria-hidden="true"></span>state</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark vcm-node-external" aria-hidden="true"></span>external</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark vcm-node-missing" aria-hidden="true"></span>missing</span>
+      <span class="vcm-key-item"><span class="vcm-node-mark vcm-float-mark" aria-hidden="true"></span>floating: no direct mutation detected</span>
+    </div>
+    <div class="vcm-key-row" aria-label="Road relation families">
+      <span class="text-muted">Road lanes:</span>
+      <span class="vcm-key-item"><span class="vcm-system-mark vcm-system-call" aria-hidden="true"></span>call/control</span>
+      <span class="vcm-key-item"><span class="vcm-system-mark vcm-system-event" aria-hidden="true"></span>event/message</span>
+      <span class="vcm-key-item"><span class="vcm-system-mark vcm-system-state" aria-hidden="true"></span>state/storage</span>
+      <span class="vcm-key-item"><span class="vcm-system-mark vcm-system-provider" aria-hidden="true"></span>provider/callback</span>
+      <span class="vcm-key-item"><span class="vcm-system-mark vcm-system-import" aria-hidden="true"></span>static import/type (optional)</span>
+      <span class="vcm-key-item"><span class="vcm-system-mark vcm-system-segmented" aria-hidden="true"></span>dashed: async/callback</span>
+      <span class="vcm-key-item">road-end code = opposite district</span>
+    </div>
+    <div class="vcm-key-row" aria-label="Boundaries, persistence, and security">
+      <span class="text-muted">Boundaries:</span>
+      <span class="vcm-key-item"><span class="vcm-input-mark" aria-hidden="true"></span>input</span>
+      <span class="vcm-key-item"><span class="vcm-output-mark" aria-hidden="true"></span>output</span>
+      <span class="vcm-key-item"><span class="vcm-persist-mark" aria-hidden="true"></span>persistent state</span>
+      <span class="vcm-key-item"><span class="vcm-security-mark" aria-hidden="true"></span>security review: size = severity · opacity = confidence</span>
+    </div>
+    <div id="vcm-system-mode-note" class="text-muted"></div>
+  </div>
+
+  <div class="card vcm-stage" id="vcm-system-stage">
+    <div id="vcm-system-label-layer" class="vcm-label-layer" aria-hidden="true"></div>
+    <div id="vcm-system-tooltip" class="tooltip vcm-tooltip text-small"></div>
+    <div class="vcm-hint text-small text-muted">Hover scene · hold WASD to move · hold arrows to look around · drag rotates · scroll zooms · select to inspect</div>
+    <span class="sr-only">Interactive 3D code city for Uzumtools. Far zoom shows visibly coded districts and an orthogonally routed road network with separately allocated district gates. Middle zoom shows component buildings with broad flush review bands, explicit input and output ports, persistent-state labels, bounded local feeders, and security-review markers. Near zoom focuses the selected component and its strongest routes. From bottom to top, bands encode coverage gap, complexity, mapped coupling, and direct mutating effects. Security marker size encodes severity and opacity encodes confidence; a marker is an audit lead, not proof of a vulnerability. By default roads omit static import and type dependencies. Road lane color identifies the selected relation family, segmentation identifies asynchronous or callback execution, width identifies aggregate mapped strength, and arrows identify direction. Keyboard movement is time-based and changes only the camera. No moving traffic is shown because runtime traces have not been observed.</span>
+  </div>
+
+  <div class="card vcm-detail viz-row" aria-live="polite">
+    <div class="vcm-detail-copy">
+      <div><code id="vcm-system-path"></code> <span id="vcm-system-subject" class="text-muted text-small"></span></div>
+      <div id="vcm-system-summary" class="text-small"></div>
+      <div id="vcm-system-metrics" class="vcm-detail-metrics text-small text-muted"></div>
+    </div>
+    <button type="button" id="vcm-system-open" class="btn">Inspect source</button>
+  </div>
+  <script type="module">
+    import * as THREE from 'https://esm.sh/three@0.185.1';
+    import { OrbitControls } from 'https://esm.sh/three@0.185.1/examples/jsm/controls/OrbitControls.js';
+
+    const root = document.getElementById('uzum-system-city');
+    const stage = root.querySelector('#vcm-system-stage');
+    const labelLayer = root.querySelector('#vcm-system-label-layer');
+    const tooltip = root.querySelector('#vcm-system-tooltip');
+    const layoutSelect = root.querySelector('#vcm-system-layout');
+    const familySelect = root.querySelector('#vcm-system-family');
+    const surfaceSelect = root.querySelector('#vcm-system-surface');
+    const labelSelect = root.querySelector('#vcm-system-labels');
+    const focusSelect = root.querySelector('#vcm-system-focus');
+    const securitySelect = root.querySelector('#vcm-system-security');
+    const levelBadge = root.querySelector('#vcm-system-level');
+    const surfaceName = root.querySelector('#vcm-system-surface-name');
+    const surfaceLow = root.querySelector('#vcm-system-surface-low');
+    const surfaceHigh = root.querySelector('#vcm-system-surface-high');
+    const modeNote = root.querySelector('#vcm-system-mode-note');
+    const pathCopy = root.querySelector('#vcm-system-path');
+    const subjectCopy = root.querySelector('#vcm-system-subject');
+    const summaryCopy = root.querySelector('#vcm-system-summary');
+    const metricsCopy = root.querySelector('#vcm-system-metrics');
+    const openButton = root.querySelector('#vcm-system-open');
+    const basePath = '/Users/mirolim/projects/uzumtools/photochecker/';
+
+    function cssColor(variable) {
+      const probe = document.createElement('span');
+      probe.style.color = `var(${variable})`;
+      probe.style.display = 'none';
+      root.appendChild(probe);
+      const value = getComputedStyle(probe).color;
+      probe.remove();
+      const rgb = value.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/);
+      if (rgb) return `rgb(${rgb[1]}, ${rgb[2]}, ${rgb[3]})`;
+      const srgb = value.match(/^color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
+      if (srgb) return `rgb(${Math.round(Number(srgb[1]) * 255)}, ${Math.round(Number(srgb[2]) * 255)}, ${Math.round(Number(srgb[3]) * 255)})`;
+      return value;
+    }
+
+    const colors = {
+      background: cssColor('--background'),
+      foreground: cssColor('--foreground'),
+      border: cssColor('--border'),
+      muted: cssColor('--muted'),
+      mutedForeground: cssColor('--muted-foreground'),
+      selected: cssColor('--primary'),
+      low: cssColor('--muted-foreground'),
+      middle: cssColor('--viz-series-1'),
+      high: cssColor('--destructive'),
+      call: cssColor('--viz-series-1'),
+      import: cssColor('--viz-series-2'),
+      event: cssColor('--viz-series-3'),
+      state: cssColor('--viz-series-4'),
+      provider: cssColor('--viz-series-5'),
+      input: cssColor('--viz-series-2'),
+      output: cssColor('--viz-series-5'),
+      security: cssColor('--destructive')
+    };
+
+    const metricRows = {
+      api: [3649,96,0.1247,5827,32,1.0,1,18],
+      auth: [352,14,0.223,478,3,0.7864,1,5],
+      cli: [289,13,0.2637,715,9,0.8455,1,6],
+      image: [798,41,0.0901,1402,1,0.8761,2,2],
+      ai: [344,7,0.1894,400,0,0.6259,1,5],
+      enhancement: [480,22,0.157,1044,6,0.9113,2,4],
+      lifecycle: [584,14,0.2076,1374,9,0.88,4,2],
+      jobs: [141,5,0.2545,149,0,0.4645,2,3],
+      billing: [573,14,0.3896,885,0,0.6766,2,3],
+      payments: [184,13,null,184,0,0.4732,3,2],
+      identity: [450,20,0.1837,512,0,0.7842,7,3],
+      security: [46,3,0.9048,50,0,0.3406,15,0],
+      models: [548,6,0.8697,664,0,0.5938,13,2],
+      storage: [141,6,0.3626,141,10,0.5722,2,1],
+      config: [152,2,0.8723,168,0,0.3602,4,0]
+    };
+    const metricByKey = new Map(Object.entries(metricRows).map(([key, row]) => [key, {
+      lines: row[0], complexity: row[1], coverage: row[2], churn: row[3], effects: row[4], attention: row[5], fanIn: row[6], fanOut: row[7]
+    }]));
+
+    const nodeRows = [
+      ['tool-ui','Photo tool UI','interface','app/templates/index.html',1,null,'connector','Uploads images, requests analysis and enhancement, and coordinates browser-side background removal.'],
+      ['account-ui','Account and payment UI','interface','app/templates/auth/profile.html',1,null,'connector','Displays account and billing state and initiates Paycom checkout.'],
+      ['landing-ui','Landing UI','interface','app/templates/landing.html',1,null,'private helper','Acquisition interface that also calls an analytics endpoint missing from the scoped Flask routes.'],
+      ['edge-ml','Browser background removal','component','app/static/js/edge-ml-background-removal.js',1368,null,'cluster hub','Runs ONNX segmentation in the browser and optionally uploads processed images.'],
+      ['browser-cache','Browser model cache','state','app/static/js/edge-ml-background-removal.js',440,null,'private state','IndexedDB cache for downloaded ONNX model bytes.'],
+      ['api','Flask API gateway','interface','app/views/api.py',291,'api','connector','Large HTTP boundary containing analysis, enhancement, upload, download, and Paycom callback operations.'],
+      ['auth','Authentication blueprint','interface','app/views/auth.py',27,'auth','connector','Handles local, Telegram, and Google login flows and profile changes.'],
+      ['operator-cli','Operator CLI','interface','app/cli/account.py',1,'cli','connector','Manual administration surface for accounts, credits, payments, and cleanup.'],
+      ['missing-analytics','Missing analytics endpoint','missing','app/static/landing.js',201,null,'orphan','The landing page calls POST /api/analytics, but no matching Flask route was found in scope.'],
+      ['image-analysis','Technical image analysis','component','app/services/image_service.py',24,'image','cluster hub','Validates uploads and computes technical, border, quality, and requirement results.'],
+      ['ai-analysis','AI image analysis','component','app/services/ai_analysis/ai_analyzer.py',19,'ai','cluster hub','Builds prompts, calls Gemini synchronously, and validates provider responses.'],
+      ['enhancement','Image enhancement','component','app/services/enhancement/orchestrator.py',25,'enhancement','cluster hub','Selects and sequences deterministic or provider-backed enhancement strategies.'],
+      ['image-lifecycle','Image lifecycle','component','app/services/image_lifecycle_manager.py',36,'lifecycle','connector','Stores image versions, resolves downloads, and deletes expired assets.'],
+      ['jobs','Job record service','component','app/services/job_service.py',21,'jobs','connector','Persists records for work performed inline; no queue dispatch or worker consumption was found.'],
+      ['billing','Credits and billing','component','app/services/credit_service.py',46,'billing','cluster hub','Reserves and settles credits and manages durable operation records.'],
+      ['payments','Payment records','component','app/services/payment_service.py',21,'payments','cluster hub','Grants or reverses credits while linking durable payment transactions.'],
+      ['identity','Identity and accounts','component','app/services/user_service.py',42,'identity','cluster hub','Manages users, sessions, external identities, profiles, and audits.'],
+      ['security','Security and extensions','utility','app/extensions.py',1,'security','shared utility','Initializes cross-cutting security, database, login, CSRF, and rate-limit facilities.'],
+      ['models','Shared data models','utility','app/models/__init__.py',1,'models','shared utility','Defines durable entities imported by interfaces, services, and operator tooling.'],
+      ['storage-adapter','Storage adapter','utility','app/services/storage/local.py',1,'storage','connector','Implements the storage boundary; this quality proxy uses the local backend source.'],
+      ['config','Enhancement config','utility','app/config/enhancement_config.py',1,'config','shared utility','Provides enhancement strategy limits and configuration consumed across the enhancement subsystem.'],
+      ['image-storage','Image storage','state','config.py',105,null,'external state','Local, GCS, or S3-compatible storage for original and derived images.'],
+      ['database','Relational database','state','config.py',84,null,'external state','SQLAlchemy-backed PostgreSQL or local SQLite durable state.'],
+      ['rate-limit','Rate-limit state','state','app/extensions.py',20,null,'external state','Redis-backed counters with a process-memory fallback.'],
+      ['gemini','Google Gemini','external','app/services/ai_analysis/gemini_service.py',8,null,'external platform','External multimodal analysis and image-generation provider.'],
+      ['model-host','Hugging Face model','external','app/static/js/edge-ml-background-removal.js',24,null,'external platform','Hosts the ONNX segmentation model downloaded by browser code.'],
+      ['onnx-cdn','ONNX Runtime CDN','external','app/static/js/edge-ml-background-removal.js',367,null,'external platform','Supplies browser ONNX Runtime builds.'],
+      ['paycom','Paycom','external','config.py',149,null,'external platform','External checkout and merchant callback provider.'],
+      ['google-oauth','Google OAuth','external','app/services/google_auth_service.py',41,null,'external platform','External OAuth authorization and identity provider.'],
+      ['telegram','Telegram Login','external','app/templates/auth/_telegram_auth_card.html',25,null,'external platform','Supplies signed identity data verified by the server.']
+    ];
+    const nodes = nodeRows.map(([id,name,kind,path,line,metricKey,role,summary]) => ({ id,name,kind,path,line,metricKey,metrics: metricKey ? metricByKey.get(metricKey) : null,role,summary }));
+    const nodeById = new Map(nodes.map(node => [node.id, node]));
+
+    const boundaryRows = [
+      ['tool-user-input','tool-ui','input','browser','image file + user actions','Seller-selected image and tool commands enter browser workflow.'],
+      ['tool-user-output','tool-ui','output','browser','analysis JSON + rendered images','Technical, AI, and enhancement results are rendered or downloaded.'],
+      ['account-user-input','account-ui','input','browser','profile + checkout actions','Authenticated profile and payment actions enter through the account interface.'],
+      ['landing-user-input','landing-ui','input','browser','page interaction events','Public page interactions originate analytics events.'],
+      ['api-http-input','api','input','HTTP','multipart images + JSON payloads','Upload, analysis, enhancement, administration, and callback payloads enter here.'],
+      ['api-http-output','api','output','HTTP','JSON + images + downloads','Responses expose analysis records, generated images, job state, and downloads.'],
+      ['auth-http-input','auth','input','HTTP/OAuth','credentials + signed identity data','Local, Google, and Telegram identity material enters here.'],
+      ['auth-http-output','auth','output','HTTP','session + redirects','Authentication state, profile responses, and redirects leave here.'],
+      ['cli-shell-input','operator-cli','input','CLI','commands + flags','Operator commands and arguments enter through an authenticated shell.'],
+      ['cli-shell-output','operator-cli','output','CLI','terminal records','Administrative results and failures return to the operator terminal.'],
+      ['paycom-callback-input','paycom','output','JSON-RPC/HTTPS','merchant callback','Paycom originates authenticated merchant-operation payloads.'],
+      ['gemini-provider-output','gemini','output','HTTPS','model response payload','Gemini returns analysis or generated-image output.']
+    ];
+    const boundaries = boundaryRows.map(([id,node,direction,transport,payload,summary]) => ({ id,node,direction,transport,payload,summary }));
+
+    const persistenceLabels = new Map([
+      ['browser-cache','CACHE'],
+      ['image-storage','FILES'],
+      ['database','DB'],
+      ['rate-limit','COUNTERS']
+    ]);
+
+    const securityRows = [
+      ['security.api-mixed-trust-surface','api','high','high','review_candidate','Mixed-trust API concentration','Uploads, administrative operations, payment callbacks, and large workflows converge on one HTTP boundary; this is an audit priority, not a confirmed vulnerability.','app/views/api.py',291],
+      ['security.auth-input-surface','auth','medium','high','review_candidate','Multiple identity input formats','Local credentials, OAuth callback data, and signed Telegram identity data share this authentication boundary.','app/views/auth.py',27],
+      ['security.storage-key-boundary','storage-adapter','medium','medium','review_candidate','Filesystem and cloud key boundary','Storage implementations write and delete local or cloud objects while some calling paths still use absolute local paths.','app/services/storage/local.py',1]
+    ];
+    const securityFindings = securityRows.map(([id,node,severity,confidence,status,label,summary,path,line]) => ({ id,node,severity,confidence,status,label,summary,path,line }));
+
+    const relationRows = [
+      ['tool-api','tool-ui','api','event','async',4,'Browser HTTP requests','mapped flow'],
+      ['tool-edge','tool-ui','edge-ml','event','async',3,'Browser operation','mapped flow'],
+      ['account-paycom','account-ui','paycom','provider','async',3,'Checkout redirect and polling','mapped flow'],
+      ['landing-analytics','landing-ui','missing-analytics','event','async',2,'HTTP request without receiver','static call-site evidence'],
+      ['edge-api','edge-ml','api','event','async',2,'Optional background-removal upload','mapped flow'],
+      ['edge-model','edge-ml','model-host','event','async',3,'Model download','mapped flow'],
+      ['edge-runtime','edge-ml','onnx-cdn','event','async',3,'Runtime download','mapped flow'],
+      ['edge-cache','edge-ml','browser-cache','state','async',3,'IndexedDB access','mapped flow'],
+      ['api-image','api','image-analysis','call','sync',4,'Technical analysis paths','static dependency plus mapped flow'],
+      ['api-ai','api','ai-analysis','call','sync',4,'AI analysis path','static dependency plus mapped flow'],
+      ['api-enhancement','api','enhancement','call','sync',4,'Enhancement path','static dependency plus mapped flow'],
+      ['api-lifecycle','api','image-lifecycle','call','sync',4,'Upload and asset lifecycle','static dependency plus mapped flow'],
+      ['api-jobs','api','jobs','call','sync',3,'Inline job persistence','static dependency plus mapped flow'],
+      ['api-billing','api','billing','call','sync',3,'Credit reservation and settlement','static dependency plus mapped flow'],
+      ['api-payments','api','payments','call','sync',2,'Merchant callback processing','static dependency'],
+      ['api-models','api','models','import','sync',4,'Shared entity imports','referenced import'],
+      ['api-extensions','api','security','import','sync',4,'Cross-cutting extension imports','referenced import'],
+      ['api-config','api','config','import','sync',2,'Enhancement configuration import','referenced import'],
+      ['auth-identity','auth','identity','call','sync',3,'Account and login operations','static dependency plus mapped flow'],
+      ['auth-models','auth','models','import','sync',2,'Shared entity imports','referenced import'],
+      ['auth-extensions','auth','security','import','sync',2,'Login and database extensions','referenced import'],
+      ['auth-google','auth','google-oauth','provider','sync',2,'OAuth exchange','mapped flow'],
+      ['auth-telegram','auth','telegram','provider','sync',2,'Signed login verification','mapped flow'],
+      ['cli-billing','operator-cli','billing','call','sync',2,'Manual credit operations','static dependency'],
+      ['cli-payments','operator-cli','payments','call','sync',2,'Manual payment operations','static dependency'],
+      ['cli-identity','operator-cli','identity','call','sync',2,'Manual account operations','static dependency'],
+      ['cli-models','operator-cli','models','import','sync',2,'Shared entity imports','referenced import'],
+      ['image-lifecycle-call','image-analysis','image-lifecycle','call','sync',2,'Asset lifecycle access','static dependency'],
+      ['ai-gemini','ai-analysis','gemini','provider','sync',3,'Blocking provider call','mapped flow'],
+      ['enhancement-gemini','enhancement','gemini','provider','sync',3,'Blocking provider call','mapped flow'],
+      ['enhancement-config','enhancement','config','import','sync',2,'Strategy configuration','referenced import'],
+      ['lifecycle-storage','image-lifecycle','storage-adapter','state','sync',4,'Storage boundary access','static dependency plus mapped flow'],
+      ['adapter-storage','storage-adapter','image-storage','state','sync',4,'Durable object access','mapped boundary'],
+      ['jobs-db','jobs','database','state','sync',4,'Synchronous durable write','mapped flow'],
+      ['jobs-models','jobs','models','import','sync',2,'Job entity imports','referenced import'],
+      ['billing-db','billing','database','state','sync',4,'Synchronous durable write','mapped flow'],
+      ['billing-models','billing','models','import','sync',2,'Billing entity imports','referenced import'],
+      ['payments-db','payments','database','state','sync',4,'Synchronous durable write','mapped flow'],
+      ['payments-models','payments','models','import','sync',2,'Payment entity imports','referenced import'],
+      ['identity-db','identity','database','state','sync',4,'Synchronous durable access','mapped flow'],
+      ['identity-models','identity','models','import','sync',2,'Account entity imports','referenced import'],
+      ['security-rate','security','rate-limit','state','sync',3,'Synchronous counter access','mapped flow'],
+      ['paycom-callback','paycom','api','provider','callback',3,'Merchant callback','mapped flow']
+    ];
+    const relations = relationRows.map(([id,from,to,family,execution,strength,label,evidence]) => ({ id,from,to,family,execution,strength,label,evidence }));
+
+    const layouts = {
+      declared: {
+        name: 'Declared runtime boundaries',
+        note: 'Proximity shows curated runtime and ownership boundaries. Roads remain evidence-linked and do not determine placement.',
+        districts: [
+          { id:'browser', code:'D1', name:'Browser runtime', x:-21, z:-4, w:11, d:22, members:['tool-ui','account-ui','landing-ui','edge-ml','browser-cache'] },
+          { id:'boundary', code:'D2', name:'HTTP + operator boundary', x:-7, z:-3, w:11, d:22, members:['api','auth','operator-cli','missing-analytics'] },
+          { id:'services', code:'D3', name:'Application services', x:9, z:-3, w:15, d:22, members:['image-analysis','ai-analysis','enhancement','image-lifecycle','jobs','billing','payments','identity'] },
+          { id:'shared', code:'D4', name:'Shared infrastructure', x:7, z:14, w:19, d:8, members:['security','models','storage-adapter','config','image-storage','database','rate-limit'] },
+          { id:'external', code:'D5', name:'External platforms', x:27, z:-3, w:10, d:25, members:['gemini','model-host','onnx-cdn','paycom','google-oauth','telegram'] }
+        ]
+      },
+      feature: {
+        name: 'Feature affinity sketch',
+        note: 'Illustrative curated affinity layout—not a computed cluster run. Shared utilities and external platforms stay distinct instead of becoming feature centroids.',
+        districts: [
+          { id:'experience', code:'E', name:'Experience + interfaces', x:-22, z:-3, w:11, d:25, members:['tool-ui','account-ui','landing-ui','api','auth','operator-cli','missing-analytics'] },
+          { id:'analysis', code:'A', name:'Analysis + browser ML', x:-8, z:-9, w:10, d:12, members:['edge-ml','browser-cache','image-analysis','ai-analysis'] },
+          { id:'enhancement', code:'H', name:'Enhancement + assets', x:6, z:-9, w:10, d:12, members:['enhancement','image-lifecycle','storage-adapter','image-storage'] },
+          { id:'accounts', code:'I', name:'Identity + billing', x:12, z:6, w:13, d:11, members:['billing','payments','identity'] },
+          { id:'shared', code:'U', name:'Shared utility belt', x:-6, z:9, w:16, d:9, members:['jobs','security','models','config','database','rate-limit'] },
+          { id:'external', code:'X', name:'External platforms', x:29, z:-3, w:10, d:25, members:['gemini','model-host','onnx-cdn','paycom','google-oauth','telegram'] }
+        ]
+      }
+    };
+
+    const familyNames = {
+      call: 'call / control',
+      event: 'event / message',
+      state: 'state / storage',
+      provider: 'external / provider',
+      import: 'static import / type dependency'
+    };
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 180);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.domElement.setAttribute('role', 'img');
+    renderer.domElement.setAttribute('aria-label', 'Zoomable 3D software city with coded districts, multi-aspect buildings, aggregate roads, and typed local feeders');
+    renderer.domElement.dataset.cameraRevision = '0';
+    stage.prepend(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = false;
+    controls.minDistance = 6;
+    controls.maxDistance = 110;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.screenSpacePanning = true;
+
+    scene.add(new THREE.HemisphereLight(colors.foreground, colors.background, 1.65));
+    const keyLight = new THREE.DirectionalLight(colors.foreground, 1.85);
+    keyLight.position.set(20, 34, 24);
+    scene.add(keyLight);
+
+    const grid = new THREE.GridHelper(64, 32, colors.border, colors.border);
+    grid.position.y = -0.02;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.18;
+    scene.add(grid);
+
+    const districtGroup = new THREE.Group();
+    const nodeGroup = new THREE.Group();
+    const boundaryGroup = new THREE.Group();
+    const securityGroup = new THREE.Group();
+    const roadGroup = new THREE.Group();
+    const districtFeederGroup = new THREE.Group();
+    const egoFeederGroup = new THREE.Group();
+    scene.add(districtGroup, roadGroup, nodeGroup, boundaryGroup, securityGroup, districtFeederGroup, egoFeederGroup);
+
+    const nodeRecords = new Map();
+    const districtRecords = new Map();
+    const nodePickables = [];
+    const overlayPickables = [];
+    const boundariesByNode = new Map();
+    const securityByNode = new Map();
+    const persistenceByNode = new Map();
+    let districtPickables = [];
+    let relationPickables = [];
+    let roadLabelRecords = [];
+    let boundaryLabelRecords = [];
+    let persistenceLabelRecords = [];
+    let roadPorts = new Map();
+    let clusterByNode = new Map();
+    let currentLayout = 'declared';
+    let selectedNode = nodeById.get('api');
+    let selectedSubject = { kind:'node', value:selectedNode };
+    let selectedSource = null;
+    let lod = 'overview';
+    let transitioning = false;
+
+    function rank(values, value) {
+      const sorted = [...values].sort((a, b) => a - b);
+      const index = sorted.findIndex(item => item >= value);
+      return sorted.length < 2 ? 0 : Math.max(0, index) / (sorted.length - 1);
+    }
+
+    const measuredNodes = nodes.filter(node => node.metrics);
+    const metricDomains = {
+      complexity: measuredNodes.map(node => node.metrics.complexity),
+      effects: measuredNodes.map(node => node.metrics.effects),
+      coupling: measuredNodes.map(node => node.metrics.fanIn + node.metrics.fanOut)
+    };
+
+    const bandDefinitions = [
+      { id:'coverage', label:'coverage gap' },
+      { id:'complexity', label:'complexity' },
+      { id:'coupling', label:'mapped coupling' },
+      { id:'effects', label:'mutating effects' }
+    ];
+
+    function rawMetric(node, lens = surfaceSelect.value) {
+      if (!node.metrics) return null;
+      if (lens === 'bands') return node.metrics.attention;
+      if (lens === 'attention') return node.metrics.attention;
+      if (lens === 'coverage') return node.metrics.coverage === null ? null : 1 - node.metrics.coverage;
+      if (lens === 'coupling') return node.metrics.fanIn + node.metrics.fanOut;
+      return node.metrics[lens];
+    }
+
+    function normalizedMetric(node, lens = surfaceSelect.value) {
+      const raw = rawMetric(node, lens);
+      if (raw === null) return null;
+      if (lens === 'bands' || lens === 'attention' || lens === 'coverage') return THREE.MathUtils.clamp(raw, 0, 1);
+      return rank(metricDomains[lens], raw);
+    }
+
+    function normalizedBands(node) {
+      return bandDefinitions.map(definition => ({
+        ...definition,
+        value: normalizedMetric(node, definition.id),
+        raw: rawMetric(node, definition.id)
+      }));
+    }
+
+    function heatColor(value) {
+      if (value === null) return new THREE.Color(colors.muted);
+      const low = new THREE.Color(colors.low);
+      const middle = new THREE.Color(colors.middle);
+      const high = new THREE.Color(colors.high);
+      return value <= 0.55 ? low.lerp(middle, value / 0.55) : middle.lerp(high, (value - 0.55) / 0.45);
+    }
+
+    function neutralColor(kind) {
+      const base = new THREE.Color(colors.muted);
+      if (kind === 'external') return base.lerp(new THREE.Color(colors.foreground), 0.18);
+      if (kind === 'state') return base.lerp(new THREE.Color(colors.foreground), 0.1);
+      return base;
+    }
+
+    function nodeDimensions(node) {
+      const lines = node.metrics?.lines ?? 110;
+      const complexity = node.metrics?.complexity ?? 3;
+      let width = THREE.MathUtils.clamp(0.9 + Math.sqrt(lines) / 28, 1.05, 2.65);
+      let height = THREE.MathUtils.clamp(1.05 + Math.log2(complexity + 1) * 0.66 + Math.log2(lines + 1) * 0.08, 1.45, 6.1);
+      if (node.kind === 'state') { width = 1.65; height = 1.35; }
+      if (node.kind === 'external') { width = 1.55; height = 2.55; }
+      if (node.kind === 'missing') { width = 1.5; height = 2.1; }
+      return { width, height };
+    }
+
+    function nodeGeometry(node, width, height) {
+      if (node.kind === 'interface') return new THREE.CylinderGeometry(width * 0.48, width * 0.66, height, 4);
+      if (node.kind === 'utility') return new THREE.CylinderGeometry(width * 0.43, width * 0.6, height, 10);
+      if (node.kind === 'state') return new THREE.CylinderGeometry(width * 0.58, width * 0.58, height, 18);
+      if (node.kind === 'external') return new THREE.CylinderGeometry(width * 0.52, width * 0.62, height, 6);
+      return new THREE.BoxGeometry(width, height, width);
+    }
+
+    function bandGeometry(node, width, height, fraction) {
+      if (node.kind === 'interface') {
+        const radius = width * THREE.MathUtils.lerp(0.66, 0.48, fraction) * 1.008;
+        return new THREE.CylinderGeometry(radius, radius, height, 4);
+      }
+      if (node.kind === 'utility') {
+        const radius = width * THREE.MathUtils.lerp(0.6, 0.43, fraction) * 1.008;
+        return new THREE.CylinderGeometry(radius, radius, height, 10);
+      }
+      return new THREE.BoxGeometry(width * 1.008, height, width * 1.008);
+    }
+
+    function makeLabel(text, extraClass = '') {
+      const label = document.createElement('span');
+      label.className = `viz-badge vcm-label text-small ${extraClass}`.trim();
+      label.textContent = text;
+      labelLayer.appendChild(label);
+      return label;
+    }
+
+    function districtCodeText(code) {
+      return /^\d+$/.test(code) ? `D${code}` : code;
+    }
+
+    function districtLabelText(district) {
+      if (labelSelect.value === 'hidden') return '';
+      const code = districtCodeText(district.code);
+      return labelSelect.value === 'full' ? `${code} · ${district.name}` : code;
+    }
+
+    function refreshDistrictLabels() {
+      districtRecords.forEach(record => {
+        record.label.textContent = districtLabelText(record.district);
+        record.label.style.display = labelSelect.value === 'hidden' ? 'none' : '';
+      });
+    }
+
+    nodes.forEach(node => {
+      const { width, height } = nodeDimensions(node);
+      const floats = Boolean(node.metrics && node.metrics.effects === 0);
+      const elevation = floats ? 0.68 : 0;
+      const material = new THREE.MeshStandardMaterial({
+        color: neutralColor(node.kind),
+        roughness: 0.76,
+        metalness: node.kind === 'external' ? 0.16 : 0.04,
+        transparent: floats || node.kind === 'missing',
+        opacity: node.kind === 'missing' ? 0.42 : floats ? 0.7 : 0.96,
+        wireframe: node.kind === 'missing'
+      });
+      const mesh = new THREE.Mesh(nodeGeometry(node, width, height), material);
+      mesh.userData.nodeId = node.id;
+      mesh.userData.kind = 'node';
+      nodeGroup.add(mesh);
+      nodePickables.push(mesh);
+
+      const edges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(mesh.geometry),
+        new THREE.LineBasicMaterial({ color: colors.border, transparent: true, opacity: node.kind === 'missing' ? 0.95 : 0.64 })
+      );
+      nodeGroup.add(edges);
+
+      const bands = [];
+      if (!['external','state','missing'].includes(node.kind)) {
+        const bandHeight = THREE.MathUtils.clamp(height * 0.12, 0.18, 0.65);
+        const bandFractions = [0.18, 0.39, 0.60, 0.81];
+        normalizedBands(node).forEach((bandData, index) => {
+          const known = bandData.value !== null;
+          const fraction = bandFractions[index];
+          const band = new THREE.Mesh(
+            bandGeometry(node, width, bandHeight, fraction),
+            new THREE.MeshStandardMaterial({
+              color: known ? heatColor(bandData.value) : colors.mutedForeground,
+              roughness: 0.64,
+              metalness: 0.03,
+              transparent: true,
+              opacity: known ? 0.98 : 0.58,
+              wireframe: !known
+            })
+          );
+          band.userData.nodeId = node.id;
+          band.userData.kind = 'node';
+          band.userData.band = bandData.id;
+          band.userData.bandIndex = index;
+          band.userData.bandFraction = fraction;
+          nodeGroup.add(band);
+          nodePickables.push(band);
+          bands.push(band);
+        });
+      }
+
+      let shadow = null;
+      if (floats) {
+        shadow = new THREE.Mesh(
+          new THREE.CircleGeometry(width * 0.38, 20),
+          new THREE.MeshBasicMaterial({ color: colors.mutedForeground, transparent: true, opacity: 0.18, depthWrite: false })
+        );
+        shadow.rotation.x = -Math.PI / 2;
+        nodeGroup.add(shadow);
+      }
+
+      nodeRecords.set(node.id, { node, mesh, edges, bands, shadow, width, height, elevation });
+    });
+
+    function addMappedRecord(map, key, value) {
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(value);
+    }
+
+    boundaries.forEach(boundary => {
+      const nodeRecord = nodeRecords.get(boundary.node);
+      if (!nodeRecord) return;
+      const marker = new THREE.Mesh(
+        new THREE.ConeGeometry(0.16, 0.46, 3),
+        new THREE.MeshStandardMaterial({
+          color: boundary.direction === 'input' ? colors.input : colors.output,
+          roughness: 0.58,
+          metalness: 0.04
+        })
+      );
+      const vector = boundary.direction === 'input' ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(1, 0, 0);
+      marker.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), vector);
+      marker.userData.boundary = boundary;
+      marker.userData.kind = 'boundary';
+      boundaryGroup.add(marker);
+      overlayPickables.push(marker);
+      const label = makeLabel(`${boundary.direction === 'input' ? 'IN' : 'OUT'} · ${boundary.transport} · ${boundary.payload}`, 'vcm-boundary-label');
+      label.style.display = 'none';
+      const record = { boundary, marker, label, labelPosition:new THREE.Vector3() };
+      boundaryLabelRecords.push(record);
+      addMappedRecord(boundariesByNode, boundary.node, record);
+    });
+
+    persistenceLabels.forEach((value, nodeId) => {
+      if (!nodeRecords.has(nodeId)) return;
+      const label = makeLabel(`P:${value}`, 'vcm-persistence-label');
+      const record = { nodeId, value, label, labelPosition:new THREE.Vector3() };
+      persistenceLabelRecords.push(record);
+      persistenceByNode.set(nodeId, record);
+    });
+
+    const severityWeight = { low:0.32, medium:0.58, high:0.82, critical:1 };
+    const confidenceOpacity = { low:0.38, medium:0.66, high:0.96 };
+    securityFindings.forEach(finding => {
+      const nodeRecord = nodeRecords.get(finding.node);
+      if (!nodeRecord) return;
+      const weight = severityWeight[finding.severity] ?? 0.5;
+      const radius = THREE.MathUtils.lerp(0.18, 0.38, weight);
+      const color = new THREE.Color(colors.mutedForeground).lerp(new THREE.Color(colors.security), weight);
+      const marker = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(radius, 0),
+        new THREE.MeshStandardMaterial({
+          color,
+          roughness:0.5,
+          transparent:true,
+          opacity:confidenceOpacity[finding.confidence] ?? 0.55
+        })
+      );
+      marker.userData.securityFinding = finding;
+      marker.userData.kind = 'security';
+      securityGroup.add(marker);
+      overlayPickables.push(marker);
+      addMappedRecord(securityByNode, finding.node, { finding, marker, radius });
+    });
+
+    const selectedLabel = makeLabel(selectedNode.name);
+    selectedLabel.style.display = 'none';
+    const selectionBox = new THREE.BoxHelper(nodeRecords.get(selectedNode.id).mesh, colors.selected);
+    scene.add(selectionBox);
+
+    function positionsFor(layoutKey) {
+      const positions = new Map();
+      layouts[layoutKey].districts.forEach(district => {
+        const count = district.members.length;
+        const usableW = Math.max(3, district.w - 2.2);
+        const usableD = Math.max(3, district.d - 2.2);
+        const columns = Math.max(1, Math.ceil(Math.sqrt(count * usableW / usableD)));
+        const rows = Math.ceil(count / columns);
+        const gapX = columns === 1 ? 0 : Math.min(3.25, usableW / Math.max(1, columns - 1));
+        const gapZ = rows === 1 ? 0 : Math.min(3.25, usableD / Math.max(1, rows - 1));
+        district.members.forEach((nodeId, index) => {
+          const column = index % columns;
+          const row = Math.floor(index / columns);
+          positions.set(nodeId, new THREE.Vector3(
+            district.x + (column - (columns - 1) / 2) * gapX,
+            0,
+            district.z + (row - (rows - 1) / 2) * gapZ
+          ));
+        });
+      });
+      return positions;
+    }
+
+    function setNodeXZ(record, x, z) {
+      const y = record.height / 2 + 0.13 + record.elevation;
+      record.mesh.position.set(x, y, z);
+      record.edges.position.copy(record.mesh.position);
+      record.bands.forEach(band => {
+        const bandY = 0.13 + record.elevation + record.height * band.userData.bandFraction;
+        band.position.set(x, bandY, z);
+      });
+      if (record.shadow) record.shadow.position.set(x, 0.08, z);
+
+      const nodeBoundaries = boundariesByNode.get(record.node.id) || [];
+      const inputs = nodeBoundaries.filter(item => item.boundary.direction === 'input');
+      const outputs = nodeBoundaries.filter(item => item.boundary.direction === 'output');
+      nodeBoundaries.forEach(item => {
+        const peers = item.boundary.direction === 'input' ? inputs : outputs;
+        const slot = peers.indexOf(item) - (peers.length - 1) / 2;
+        const side = item.boundary.direction === 'input' ? -1 : 1;
+        const markerX = x + side * (record.width * 0.72 + 0.26);
+        const markerY = 0.13 + record.elevation + Math.min(record.height * 0.35, 1.05);
+        const markerZ = z + slot * 0.48;
+        item.marker.position.set(markerX, markerY, markerZ);
+        item.labelPosition.set(markerX, markerY + 0.48, markerZ);
+      });
+
+      const persistence = persistenceByNode.get(record.node.id);
+      if (persistence) persistence.labelPosition.set(x, 0.13 + record.elevation + record.height + 0.48, z);
+
+      const securityRecords = securityByNode.get(record.node.id) || [];
+      securityRecords.forEach((item, index) => {
+        const offset = (index - (securityRecords.length - 1) / 2) * 0.46;
+        item.marker.position.set(
+          x + record.width * 0.28 + offset,
+          0.13 + record.elevation + record.height + item.radius + 0.12,
+          z - record.width * 0.22
+        );
+      });
+    }
+
+    function disposeObject(object) {
+      object.traverse(child => {
+        child.geometry?.dispose();
+        if (Array.isArray(child.material)) child.material.forEach(material => material.dispose());
+        else child.material?.dispose();
+      });
+    }
+
+    function clearGroup(group) {
+      [...group.children].forEach(child => {
+        group.remove(child);
+        disposeObject(child);
+      });
+    }
+
+    function buildDistricts(layoutKey) {
+      districtRecords.forEach(record => record.label.remove());
+      districtRecords.clear();
+      districtPickables = [];
+      clearGroup(districtGroup);
+      clusterByNode = new Map();
+
+      layouts[layoutKey].districts.forEach(district => {
+        district.members.forEach(nodeId => clusterByNode.set(nodeId, district.id));
+        const plate = new THREE.Mesh(
+          new THREE.BoxGeometry(district.w, 0.15, district.d),
+          new THREE.MeshStandardMaterial({ color: colors.muted, roughness: 0.95, transparent: true, opacity: 0.42 })
+        );
+        plate.position.set(district.x, 0, district.z);
+        districtGroup.add(plate);
+
+        const perimeter = new THREE.LineSegments(
+          new THREE.EdgesGeometry(plate.geometry),
+          new THREE.LineBasicMaterial({ color: colors.border, transparent: true, opacity: 0.72 })
+        );
+        perimeter.position.copy(plate.position);
+        districtGroup.add(perimeter);
+
+        const beaconHeight = 1.2 + Math.log2(district.members.length + 1) * 0.85;
+        const beaconWidth = Math.min(4.6, 2.3 + Math.sqrt(district.members.length) * 0.5);
+        const beacon = new THREE.Mesh(
+          new THREE.BoxGeometry(beaconWidth, beaconHeight, beaconWidth * 0.78),
+          new THREE.MeshStandardMaterial({ color: colors.middle, roughness: 0.72, metalness: 0.05 })
+        );
+        beacon.position.set(district.x, beaconHeight / 2 + 0.12, district.z);
+        beacon.userData.districtId = district.id;
+        beacon.userData.kind = 'district';
+        districtGroup.add(beacon);
+        districtPickables.push(beacon);
+
+        const beaconEdges = new THREE.LineSegments(
+          new THREE.EdgesGeometry(beacon.geometry),
+          new THREE.LineBasicMaterial({ color: colors.border, transparent: true, opacity: 0.76 })
+        );
+        beaconEdges.position.copy(beacon.position);
+        districtGroup.add(beaconEdges);
+
+        const label = makeLabel(districtLabelText(district), 'vcm-district-label');
+        districtRecords.set(district.id, {
+          district,
+          plate,
+          perimeter,
+          beacon,
+          beaconEdges,
+          label,
+          labelPosition: new THREE.Vector3(district.x - district.w * 0.5 + 0.85, 0.72, district.z - district.d * 0.5 + 0.85)
+        });
+      });
+    }
+
+    function nodeAnchor(nodeId) {
+      const record = nodeRecords.get(nodeId);
+      return record.mesh.position.clone().add(new THREE.Vector3(0, Math.min(0.75, record.height * 0.18), 0));
+    }
+
+    function pairKey(first, second) {
+      return [first, second].sort().join('|');
+    }
+
+    const roadGrid = 0.5;
+    let roadOccupancy = new Map();
+
+    function snapRoad(value) {
+      return Math.round(value / roadGrid) * roadGrid;
+    }
+
+    function roadSide(from, to) {
+      const dx = to.x - from.x;
+      const dz = to.z - from.z;
+      if (Math.abs(dx) / Math.max(1, from.w) >= Math.abs(dz) / Math.max(1, from.d)) {
+        return dx >= 0 ? 'east' : 'west';
+      }
+      return dz >= 0 ? 'south' : 'north';
+    }
+
+    function sideNormal(side) {
+      if (side === 'east') return new THREE.Vector3(1, 0, 0);
+      if (side === 'west') return new THREE.Vector3(-1, 0, 0);
+      if (side === 'south') return new THREE.Vector3(0, 0, 1);
+      return new THREE.Vector3(0, 0, -1);
+    }
+
+    // Allocate a distinct, ordered gate for every road touching a district.
+    // This is the orthogonal-graph equivalent of pin assignment in a circuit
+    // router: normal fan-out must not look like accidental code congestion.
+    function assignRoadPorts(roads) {
+      const groups = new Map();
+      roads.forEach(road => {
+        [[road.a, road.b], [road.b, road.a]].forEach(([districtId, oppositeId]) => {
+          const district = districtRecords.get(districtId)?.district;
+          const opposite = districtRecords.get(oppositeId)?.district;
+          if (!district || !opposite) return;
+          const side = roadSide(district, opposite);
+          const key = `${districtId}|${side}`;
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push({ road, district, opposite, side });
+        });
+      });
+
+      const ports = new Map();
+      groups.forEach(entries => {
+        const side = entries[0].side;
+        entries.sort((a, b) => {
+          const aAxis = side === 'east' || side === 'west' ? a.opposite.z : a.opposite.x;
+          const bAxis = side === 'east' || side === 'west' ? b.opposite.z : b.opposite.x;
+          return aAxis - bAxis || a.road.key.localeCompare(b.road.key);
+        });
+        const district = entries[0].district;
+        const edgeLength = side === 'east' || side === 'west' ? district.d : district.w;
+        const usableLength = Math.max(0, edgeLength - 2.8);
+        const spacing = entries.length > 1 ? Math.min(1.65, usableLength / (entries.length - 1)) : 0;
+        entries.forEach((entry, index) => {
+          const offset = snapRoad((index - (entries.length - 1) / 2) * spacing);
+          const normal = sideNormal(side);
+          const port = side === 'east' || side === 'west'
+            ? new THREE.Vector3(
+                district.x + normal.x * (district.w * 0.5 + 0.42),
+                0.2,
+                snapRoad(district.z + offset)
+              )
+            : new THREE.Vector3(
+                snapRoad(district.x + offset),
+                0.2,
+                district.z + normal.z * (district.d * 0.5 + 0.42)
+              );
+          const gate = port.clone().add(normal.multiplyScalar(1.15));
+          if (side === 'east' || side === 'west') gate.x = snapRoad(gate.x);
+          else gate.z = snapRoad(gate.z);
+          ports.set(`${entry.road.key}|${district.id}`, { port, gate, side });
+        });
+      });
+      return ports;
+    }
+
+    function roadBounds() {
+      const districts = [...districtRecords.values()].map(record => record.district);
+      return {
+        minX: Math.floor(Math.min(...districts.map(district => district.x - district.w * 0.5)) - 7),
+        maxX: Math.ceil(Math.max(...districts.map(district => district.x + district.w * 0.5)) + 7),
+        minZ: Math.floor(Math.min(...districts.map(district => district.z - district.d * 0.5)) - 7),
+        maxZ: Math.ceil(Math.max(...districts.map(district => district.z + district.d * 0.5)) + 7)
+      };
+    }
+
+    function roadBlocked(x, z) {
+      return [...districtRecords.values()].some(record => {
+        const district = record.district;
+        const padding = 0.34;
+        return x > district.x - district.w * 0.5 - padding &&
+          x < district.x + district.w * 0.5 + padding &&
+          z > district.z - district.d * 0.5 - padding &&
+          z < district.z + district.d * 0.5 + padding;
+      });
+    }
+
+    function gridKey(x, z, direction = '') {
+      return `${x},${z},${direction}`;
+    }
+
+    function simplifyOrthogonal(points) {
+      const simplified = [];
+      points.forEach(point => {
+        const previous = simplified[simplified.length - 1];
+        if (previous && previous.x === point.x && previous.z === point.z) return;
+        simplified.push(point);
+        while (simplified.length >= 3) {
+          const a = simplified[simplified.length - 3];
+          const b = simplified[simplified.length - 2];
+          const c = simplified[simplified.length - 1];
+          if ((a.x === b.x && b.x === c.x) || (a.z === b.z && b.z === c.z)) simplified.splice(simplified.length - 2, 1);
+          else break;
+        }
+      });
+      return simplified;
+    }
+
+    function roadOccupancyCost(x, z) {
+      const at = (dx, dz) => roadOccupancy.get(`${x + dx},${z + dz}`) || 0;
+      return at(0, 0) * 7.5 + (at(1, 0) + at(-1, 0) + at(0, 1) + at(0, -1)) * 1.35;
+    }
+
+    function orthogonalRoadPath(start, end) {
+      const bounds = roadBounds();
+      const startX = Math.round(start.x / roadGrid);
+      const startZ = Math.round(start.z / roadGrid);
+      const endX = Math.round(end.x / roadGrid);
+      const endZ = Math.round(end.z / roadGrid);
+      const minX = Math.round(bounds.minX / roadGrid);
+      const maxX = Math.round(bounds.maxX / roadGrid);
+      const minZ = Math.round(bounds.minZ / roadGrid);
+      const maxZ = Math.round(bounds.maxZ / roadGrid);
+      const directions = [
+        { id:'east', dx:1, dz:0 },
+        { id:'west', dx:-1, dz:0 },
+        { id:'south', dx:0, dz:1 },
+        { id:'north', dx:0, dz:-1 }
+      ].sort((a, b) => {
+        const aDistance = Math.abs(endX - (startX + a.dx)) + Math.abs(endZ - (startZ + a.dz));
+        const bDistance = Math.abs(endX - (startX + b.dx)) + Math.abs(endZ - (startZ + b.dz));
+        return aDistance - bDistance;
+      });
+      const open = [{ x:startX, z:startZ, direction:'start', g:0, f:Math.abs(endX - startX) + Math.abs(endZ - startZ) }];
+      const scores = new Map([[gridKey(startX, startZ, 'start'), 0]]);
+      const parents = new Map();
+      let goal = null;
+      let iterations = 0;
+
+      while (open.length && iterations < 24000) {
+        iterations += 1;
+        let bestIndex = 0;
+        for (let index = 1; index < open.length; index += 1) {
+          if (open[index].f < open[bestIndex].f || (open[index].f === open[bestIndex].f && open[index].g < open[bestIndex].g)) bestIndex = index;
+        }
+        const current = open.splice(bestIndex, 1)[0];
+        if (current.x === endX && current.z === endZ) { goal = current; break; }
+
+        directions.forEach(direction => {
+          const nextX = current.x + direction.dx;
+          const nextZ = current.z + direction.dz;
+          if (nextX < minX || nextX > maxX || nextZ < minZ || nextZ > maxZ) return;
+          const worldX = nextX * roadGrid;
+          const worldZ = nextZ * roadGrid;
+          const isGoal = nextX === endX && nextZ === endZ;
+          if (!isGoal && roadBlocked(worldX, worldZ)) return;
+          const turnCost = current.direction === 'start' || current.direction === direction.id ? 0 : 0.82;
+          const nextG = current.g + 1 + turnCost + roadOccupancyCost(nextX, nextZ);
+          const key = gridKey(nextX, nextZ, direction.id);
+          if (scores.has(key) && scores.get(key) <= nextG) return;
+          scores.set(key, nextG);
+          parents.set(key, gridKey(current.x, current.z, current.direction));
+          open.push({
+            x:nextX,
+            z:nextZ,
+            direction:direction.id,
+            g:nextG,
+            f:nextG + Math.abs(endX - nextX) + Math.abs(endZ - nextZ)
+          });
+        });
+      }
+
+      if (!goal) {
+        const detourZ = snapRoad(bounds.minZ + 1);
+        return simplifyOrthogonal([
+          start.clone(),
+          new THREE.Vector3(start.x, 0.2, detourZ),
+          new THREE.Vector3(end.x, 0.2, detourZ),
+          end.clone()
+        ]);
+      }
+
+      const reversed = [];
+      let key = gridKey(goal.x, goal.z, goal.direction);
+      while (key) {
+        const [x, z] = key.split(',');
+        reversed.push(new THREE.Vector3(Number(x) * roadGrid, 0.2, Number(z) * roadGrid));
+        key = parents.get(key);
+      }
+      let points = simplifyOrthogonal(reversed.reverse());
+      if (points.length === 1 && !start.equals(end)) points = [start.clone(), end.clone()];
+      reversed.forEach(point => {
+        const x = Math.round(point.x / roadGrid);
+        const z = Math.round(point.z / roadGrid);
+        roadOccupancy.set(`${x},${z}`, (roadOccupancy.get(`${x},${z}`) || 0) + 1);
+      });
+      return points;
+    }
+
+    function addRoadBox(group, start, end, width, height, material, data, pickable = true) {
+      const direction = end.clone().sub(start);
+      const length = Math.max(0.05, Math.hypot(direction.x, direction.z));
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(length, height, width), material);
+      mesh.position.copy(start).lerp(end, 0.5);
+      mesh.rotation.y = Math.atan2(-direction.z, direction.x);
+      mesh.userData.roadData = data;
+      mesh.userData.kind = data.kind;
+      group.add(mesh);
+      if (pickable) relationPickables.push(mesh);
+      return mesh;
+    }
+
+    function addRoadSign(position, oppositeCode, road, endpointDistrict) {
+      const pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.035, 0.035, 0.52, 6),
+        new THREE.MeshStandardMaterial({ color: colors.foreground, roughness: 0.8 })
+      );
+      pole.position.copy(position).setY(0.42);
+      roadGroup.add(pole);
+      const label = makeLabel(`→${districtCodeText(oppositeCode)}`, 'vcm-system-sign');
+      roadLabelRecords.push({ label, position:position.clone().setY(0.88), road, endpointDistrict });
+    }
+
+    function offsetOrthogonalPath(points, offset) {
+      return points.map((point, index) => {
+        const previous = index > 0 ? points[index - 1] : null;
+        const next = index + 1 < points.length ? points[index + 1] : null;
+        const previousDirection = previous ? point.clone().sub(previous).setY(0).normalize() : null;
+        const nextDirection = next ? next.clone().sub(point).setY(0).normalize() : null;
+        const previousNormal = previousDirection ? new THREE.Vector3(-previousDirection.z, 0, previousDirection.x) : null;
+        const nextNormal = nextDirection ? new THREE.Vector3(-nextDirection.z, 0, nextDirection.x) : null;
+        if (!previousNormal && !nextNormal) return point.clone();
+        if (!previousNormal || !nextNormal || previousDirection.dot(nextDirection) > 0.999) {
+          return point.clone().add((previousNormal || nextNormal).clone().multiplyScalar(offset));
+        }
+
+        // Intersect the two axis-aligned offset segments. Averaging their
+        // normals creates a diagonal miter and the triangular lane spikes that
+        // looked like extra relations at corners.
+        const shifted = point.clone();
+        if (Math.abs(previousDirection.x) > 0.5) shifted.z += previousNormal.z * offset;
+        else shifted.x += previousNormal.x * offset;
+        if (Math.abs(nextDirection.x) > 0.5) shifted.z += nextNormal.z * offset;
+        else shifted.x += nextNormal.x * offset;
+        return shifted;
+      });
+    }
+
+    function pathPointAndDirection(points, ratio) {
+      if (points.length < 2) {
+        return {
+          point:(points[0] || new THREE.Vector3()).clone(),
+          direction:new THREE.Vector3(1, 0, 0)
+        };
+      }
+      const lengths = points.slice(1).map((point, index) => point.distanceTo(points[index]));
+      const total = lengths.reduce((sum, length) => sum + length, 0);
+      let remaining = total * ratio;
+      for (let index = 0; index < lengths.length; index += 1) {
+        if (remaining <= lengths[index]) {
+          const direction = points[index + 1].clone().sub(points[index]).setY(0).normalize();
+          return { point:points[index].clone().lerp(points[index + 1], remaining / Math.max(0.001, lengths[index])), direction };
+        }
+        remaining -= lengths[index];
+      }
+      return { point:points[points.length - 1].clone(), direction:points[points.length - 1].clone().sub(points[points.length - 2]).setY(0).normalize() };
+    }
+
+    function addLaneArrow(group, points, width, material, data) {
+      const { point, direction } = pathPointAndDirection(points, 0.72);
+      const arrow = new THREE.Mesh(new THREE.ConeGeometry(width * 0.95, width * 3.2, 3), material.clone());
+      arrow.position.copy(point).setY(0.42);
+      arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+      arrow.userData.roadData = data;
+      arrow.userData.kind = data.kind;
+      group.add(arrow);
+      relationPickables.push(arrow);
+    }
+
+    function addRoadPath(group, points, width, height, material, data) {
+      points.slice(1).forEach((end, index) => {
+        addRoadBox(group, points[index], end, width, height, material.clone(), data);
+      });
+      points.slice(1, -1).forEach(point => {
+        const corner = new THREE.Mesh(new THREE.BoxGeometry(width, height, width), material.clone());
+        corner.position.copy(point);
+        corner.userData.roadData = data;
+        corner.userData.kind = data.kind;
+        group.add(corner);
+        relationPickables.push(corner);
+      });
+      material.dispose();
+    }
+
+    function addRoadLane(group, points, offset, width, data) {
+      const lanePoints = offsetOrthogonalPath(points, offset).map(point => point.setY(0.32));
+      const segmented = data.execution === 'async' || data.execution === 'callback';
+      const material = new THREE.MeshStandardMaterial({
+        color: colors[data.family],
+        roughness: 0.62,
+        metalness: 0.04,
+        transparent: true,
+        opacity: data.family === 'import' ? 0.72 : 0.94
+      });
+      lanePoints.slice(1).forEach((end, index) => {
+        const start = lanePoints[index];
+        const length = start.distanceTo(end);
+        if (!segmented) {
+          addRoadBox(group, start, end, width, 0.055, material.clone(), data);
+          return;
+        }
+        const dash = data.execution === 'callback' ? 0.34 : 0.52;
+        const gap = data.execution === 'callback' ? 0.31 : 0.24;
+        for (let distance = 0; distance < length; distance += dash + gap) {
+          const fromT = distance / Math.max(0.001, length);
+          const toT = Math.min(1, (distance + dash) / Math.max(0.001, length));
+          addRoadBox(group, start.clone().lerp(end, fromT), start.clone().lerp(end, toT), width, 0.055, material.clone(), data);
+        }
+      });
+      if (!segmented) {
+        lanePoints.slice(1, -1).forEach(point => {
+          const corner = new THREE.Mesh(new THREE.BoxGeometry(width, 0.055, width), material.clone());
+          corner.position.copy(point);
+          corner.userData.roadData = data;
+          corner.userData.kind = data.kind;
+          group.add(corner);
+          relationPickables.push(corner);
+        });
+      }
+      addLaneArrow(group, lanePoints, width, material, data);
+      material.dispose();
+    }
+
+    function addFeeder(group, start, end, data, radius = 0.045, bend = 0) {
+      const material = new THREE.MeshStandardMaterial({
+        color: colors[data.family],
+        roughness: 0.68,
+        transparent: true,
+        opacity: data.family === 'import' ? 0.52 : 0.76
+      });
+      const horizontalFirst = Math.abs(end.x - start.x) >= Math.abs(end.z - start.z);
+      const midpoint = horizontalFirst
+        ? new THREE.Vector3(snapRoad((start.x + end.x) * 0.5 + bend), 0.38, start.z)
+        : new THREE.Vector3(start.x, 0.38, snapRoad((start.z + end.z) * 0.5 + bend));
+      const points = horizontalFirst
+        ? [start.clone().setY(0.38), midpoint, new THREE.Vector3(midpoint.x, 0.38, end.z), end.clone().setY(0.38)]
+        : [start.clone().setY(0.38), midpoint, new THREE.Vector3(end.x, 0.38, midpoint.z), end.clone().setY(0.38)];
+      addRoadPath(group, simplifyOrthogonal(points), radius * 2, 0.045, material, data);
+    }
+
+    function activeRelations() {
+      if (familySelect.value === 'behavior') return relations.filter(relation => relation.family !== 'import');
+      return relations.filter(relation => familySelect.value === 'all' || relation.family === familySelect.value);
+    }
+
+    function buildMacroRoads() {
+      const roads = new Map();
+      activeRelations().forEach(relation => {
+        const fromCluster = clusterByNode.get(relation.from);
+        const toCluster = clusterByNode.get(relation.to);
+        if (!fromCluster || !toCluster || fromCluster === toCluster) return;
+        const key = pairKey(fromCluster, toCluster);
+        if (!roads.has(key)) {
+          const [a, b] = key.split('|');
+          roads.set(key, { kind:'road', key, a, b, count:0, strength:0, relations:[], lanes:new Map() });
+        }
+        const road = roads.get(key);
+        road.count += 1;
+        road.strength += relation.strength;
+        road.relations.push(relation);
+        const laneKey = `${fromCluster}|${toCluster}|${relation.family}|${relation.execution}`;
+        if (!road.lanes.has(laneKey)) {
+          road.lanes.set(laneKey, {
+            kind:'lane', roadKey:key, from:fromCluster, to:toCluster,
+            family:relation.family, execution:relation.execution,
+            count:0, strength:0, relations:[]
+          });
+        }
+        const lane = road.lanes.get(laneKey);
+        lane.count += 1;
+        lane.strength += relation.strength;
+        lane.relations.push(relation);
+      });
+
+      const roadList = [...roads.values()].sort((a, b) => b.strength - a.strength || a.key.localeCompare(b.key));
+      const assignedPorts = assignRoadPorts(roadList);
+      roadList.forEach(road => {
+        const aRecord = districtRecords.get(road.a);
+        const bRecord = districtRecords.get(road.b);
+        if (!aRecord || !bRecord) return;
+        const startEndpoint = assignedPorts.get(`${road.key}|${road.a}`);
+        const endEndpoint = assignedPorts.get(`${road.key}|${road.b}`);
+        if (!startEndpoint || !endEndpoint) return;
+        const start = startEndpoint.port;
+        const end = endEndpoint.port;
+        const routed = orthogonalRoadPath(startEndpoint.gate, endEndpoint.gate);
+        const path = simplifyOrthogonal([start.clone(), ...routed, end.clone()]);
+        road.path = path;
+        roadPorts.set(`${road.key}|${road.a}`, start.clone());
+        roadPorts.set(`${road.key}|${road.b}`, end.clone());
+        road.lanes = [...road.lanes.values()].sort((a, b) =>
+          a.family.localeCompare(b.family) || a.from.localeCompare(b.from) || a.execution.localeCompare(b.execution)
+        );
+
+        const roadWidth = THREE.MathUtils.clamp(0.52 + Math.sqrt(road.strength) * 0.1, 0.68, 1.3);
+        addRoadPath(
+          roadGroup,
+          path.map(point => point.clone().setY(0.23)),
+          roadWidth,
+          0.11,
+          new THREE.MeshStandardMaterial({ color:colors.muted, roughness:0.94, transparent:true, opacity:0.88 }),
+          road
+        );
+
+        const laneWidth = THREE.MathUtils.clamp((roadWidth - 0.16) / Math.max(3.5, road.lanes.length * 1.55), 0.085, 0.19);
+        const spacing = Math.min(laneWidth * 1.5, (roadWidth - laneWidth) / Math.max(1, road.lanes.length - 1));
+        road.lanes.forEach((lane, index) => {
+          const offset = (index - (road.lanes.length - 1) / 2) * spacing;
+          const lanePath = lane.from === road.a ? path : [...path].reverse();
+          addRoadLane(roadGroup, lanePath, offset, laneWidth, lane);
+        });
+
+        addRoadSign(start, bRecord.district.code, road, road.a);
+        addRoadSign(end, aRecord.district.code, road, road.b);
+      });
+    }
+
+    function relationPort(relation, districtId) {
+      const fromCluster = clusterByNode.get(relation.from);
+      const toCluster = clusterByNode.get(relation.to);
+      if (fromCluster === toCluster) return null;
+      return roadPorts.get(`${pairKey(fromCluster, toCluster)}|${districtId}`) || null;
+    }
+
+    function buildDistrictFeeders() {
+      const districtId = clusterByNode.get(selectedNode.id);
+      const crossing = activeRelations()
+        .filter(relation => {
+          const fromCluster = clusterByNode.get(relation.from);
+          const toCluster = clusterByNode.get(relation.to);
+          return fromCluster !== toCluster && (fromCluster === districtId || toCluster === districtId);
+        })
+        .sort((a, b) => b.strength - a.strength || a.id.localeCompare(b.id));
+      const shown = crossing.slice(0, 12);
+      shown.forEach((relation, index) => {
+        const localNode = clusterByNode.get(relation.from) === districtId ? relation.from : relation.to;
+        const port = relationPort(relation, districtId);
+        if (!port) return;
+        const data = { ...relation, kind:'relation', scope:'district feeder', shown:shown.length, total:crossing.length };
+        addFeeder(districtFeederGroup, nodeAnchor(localNode), port, data, 0.038, ((index % 5) - 2) * 0.045);
+      });
+      districtFeederGroup.userData.shown = shown.length;
+      districtFeederGroup.userData.total = crossing.length;
+    }
+
+    function buildLocalRoutes() {
+      const related = activeRelations()
+        .filter(relation => relation.from === selectedNode.id || relation.to === selectedNode.id)
+        .sort((a, b) => b.strength - a.strength || a.id.localeCompare(b.id));
+      const shown = related.slice(0, 7);
+      shown.forEach((relation, index) => {
+        const fromCluster = clusterByNode.get(relation.from);
+        const toCluster = clusterByNode.get(relation.to);
+        const data = { ...relation, kind:'relation', scope:'selected route', shown:shown.length, total:related.length };
+        if (fromCluster === toCluster) {
+          addFeeder(egoFeederGroup, nodeAnchor(relation.from), nodeAnchor(relation.to), data, 0.055, ((index % 3) - 1) * 0.16);
+          return;
+        }
+        const fromPort = relationPort(relation, fromCluster);
+        const toPort = relationPort(relation, toCluster);
+        if (fromPort) addFeeder(egoFeederGroup, nodeAnchor(relation.from), fromPort, data, 0.055, ((index % 3) - 1) * 0.08);
+        if (toPort) addFeeder(egoFeederGroup, nodeAnchor(relation.to), toPort, data, 0.055, ((index % 3) - 1) * -0.08);
+      });
+      egoFeederGroup.userData.shown = shown.length;
+      egoFeederGroup.userData.total = related.length;
+    }
+
+    function rebuildRoutes() {
+      roadLabelRecords.forEach(record => record.label.remove());
+      roadLabelRecords = [];
+      roadPorts = new Map();
+      roadOccupancy = new Map();
+      relationPickables = [];
+      clearGroup(roadGroup);
+      clearGroup(districtFeederGroup);
+      clearGroup(egoFeederGroup);
+      buildMacroRoads();
+      buildDistrictFeeders();
+      buildLocalRoutes();
+      updateVisibility();
+    }
+
+    function aggregateHeat(district) {
+      const lens = surfaceSelect.value === 'bands' ? 'attention' : surfaceSelect.value;
+      const values = district.members.map(nodeId => normalizedMetric(nodeById.get(nodeId), lens)).filter(value => value !== null);
+      return values.length ? Math.max(...values) : null;
+    }
+
+    function updateColors() {
+      const showBands = surfaceSelect.value === 'bands';
+      nodeRecords.forEach(record => {
+        record.mesh.material.color.copy(showBands
+          ? neutralColor(record.node.kind)
+          : record.node.metrics ? heatColor(normalizedMetric(record.node)) : neutralColor(record.node.kind));
+        const values = new Map(normalizedBands(record.node).map(band => [band.id, band]));
+        record.bands.forEach(bandMesh => {
+          const band = values.get(bandMesh.userData.band);
+          const known = band?.value !== null && band?.value !== undefined;
+          bandMesh.material.color.copy(known ? heatColor(band.value) : new THREE.Color(colors.mutedForeground));
+          bandMesh.material.wireframe = !known;
+          bandMesh.material.opacity = known ? 0.98 : 0.58;
+          bandMesh.material.needsUpdate = true;
+        });
+      });
+      districtRecords.forEach(record => record.beacon.material.color.copy(heatColor(aggregateHeat(record.district))));
+
+      const legends = {
+        bands: ['Four review bands','lower in each band','higher in each band','Bands are independently normalized; wireframe means unknown.'],
+        attention: ['Review priority','lower','higher','Composite review signal—not defect probability.'],
+        coverage: ['Missing coverage','0% uncovered','100% uncovered','Unknown stays unknown; this scan is point-in-time.'],
+        complexity: ['Maximum complexity','CC 2','CC 96','Ranked maximum per-function cyclomatic complexity.'],
+        coupling: ['Mapped coupling','2 links','20 links','Ranked incoming plus outgoing mapped relations.'],
+        effects: ['Mutating side effects','none detected','32 sites','Floating means no direct mutation detected—not transitive purity.']
+      };
+      const legend = legends[surfaceSelect.value];
+      surfaceName.textContent = legend[0];
+      surfaceLow.textContent = legend[1];
+      surfaceHigh.textContent = legend[2];
+      const placement = currentLayout === 'declared' ? 'Placement: curated runtime/ownership.' : 'Placement: illustrative affinity sketch.';
+      const relationScope = familySelect.value === 'behavior'
+        ? 'Static import/type dependencies are hidden; select them explicitly to inspect coupling.'
+        : 'The selected relation lens may include static dependencies; a line does not imply observed traffic.';
+      modeNote.textContent = `${placement} ${legend[3]} ${relationScope} Roads use allocated district gates and orthogonal obstacle routing; security spots are audit leads.`;
+      updateDetail(selectedSubject);
+      render();
+    }
+
+    function districtForNode(nodeId) {
+      const districtId = clusterByNode.get(nodeId);
+      return layouts[currentLayout].districts.find(district => district.id === districtId);
+    }
+
+    function updateNodeDetail(node) {
+      const district = districtForNode(node.id);
+      selectedSource = node.path ? { path:`${basePath}${node.path}`, line:node.line || 1, node } : null;
+      pathCopy.textContent = selectedSource ? selectedSource.path : node.name;
+      subjectCopy.textContent = `${node.kind} · ${node.role} · ${district?.name || 'unassigned'}`;
+      summaryCopy.textContent = node.summary;
+      if (node.metrics) {
+        const coverage = node.metrics.coverage === null ? 'coverage unknown' : `${Math.round(node.metrics.coverage * 100)}% line coverage`;
+        const effect = node.metrics.effects > 0 ? `${node.metrics.effects} directly detected mutating sites · grounded` : 'no direct mutating sites detected · floating';
+        const bandSummary = `bands bottom→top: ${node.metrics.coverage === null ? 'coverage gap unknown' : `${Math.round((1 - node.metrics.coverage) * 100)}% coverage gap`} · max CC ${node.metrics.complexity} · ${node.metrics.fanIn + node.metrics.fanOut} mapped links · ${node.metrics.effects} direct mutation sites`;
+        metricsCopy.textContent = surfaceSelect.value === 'bands'
+          ? `${node.metrics.lines.toLocaleString()} representative-file lines · ${bandSummary} · ${egoFeederGroup.userData.shown || 0}/${egoFeederGroup.userData.total || 0} selected routes shown`
+          : `${node.metrics.lines.toLocaleString()} representative-file lines · max CC ${node.metrics.complexity} · ${coverage} · ${node.metrics.churn.toLocaleString()} changed lines · ${effect} · ${node.metrics.fanIn} in / ${node.metrics.fanOut} out · ${egoFeederGroup.userData.shown || 0}/${egoFeederGroup.userData.total || 0} selected routes shown`;
+      } else {
+        metricsCopy.textContent = ['state','external'].includes(node.kind)
+          ? 'Semantic resource: source quality heat is intentionally not assigned to this non-owned runtime element.'
+          : node.kind === 'missing'
+            ? 'Expected receiver missing from the scoped Flask routes; the source target is the observed caller.'
+            : 'No comparable Python quality metrics are embedded for this source; neutral heat means unknown, not healthy.';
+      }
+      const nodeBoundaries = boundariesByNode.get(node.id) || [];
+      const securityCount = (securityByNode.get(node.id) || []).length;
+      const persistence = persistenceByNode.get(node.id);
+      const context = [
+        nodeBoundaries.length ? `${nodeBoundaries.filter(item => item.boundary.direction === 'input').length} inputs / ${nodeBoundaries.filter(item => item.boundary.direction === 'output').length} outputs` : '',
+        persistence ? `persistent ${persistence.value.toLowerCase()}` : '',
+        securityCount ? `${securityCount} security review lead${securityCount === 1 ? '' : 's'}` : ''
+      ].filter(Boolean).join(' · ');
+      if (context) metricsCopy.textContent += ` · ${context}`;
+      openButton.disabled = !selectedSource;
+      focusSelect.value = node.id;
+      selectionBox.setFromObject(nodeRecords.get(node.id).mesh);
+      selectedLabel.textContent = node.name;
+    }
+
+    function updateRoadDetail(route) {
+      selectedSource = null;
+      openButton.disabled = true;
+      if (route.kind === 'road') {
+        const a = districtRecords.get(route.a)?.district;
+        const b = districtRecords.get(route.b)?.district;
+        pathCopy.textContent = `${districtCodeText(a?.code || route.a)} ↔ ${districtCodeText(b?.code || route.b)}`;
+        subjectCopy.textContent = `district road · ${route.lanes.length} typed lanes`;
+        summaryCopy.textContent = `${a?.name || route.a} and ${b?.name || route.b} are linked by ${route.count} mapped cross-district relations.`;
+        metricsCopy.textContent = `combined mapped strength ${route.strength} · width aggregates relation strength, not observed traffic · road-end signs point to the opposite district · select a colored lane for relation semantics`;
+      } else if (route.kind === 'lane') {
+        const from = districtRecords.get(route.from)?.district;
+        const to = districtRecords.get(route.to)?.district;
+        pathCopy.textContent = `${districtCodeText(from?.code || route.from)} → ${districtCodeText(to?.code || route.to)}`;
+        subjectCopy.textContent = `${familyNames[route.family]} lane · ${route.execution}`;
+        summaryCopy.textContent = route.family === 'import'
+          ? `${route.count} static source dependencies point from ${from?.name || route.from} to declarations or types in ${to?.name || route.to}; this is not runtime communication.`
+          : `${route.count} mapped behavioral relations share this directional lane from ${from?.name || route.from} to ${to?.name || route.to}.`;
+        metricsCopy.textContent = `combined mapped strength ${route.strength} · ${route.execution === 'async' || route.execution === 'callback' ? 'segmented lane' : 'continuous lane'} · arrow gives dependency or flow direction · select a thin feeder to inspect one source-backed relation`;
+      } else {
+        const from = nodeById.get(route.from);
+        const to = nodeById.get(route.to);
+        pathCopy.textContent = `${from.name} → ${to.name}`;
+        subjectCopy.textContent = `${familyNames[route.family]} feeder · ${route.execution}`;
+        summaryCopy.textContent = route.label;
+        metricsCopy.textContent = `mapped strength ${route.strength} · evidence: ${route.evidence} · thin feeder joins a component to its district road port; the road lane carries the cross-district part`;
+      }
+    }
+
+    function updateDistrictDetail(districtId) {
+      selectedSource = null;
+      openButton.disabled = true;
+      const record = districtRecords.get(districtId);
+      const district = record.district;
+      const memberNames = district.members.map(nodeId => nodeById.get(nodeId).name);
+      const crossing = activeRelations().filter(relation => {
+        const from = clusterByNode.get(relation.from);
+        const to = clusterByNode.get(relation.to);
+        return from !== to && (from === districtId || to === districtId);
+      });
+      pathCopy.textContent = district.name;
+      subjectCopy.textContent = `${district.members.length} members · ${layouts[currentLayout].name}`;
+      summaryCopy.textContent = memberNames.join(' · ');
+      const roadCount = new Set(crossing.map(relation => pairKey(clusterByNode.get(relation.from), clusterByNode.get(relation.to)))).size;
+      metricsCopy.textContent = `${crossing.length} filtered cross-district relations across ${roadCount} district roads · ${districtFeederGroup.userData.shown || 0}/${districtFeederGroup.userData.total || 0} local feeders shown for the focused district`;
+      selectionBox.setFromObject(record.beacon);
+      selectedLabel.textContent = district.name;
+    }
+
+    function updateBoundaryDetail(boundary) {
+      const node = nodeById.get(boundary.node);
+      const changedNode = selectedNode.id !== node.id;
+      selectedNode = node;
+      if (changedNode) rebuildRoutes();
+      selectedSource = node.path ? { path:`${basePath}${node.path}`, line:node.line || 1, node } : null;
+      pathCopy.textContent = selectedSource ? selectedSource.path : node.name;
+      subjectCopy.textContent = `${boundary.direction} boundary · ${boundary.transport}`;
+      summaryCopy.textContent = boundary.summary;
+      metricsCopy.textContent = `payload: ${boundary.payload} · marker points ${boundary.direction === 'input' ? 'into' : 'out of'} ${node.name} · boundary evidence should remain source-linked and editable`;
+      openButton.disabled = !selectedSource;
+      focusSelect.value = node.id;
+      selectionBox.setFromObject(nodeRecords.get(node.id).mesh);
+      selectedLabel.textContent = node.name;
+    }
+
+    function updateSecurityDetail(finding) {
+      const node = nodeById.get(finding.node);
+      const changedNode = selectedNode.id !== node.id;
+      selectedNode = node;
+      if (changedNode) rebuildRoutes();
+      selectedSource = { path:`${basePath}${finding.path}`, line:finding.line || 1, node };
+      pathCopy.textContent = selectedSource.path;
+      subjectCopy.textContent = `security ${finding.status.replace('_', ' ')} · ${finding.severity} severity · ${finding.confidence} confidence`;
+      summaryCopy.textContent = finding.summary;
+      metricsCopy.textContent = `${finding.label} · marker size encodes severity and opacity encodes confidence · this is an audit lead, not a confirmed exploitable vulnerability`;
+      openButton.disabled = false;
+      focusSelect.value = node.id;
+      selectionBox.setFromObject(nodeRecords.get(node.id).mesh);
+      selectedLabel.textContent = node.name;
+    }
+
+    function updateDetail(subject) {
+      selectedSubject = subject;
+      if (subject.kind === 'node') updateNodeDetail(subject.value);
+      if (subject.kind === 'road') updateRoadDetail(subject.value);
+      if (subject.kind === 'district') updateDistrictDetail(subject.value);
+      if (subject.kind === 'boundary') updateBoundaryDetail(subject.value);
+      if (subject.kind === 'security') updateSecurityDetail(subject.value);
+    }
+
+    function selectNode(nodeId, move = false) {
+      const node = nodeById.get(nodeId);
+      if (!node) return;
+      selectedNode = node;
+      renderer.domElement.dataset.focusNode = node.id;
+      rebuildRoutes();
+      updateDetail({ kind:'node', value:node });
+      if (move) moveCamera('detail');
+      render();
+    }
+
+    function projectLabel(element, position) {
+      const point = position.clone().project(camera);
+      const visible = point.z > -1 && point.z < 1;
+      element.style.visibility = visible ? 'visible' : 'hidden';
+      if (!visible) return;
+      element.style.left = `${(point.x * 0.5 + 0.5) * stage.clientWidth}px`;
+      element.style.top = `${(-point.y * 0.5 + 0.5) * stage.clientHeight}px`;
+    }
+
+    function updateVisibility() {
+      const distance = controls.getDistance();
+      lod = distance > 74 ? 'overview' : distance > 28 ? 'buildings' : 'detail';
+      districtRecords.forEach(record => {
+        record.beacon.visible = lod === 'overview';
+        record.beaconEdges.visible = lod === 'overview';
+        record.label.textContent = districtLabelText(record.district);
+        record.label.style.display = labelSelect.value === 'hidden' ? 'none' : '';
+      });
+      nodeRecords.forEach(record => {
+        const visible = lod !== 'overview';
+        record.mesh.visible = visible;
+        record.edges.visible = visible;
+        record.bands.forEach(band => { band.visible = visible && surfaceSelect.value === 'bands'; });
+        if (record.shadow) record.shadow.visible = visible;
+      });
+      boundaryGroup.visible = lod !== 'overview';
+      let visibleBoundaryCount = 0;
+      boundaryLabelRecords.forEach(record => {
+        record.marker.visible = lod === 'buildings' || (lod === 'detail' && record.boundary.node === selectedNode.id);
+        if (boundaryGroup.visible && record.marker.visible) visibleBoundaryCount += 1;
+        record.label.style.display = lod === 'detail' && record.boundary.node === selectedNode.id ? '' : 'none';
+      });
+      persistenceLabelRecords.forEach(record => {
+        record.label.style.display = lod === 'overview' ? 'none' : '';
+      });
+      securityGroup.visible = lod !== 'overview' && securitySelect.value !== 'hidden';
+      let visibleSecurityCount = 0;
+      securityByNode.forEach(records => records.forEach(record => {
+        record.marker.visible = securitySelect.value === 'all' || (securitySelect.value === 'high' && ['high','critical'].includes(record.finding.severity));
+        if (securityGroup.visible && record.marker.visible) visibleSecurityCount += 1;
+      }));
+      renderer.domElement.dataset.visibleBoundaryCount = String(visibleBoundaryCount);
+      renderer.domElement.dataset.visibleSecurityCount = String(visibleSecurityCount);
+      roadGroup.visible = true;
+      districtFeederGroup.visible = !transitioning && lod === 'buildings';
+      egoFeederGroup.visible = !transitioning && lod === 'detail';
+      const focusedDistrict = clusterByNode.get(selectedNode.id);
+      roadLabelRecords.forEach(record => {
+        record.label.style.display = lod === 'buildings' && record.endpointDistrict === focusedDistrict ? '' : 'none';
+      });
+      selectionBox.visible = lod === 'overview'
+        ? selectedSubject.kind === 'district'
+        : ['node','boundary','security'].includes(selectedSubject.kind);
+      selectedLabel.style.display = lod === 'detail' && ['node','boundary','security'].includes(selectedSubject.kind) ? '' : 'none';
+      levelBadge.textContent = lod === 'overview' ? 'L0 · coded districts + routed roads' : lod === 'buildings' ? 'L1 · bands + boundaries + persistence' : 'L2 · selected routes + audit evidence';
+    }
+
+    function render() {
+      updateVisibility();
+      selectionBox.update();
+      renderer.render(scene, camera);
+      districtRecords.forEach(record => projectLabel(record.label, record.labelPosition));
+      roadLabelRecords.forEach(record => projectLabel(record.label, record.position));
+      boundaryLabelRecords.forEach(record => projectLabel(record.label, record.labelPosition));
+      persistenceLabelRecords.forEach(record => projectLabel(record.label, record.labelPosition));
+      if (['node','boundary','security'].includes(selectedSubject.kind)) {
+        const record = nodeRecords.get(selectedNode.id);
+        projectLabel(selectedLabel, record.mesh.position.clone().add(new THREE.Vector3(0, record.height / 2 + 0.75, 0)));
+      }
+    }
+
+    const center = new THREE.Vector3(1.5, 1.2, 0);
+    camera.position.set(46, 43, 54);
+    controls.target.copy(center);
+    controls.update();
+    const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function animateCamera(position, target) {
+      const fromPosition = camera.position.clone();
+      const fromTarget = controls.target.clone();
+      const duration = reducedMotion ? 0 : 380;
+      const started = performance.now();
+      function frame(now) {
+        const t = duration ? Math.min(1, (now - started) / duration) : 1;
+        const eased = 1 - Math.pow(1 - t, 3);
+        camera.position.lerpVectors(fromPosition, position, eased);
+        controls.target.lerpVectors(fromTarget, target, eased);
+        controls.update();
+        render();
+        if (t < 1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function moveCamera(view) {
+      renderer.domElement.dataset.cameraMode = view;
+      if (view === 'overview') animateCamera(new THREE.Vector3(46, 43, 54), center);
+      if (view === 'buildings') animateCamera(new THREE.Vector3(38, 32, 44), center);
+      if (view === 'detail') {
+        const record = nodeRecords.get(selectedNode.id);
+        const target = record.mesh.position.clone().add(new THREE.Vector3(0, record.height * 0.18, 0));
+        animateCamera(target.clone().add(new THREE.Vector3(12, 10, 15)), target);
+      }
+    }
+
+    function changeLayout(layoutKey) {
+      if (!layouts[layoutKey]) return;
+      transitioning = true;
+      currentLayout = layoutKey;
+      const targets = positionsFor(layoutKey);
+      const starts = new Map([...nodeRecords.entries()].map(([id, record]) => [id, record.mesh.position.clone()]));
+      buildDistricts(layoutKey);
+      rebuildRoutes();
+      const duration = reducedMotion ? 0 : 520;
+      const started = performance.now();
+      function frame(now) {
+        const t = duration ? Math.min(1, (now - started) / duration) : 1;
+        const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        nodeRecords.forEach((record, id) => {
+          const target = targets.get(id);
+          const start = starts.get(id);
+          const x = THREE.MathUtils.lerp(start.x, target.x, eased);
+          const z = THREE.MathUtils.lerp(start.z, target.z, eased);
+          setNodeXZ(record, x, z);
+        });
+        render();
+        if (t < 1) requestAnimationFrame(frame);
+        else {
+          transitioning = false;
+          rebuildRoutes();
+          updateColors();
+          updateDetail({ kind:'node', value:selectedNode });
+          render();
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    let sceneKeyboardActive = false;
+    const cameraKeys = new Set(['w','a','s','d','arrowleft','arrowright','arrowup','arrowdown']);
+    const pressedCameraKeys = new Set();
+    const keyboardVelocity = new THREE.Vector3();
+    let keyboardYawVelocity = 0;
+    let keyboardPitchVelocity = 0;
+    let keyboardFrame = 0;
+    let keyboardFrameTime = 0;
+
+    function stopKeyboardMotion() {
+      pressedCameraKeys.clear();
+      keyboardVelocity.set(0, 0, 0);
+      keyboardYawVelocity = 0;
+      keyboardPitchVelocity = 0;
+      keyboardFrameTime = 0;
+      if (keyboardFrame) cancelAnimationFrame(keyboardFrame);
+      keyboardFrame = 0;
+    }
+
+    function updateKeyboardMotion(now) {
+      const delta = keyboardFrameTime ? Math.min(0.05, (now - keyboardFrameTime) / 1000) : 0;
+      keyboardFrameTime = now;
+      const distance = controls.getDistance();
+      const forward = controls.target.clone().sub(camera.position).setY(0).normalize();
+      const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+      const desiredVelocity = new THREE.Vector3();
+      if (pressedCameraKeys.has('w')) desiredVelocity.add(forward);
+      if (pressedCameraKeys.has('s')) desiredVelocity.sub(forward);
+      if (pressedCameraKeys.has('a')) desiredVelocity.sub(right);
+      if (pressedCameraKeys.has('d')) desiredVelocity.add(right);
+      if (desiredVelocity.lengthSq() > 1) desiredVelocity.normalize();
+      desiredVelocity.multiplyScalar(THREE.MathUtils.clamp(distance * 0.72, 5.5, 27));
+
+      const response = reducedMotion ? 1 : 1 - Math.exp(-11 * delta);
+      keyboardVelocity.lerp(desiredVelocity, response);
+      const rotationSpeed = 1.18;
+      const desiredYaw = ((pressedCameraKeys.has('arrowright') ? 1 : 0) - (pressedCameraKeys.has('arrowleft') ? 1 : 0)) * rotationSpeed;
+      const desiredPitch = ((pressedCameraKeys.has('arrowdown') ? 1 : 0) - (pressedCameraKeys.has('arrowup') ? 1 : 0)) * rotationSpeed * 0.72;
+      keyboardYawVelocity = THREE.MathUtils.lerp(keyboardYawVelocity, desiredYaw, response);
+      keyboardPitchVelocity = THREE.MathUtils.lerp(keyboardPitchVelocity, desiredPitch, response);
+
+      if (delta > 0 && keyboardVelocity.lengthSq() > 0.0001) {
+        const translation = keyboardVelocity.clone().multiplyScalar(delta);
+        camera.position.add(translation);
+        controls.target.add(translation);
+      }
+      if (delta > 0 && (Math.abs(keyboardYawVelocity) > 0.0001 || Math.abs(keyboardPitchVelocity) > 0.0001)) {
+        const offset = camera.position.clone().sub(controls.target);
+        const spherical = new THREE.Spherical().setFromVector3(offset);
+        spherical.theta += keyboardYawVelocity * delta;
+        spherical.phi = THREE.MathUtils.clamp(spherical.phi + keyboardPitchVelocity * delta, 0.2, Math.PI * 0.485);
+        camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(spherical));
+      }
+
+      controls.update();
+      renderer.domElement.dataset.cameraMode = 'free';
+      renderer.domElement.dataset.cameraRevision = String(Number(renderer.domElement.dataset.cameraRevision || 0) + 1);
+      render();
+
+      const moving = pressedCameraKeys.size > 0 || keyboardVelocity.lengthSq() > 0.01 ||
+        Math.abs(keyboardYawVelocity) > 0.01 || Math.abs(keyboardPitchVelocity) > 0.01;
+      if (moving && sceneKeyboardActive && root.isConnected) {
+        keyboardFrame = requestAnimationFrame(updateKeyboardMotion);
+      } else {
+        stopKeyboardMotion();
+      }
+    }
+
+    function startKeyboardMotion() {
+      if (keyboardFrame) return;
+      const now = performance.now();
+      keyboardFrameTime = now - 16;
+      updateKeyboardMotion(now);
+    }
+
+    document.addEventListener('keydown', event => {
+      if (!sceneKeyboardActive || !root.isConnected) return;
+      if (event.target instanceof Element && event.target.closest('input, select, textarea, button, a')) return;
+      const key = event.key.toLowerCase();
+      if (!cameraKeys.has(key)) return;
+      event.preventDefault();
+      pressedCameraKeys.add(key);
+      startKeyboardMotion();
+    });
+    document.addEventListener('keyup', event => {
+      const key = event.key.toLowerCase();
+      if (!cameraKeys.has(key)) return;
+      pressedCameraKeys.delete(key);
+      if (sceneKeyboardActive) startKeyboardMotion();
+    });
+    window.addEventListener('blur', stopKeyboardMotion);
+
+    focusSelect.replaceChildren(...nodes
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(node => {
+        const option = document.createElement('option');
+        option.value = node.id;
+        option.textContent = `${node.name} · ${node.kind}`;
+        return option;
+      }));
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    function intersections(event) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      return raycaster.intersectObjects([...overlayPickables, ...nodePickables, ...districtPickables, ...relationPickables].filter(object => object.visible && object.parent?.visible !== false), false);
+    }
+
+    function tooltipCopy(object) {
+      if (object.userData.securityFinding) {
+        const finding = object.userData.securityFinding;
+        return `${finding.label} · ${finding.severity} severity · ${finding.confidence} confidence · audit lead, not confirmed vulnerability`;
+      }
+      if (object.userData.boundary) {
+        const boundary = object.userData.boundary;
+        return `${boundary.direction.toUpperCase()} · ${boundary.transport} · ${boundary.payload} · ${nodeById.get(boundary.node).name}`;
+      }
+      if (object.userData.nodeId) {
+        const node = nodeById.get(object.userData.nodeId);
+        if (surfaceSelect.value === 'bands' && node.metrics) {
+          const coverage = node.metrics.coverage === null ? '?' : `${Math.round((1 - node.metrics.coverage) * 100)}%`;
+          return `${node.name} · bands: coverage gap ${coverage} · CC ${node.metrics.complexity} · coupling ${node.metrics.fanIn + node.metrics.fanOut} · effects ${node.metrics.effects}`;
+        }
+        const metric = rawMetric(node);
+        const metricText = metric === null ? 'quality unknown/not applicable' : surfaceSelect.value === 'coverage' ? `${Math.round(metric * 100)}% uncovered` : `${metric.toLocaleString()}`;
+        return `${node.name} · ${node.kind} · ${surfaceName.textContent}: ${metricText}`;
+      }
+      if (object.userData.districtId) {
+        const district = districtRecords.get(object.userData.districtId).district;
+        return `${district.name} · ${district.members.length} members · select to inspect boundary crossings`;
+      }
+      const route = object.userData.roadData;
+      if (route?.kind === 'road') {
+        const a = districtRecords.get(route.a)?.district;
+        const b = districtRecords.get(route.b)?.district;
+        return `${districtCodeText(a?.code || route.a)} ↔ ${districtCodeText(b?.code || route.b)} · ${route.count} relations · ${route.lanes.length} typed lanes · strength ${route.strength}`;
+      }
+      if (route?.kind === 'lane') {
+        const from = districtRecords.get(route.from)?.district;
+        const to = districtRecords.get(route.to)?.district;
+        return `${districtCodeText(from?.code || route.from)} → ${districtCodeText(to?.code || route.to)} · ${route.count} ${familyNames[route.family]} relations · ${route.execution}`;
+      }
+      if (route) return `${nodeById.get(route.from).name} → ${nodeById.get(route.to).name} · ${familyNames[route.family]} · ${route.execution}`;
+      return '';
+    }
+
+    renderer.domElement.addEventListener('pointermove', event => {
+      const hit = intersections(event)[0];
+      if (!hit) {
+        tooltip.style.display = 'none';
+        renderer.domElement.style.cursor = 'grab';
+        return;
+      }
+      renderer.domElement.style.cursor = 'pointer';
+      tooltip.textContent = tooltipCopy(hit.object);
+      tooltip.style.display = 'block';
+      const stageRect = stage.getBoundingClientRect();
+      const left = Math.min(event.clientX - stageRect.left + 12, stage.clientWidth - 302);
+      const top = Math.max(8, event.clientY - stageRect.top - 34);
+      tooltip.style.left = `${Math.max(8, left)}px`;
+      tooltip.style.top = `${top}px`;
+    });
+
+    renderer.domElement.addEventListener('pointerenter', () => { sceneKeyboardActive = true; });
+    renderer.domElement.addEventListener('pointerleave', () => {
+      sceneKeyboardActive = false;
+      stopKeyboardMotion();
+      tooltip.style.display = 'none';
+    });
+    renderer.domElement.addEventListener('click', event => {
+      const hit = intersections(event)[0];
+      if (!hit) return;
+      const object = hit.object;
+      if (object.userData.securityFinding) {
+        updateDetail({ kind:'security', value:object.userData.securityFinding });
+        moveCamera('detail');
+        render();
+      } else if (object.userData.boundary) {
+        updateDetail({ kind:'boundary', value:object.userData.boundary });
+        moveCamera('detail');
+        render();
+      } else if (object.userData.nodeId) {
+        selectNode(object.userData.nodeId, lod === 'detail');
+      } else if (object.userData.districtId) {
+        updateDetail({ kind:'district', value:object.userData.districtId });
+        render();
+      } else if (object.userData.roadData) {
+        updateDetail({ kind:'road', value:object.userData.roadData });
+        render();
+      }
+    });
+
+    controls.addEventListener('change', render);
+    layoutSelect.addEventListener('change', () => changeLayout(layoutSelect.value));
+    familySelect.addEventListener('change', () => {
+      rebuildRoutes();
+      updateColors();
+    });
+    surfaceSelect.addEventListener('change', updateColors);
+    labelSelect.addEventListener('change', () => {
+      refreshDistrictLabels();
+      render();
+    });
+    securitySelect.addEventListener('change', render);
+    focusSelect.addEventListener('change', () => selectNode(focusSelect.value, true));
+    root.querySelectorAll('[data-system-view]').forEach(button => button.addEventListener('click', () => moveCamera(button.dataset.systemView)));
+    openButton.addEventListener('click', async () => {
+      if (!selectedSource) return;
+      if (window.openai?.sendFollowUpMessage) {
+        await window.openai.sendFollowUpMessage({
+          title: `Inspect ${selectedSource.node.name}`,
+          prompt: `Open ${selectedSource.path}:${selectedSource.line}. Explain this selected city element using the exact source, including its architectural role, incoming and outgoing interactions, complexity, direct and transitive side effects, and test evidence. Distinguish measured facts from inference and do not assume a heat metric proves defective code.`
+        });
+      } else {
+        modeNote.textContent = `Source target: ${selectedSource.path}:${selectedSource.line}`;
+      }
+    });
+
+    const resizeObserver = new ResizeObserver(() => {
+      const width = Math.max(1, stage.clientWidth);
+      const height = Math.max(1, stage.clientHeight);
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      render();
+    });
+    resizeObserver.observe(stage);
+
+    buildDistricts(currentLayout);
+    const initialPositions = positionsFor(currentLayout);
+    nodeRecords.forEach((record, id) => {
+      const position = initialPositions.get(id);
+      setNodeXZ(record, position.x, position.z);
+    });
+    rebuildRoutes();
+    updateColors();
+    selectNode(selectedNode.id);
+    render();
+  </script>
+</div>

@@ -1,0 +1,571 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vibecodemap.dev/schema/project-0.1.json",
+  "title": "VibeCodeMap project manifest 0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "vcm_project",
+    "project",
+    "analysis",
+    "decompositions",
+    "render_profiles"
+  ],
+  "properties": {
+    "vcm_project": { "const": "0.1" },
+    "project": { "$ref": "#/$defs/project" },
+    "analysis": { "$ref": "#/$defs/analysis" },
+    "decompositions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/decomposition" }
+    },
+    "expectations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/expectation" },
+      "default": []
+    },
+    "corrections": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/correction" },
+      "default": []
+    },
+    "boundaries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/boundary" },
+      "default": []
+    },
+    "security_reviews": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/securityReview" },
+      "default": []
+    },
+    "render_profiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/renderProfile" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
+    },
+    "nonEmpty": { "type": "string", "minLength": 1 },
+    "globList": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/nonEmpty" }
+    },
+    "evidenceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": { "$ref": "#/$defs/nonEmpty" },
+        "symbol": { "type": "string" },
+        "lines": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [
+            { "type": "integer", "minimum": 1 },
+            { "type": "integer", "minimum": 1 }
+          ]
+        },
+        "supports": { "type": "string" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "confidence", "rationale"],
+      "properties": {
+        "method": {
+          "enum": [
+            "deterministic",
+            "ai_inferred",
+            "human_declared",
+            "human_confirmed",
+            "runtime_observed"
+          ]
+        },
+        "confidence": { "enum": ["high", "medium", "low"] },
+        "rationale": { "$ref": "#/$defs/nonEmpty" },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidenceRef" }
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "repository", "inputs"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/nonEmpty" },
+        "repository": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["root"],
+          "properties": {
+            "root": { "$ref": "#/$defs/nonEmpty" },
+            "revision_policy": {
+              "enum": ["working_tree", "head", "explicit"]
+            }
+          }
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["structural_model"],
+          "properties": {
+            "structural_model": { "$ref": "#/$defs/nonEmpty" },
+            "quality_model": { "type": "string" },
+            "runtime_models": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/nonEmpty" }
+            },
+            "requirements": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/nonEmpty" }
+            }
+          }
+        }
+      }
+    },
+    "analysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["languages", "scope", "generated_detection"],
+      "properties": {
+        "languages": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/languageProfile" }
+        },
+        "scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["default_action", "rules"],
+          "properties": {
+            "default_action": {
+              "enum": ["analyze", "summarize", "externalize", "ignore"]
+            },
+            "rules": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/scopeRule" }
+            },
+            "read_gitignore": { "type": "boolean", "default": true },
+            "read_gitattributes": { "type": "boolean", "default": true }
+          }
+        },
+        "generated_detection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["default_action", "markers"],
+          "properties": {
+            "default_action": {
+              "enum": ["summarize", "externalize", "ignore"]
+            },
+            "max_header_bytes": {
+              "type": "integer",
+              "minimum": 256,
+              "maximum": 65536,
+              "default": 8192
+            },
+            "markers": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/markerRule" }
+            }
+          }
+        },
+        "budgets": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max_file_bytes": { "type": "integer", "minimum": 1 },
+            "max_symbols_per_file": { "type": "integer", "minimum": 1 },
+            "max_ai_summary_files": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "languageProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "enabled", "adapter", "include", "capabilities"],
+      "properties": {
+        "id": {
+          "enum": [
+            "python",
+            "javascript",
+            "typescript",
+            "go",
+            "swift",
+            "objective-c",
+            "kotlin",
+            "java",
+            "dart"
+          ]
+        },
+        "enabled": { "type": "boolean" },
+        "adapter": { "$ref": "#/$defs/nonEmpty" },
+        "include": { "$ref": "#/$defs/globList" },
+        "parser": { "type": "string" },
+        "capabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "artifacts",
+              "symbols",
+              "imports",
+              "calls",
+              "types",
+              "effects",
+              "complexity",
+              "coverage",
+              "tests",
+              "entrypoints",
+              "ui_composition",
+              "navigation",
+              "lifecycle",
+              "permissions",
+              "platform_boundaries"
+            ]
+          }
+        },
+        "metric_sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmpty" }
+        }
+      }
+    },
+    "scopeRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "patterns", "action", "classification", "reason", "priority"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "patterns": { "$ref": "#/$defs/globList" },
+        "action": { "enum": ["analyze", "summarize", "externalize", "ignore"] },
+        "classification": {
+          "enum": [
+            "source",
+            "generated",
+            "installed_dependency",
+            "vendored_dependency",
+            "build_output",
+            "cache",
+            "asset",
+            "documentation",
+            "test",
+            "migration",
+            "vcs_metadata",
+            "custom"
+          ]
+        },
+        "reason": { "$ref": "#/$defs/nonEmpty" },
+        "priority": { "type": "integer", "minimum": -1000, "maximum": 1000 },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "markerRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "regex", "action", "classification", "reason", "priority"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "regex": { "$ref": "#/$defs/nonEmpty" },
+        "action": { "enum": ["summarize", "externalize", "ignore"] },
+        "classification": { "enum": ["generated", "vendored_dependency", "custom"] },
+        "reason": { "$ref": "#/$defs/nonEmpty" },
+        "priority": { "type": "integer", "minimum": -1000, "maximum": 1000 }
+      }
+    },
+    "selector": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "element_ids": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "path_globs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmpty" }
+        },
+        "facets": {
+          "type": "object",
+          "additionalProperties": {
+            "type": ["string", "number", "boolean", "array"]
+          }
+        },
+        "exclude": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/id" }
+        }
+      },
+      "anyOf": [
+        { "required": ["element_ids"] },
+        { "required": ["path_globs"] },
+        { "required": ["facets"] }
+      ]
+    },
+    "decomposition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "kind", "districts", "provenance"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/nonEmpty" },
+        "kind": { "enum": ["declared", "inferred_static", "runtime_observed"] },
+        "districts": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/district" }
+        },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "district": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "code", "name", "members"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z0-9]{1,4}$"
+        },
+        "name": { "$ref": "#/$defs/nonEmpty" },
+        "summary": { "type": "string" },
+        "role": {
+          "enum": ["owned", "shared_utility", "external_platform", "unassigned"]
+        },
+        "members": { "$ref": "#/$defs/selector" }
+      }
+    },
+    "expectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "name", "importance", "summary", "provenance"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "enum": ["component", "interface", "relation", "flow", "test", "policy"] },
+        "name": { "$ref": "#/$defs/nonEmpty" },
+        "parent": { "$ref": "#/$defs/id" },
+        "importance": { "enum": ["required", "recommended", "optional", "forbidden"] },
+        "summary": { "$ref": "#/$defs/nonEmpty" },
+        "match": { "$ref": "#/$defs/selector" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "correction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "target", "operations", "reason", "provenance"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "target": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["entity"],
+              "properties": { "entity": { "$ref": "#/$defs/id" } }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["selector"],
+              "properties": { "selector": { "$ref": "#/$defs/selector" } }
+            }
+          ]
+        },
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["action", "path"],
+            "properties": {
+              "action": { "enum": ["set", "merge", "add", "remove"] },
+              "path": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_.-]*$"
+              },
+              "value": true
+            }
+          }
+        },
+        "reason": { "$ref": "#/$defs/nonEmpty" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "subject", "direction", "transport", "payloads", "summary", "provenance"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "subject": { "$ref": "#/$defs/id" },
+        "direction": { "enum": ["input", "output", "bidirectional"] },
+        "transport": { "$ref": "#/$defs/nonEmpty" },
+        "payloads": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/nonEmpty" }
+        },
+        "trust_from": { "type": "string" },
+        "trust_to": { "type": "string" },
+        "authentication": {
+          "enum": ["none", "optional", "required", "mixed", "external", "unknown"]
+        },
+        "source_relation": { "$ref": "#/$defs/id" },
+        "summary": { "$ref": "#/$defs/nonEmpty" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "securityReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "subjects", "category", "status", "severity", "summary", "provenance"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "subjects": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "category": {
+          "enum": ["attack_surface", "vulnerability", "control_gap", "sensitive_data_flow", "supply_chain", "configuration", "other"]
+        },
+        "status": {
+          "enum": ["review_candidate", "confirmed", "accepted", "false_positive", "fixed"]
+        },
+        "severity": { "enum": ["info", "low", "medium", "high", "critical"] },
+        "summary": { "$ref": "#/$defs/nonEmpty" },
+        "impact": { "type": "string" },
+        "recommendation": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      }
+    },
+    "renderProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "decomposition", "hierarchy", "encodings", "roads", "labels"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "const": "road_city" },
+        "decomposition": { "$ref": "#/$defs/id" },
+        "hierarchy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["city", "district", "building", "interior"],
+          "properties": {
+            "city": { "enum": ["system"] },
+            "district": { "enum": ["component_group", "cluster", "subsystem", "deployable"] },
+            "building": { "enum": ["component", "file", "class"] },
+            "interior": {
+              "type": "array",
+              "items": { "enum": ["file", "class", "function", "operation"] }
+            }
+          }
+        },
+        "encodings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["body", "bands", "unknown_pattern"],
+          "properties": {
+            "body": { "enum": ["semantic_kind", "role"] },
+            "bands": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 6,
+              "items": { "$ref": "#/$defs/band" }
+            },
+            "unknown_pattern": { "enum": ["wireframe", "hatch", "gap"] },
+            "surface_evidence": { "enum": ["none", "opacity", "texture"] }
+          }
+        },
+        "roads": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "aggregate",
+            "endpoint_labels",
+            "local_feeders",
+            "lane_family",
+            "lane_execution",
+            "max_detail_relations"
+          ],
+          "properties": {
+            "aggregate": { "const": "district_pair" },
+            "endpoint_labels": { "const": "opposite_district_code" },
+            "local_feeders": { "enum": ["selected_only", "selected_district", "all_bounded"] },
+            "lane_family": { "const": "relation_family" },
+            "lane_execution": { "const": "surface_pattern" },
+            "max_detail_relations": { "type": "integer", "minimum": 3, "maximum": 30 },
+            "intra_district": { "enum": ["hidden", "selected_only", "all_bounded"] }
+          }
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["district_default", "allow_long_names"],
+          "properties": {
+            "district_default": { "enum": ["code", "name", "hidden"] },
+            "allow_long_names": { "type": "boolean" },
+            "road_endpoints": { "type": "boolean" }
+          }
+        },
+        "boundaries": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["show_inputs", "show_outputs", "payload_detail", "persistence_labels"],
+          "properties": {
+            "show_inputs": { "type": "boolean" },
+            "show_outputs": { "type": "boolean" },
+            "payload_detail": { "enum": ["selected_only", "district", "all"] },
+            "persistence_labels": { "type": "boolean" }
+          }
+        },
+        "security": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["marker", "severity_encoding", "confidence_encoding", "candidate_treatment"],
+          "properties": {
+            "marker": { "enum": ["spot", "beacon", "halo"] },
+            "severity_encoding": { "enum": ["size", "heat", "size_and_heat"] },
+            "confidence_encoding": { "enum": ["opacity", "pattern"] },
+            "candidate_treatment": { "enum": ["label", "outline", "label_and_outline"] }
+          }
+        }
+      }
+    },
+    "band": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "metric", "order", "direction", "normalization"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "label": { "$ref": "#/$defs/nonEmpty" },
+        "metric": { "$ref": "#/$defs/nonEmpty" },
+        "order": { "type": "integer", "minimum": 1, "maximum": 6 },
+        "direction": { "enum": ["higher_attention", "lower_attention", "context_only"] },
+        "normalization": {
+          "enum": ["project_percentile", "absolute_threshold", "ratio_0_1", "log_project_percentile"]
+        },
+        "thresholds": {
+          "type": "array",
+          "items": { "type": "number" }
+        },
+        "unknown": { "enum": ["wireframe", "hatch", "gap"] }
+      }
+    }
+  }
+}

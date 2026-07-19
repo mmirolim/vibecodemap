@@ -1,4 +1,4 @@
-# ADR-001: Go core with a TypeScript/Three.js renderer
+# ADR-001: Go core and document generator with a Three.js browser runtime
 
 - Status: accepted for the next prototype
 - Date: 2026-07-18
@@ -11,10 +11,12 @@ local UI, and expose operations to AI agents. It must also provide a highly
 interactive browser renderer with WebGL picking, camera control, semantic zoom,
 tooltips, legends, and source navigation.
 
-One implementation language does not solve both concerns equally well. Using
-Go for browser rendering would either abandon Three.js or introduce a Go/WASM
-bridge around a JavaScript rendering ecosystem. Neither reduces the hard part:
-designing a stable evidence and interaction contract.
+“Go renders the map” has two materially different meanings. Go can generate the
+complete deliverable—validate the DSL, compute the view model, and write a
+standalone HTML document—while Three.js executes the WebGL scene in the browser.
+That is the intended architecture. It does not require a Node.js server or Go
+WASM. Using Go itself as the browser WebGL runtime would require a Go/WASM bridge
+and is a separate, currently unjustified design.
 
 ## Decision
 
@@ -31,16 +33,18 @@ The Go process owns:
 - schema and semantic validation;
 - aggregation for semantic zoom;
 - revision snapshots and diffs;
-- local HTTP/API serving and, later, an MCP surface;
-- embedding the compiled web application in release binaries.
+- generation of a standalone HTML document from validated project data;
+- optional local HTTP/API serving and, later, an MCP surface;
+- embedding the versioned renderer assets in release binaries.
 
 Go is appropriate here because it produces a portable single binary, has good
 filesystem and process primitives, supports concurrent independent analyzers,
-and can serve the resulting local application without a separate runtime.
+and can generate or serve the resulting application without a separate server
+runtime.
 
-### TypeScript and Three.js renderer
+### Three.js browser runtime
 
-The browser application owns:
+The generated document's browser code owns:
 
 - WebGL rendering through Three.js;
 - stable layout and camera behavior;
@@ -50,8 +54,25 @@ The browser application owns:
 - source navigation and agent follow-up actions;
 - accessible 2D/table alternatives using the same model.
 
-The renderer receives validated JSON. It does not compute analyzer metrics or
-silently reinterpret metric direction, freshness, or missing values.
+The renderer receives a validated renderer-neutral JSON view model emitted by
+Go. It does not compute analyzer metrics or silently reinterpret metric
+direction, freshness, or missing values. TypeScript is useful for maintaining a
+larger renderer, but it is a build-time implementation choice rather than a
+runtime requirement; the early prototype may remain plain JavaScript.
+
+The planned CLI boundary is:
+
+```text
+vibecodemap describe                 # print the complete human DSL contract
+vibecodemap schema                   # print the complete machine schema
+vibecodemap validate project.yaml    # syntax, schema, and semantic references
+vibecodemap render project.yaml -o map.html
+```
+
+`render` should validate first, compose the structural, quality, requirement,
+runtime, boundary, and security records into one view model, then inject that
+model into embedded versioned Three.js assets. It should not contain a second
+set of architectural inference rules hidden in the HTML template.
 
 ### Analyzer adapters
 
@@ -76,13 +97,14 @@ remain analyzer-produced; AI interpretations remain visibly distinct findings.
 
 ## Rejected alternatives
 
-### Go for both core and rendering
+### Go as the in-browser WebGL runtime
 
-Go/WASM can render WebGL, but it adds a bridge to browser APIs and the Three.js
+Go/WASM can drive WebGL, but it adds a bridge to browser APIs and the Three.js
 ecosystem without improving the evidence model. It also increases binary size,
-debugging complexity, and UI iteration cost. Reconsider only if profiling shows
-an actual browser-side computation bottleneck that cannot be moved to a worker
-or the Go core.
+debugging complexity, and UI iteration cost. This rejection does not reject a
+Go CLI that generates HTML; that generator is part of the accepted design.
+Reconsider WASM only if profiling shows an actual browser-side computation
+bottleneck that cannot be moved to a worker or the Go core.
 
 ### TypeScript/Node for everything
 
@@ -101,8 +123,9 @@ parser can replace every compiler, linter, test runner, and profiler.
 - The JSON/process boundary must be versioned and tested early.
 - Go and TypeScript share generated schema types or conformance fixtures rather
   than hand-maintained duplicate models.
-- The first release can still be one executable by embedding compiled web
-  assets in Go.
+- The first release can be one executable that prints the DSL, validates models,
+  and emits a self-contained map document by embedding compiled web assets in
+  Go.
 - Python remains a development dependency only for Python adapters that need it.
 - SQLite is deferred until scan history/query needs justify it; revision JSON
   snapshots are sufficient for the next experiment.

@@ -103,13 +103,15 @@ func Build(evidence []EvidenceEdge, profile Profile) ([]Edge, error) {
 	}
 
 	grouped := make(map[groupedKey]*groupedEvidence)
+	evidenceIDs := make(map[string]struct{}, len(evidence))
 	for index, item := range evidence {
-		if _, enabled := layers[item.Signal]; !enabled {
-			continue
-		}
 		if item.ID == "" {
 			return nil, fmt.Errorf("evidence edge %d has no ID", index)
 		}
+		if _, duplicate := evidenceIDs[item.ID]; duplicate {
+			return nil, fmt.Errorf("duplicate evidence edge id %q", item.ID)
+		}
+		evidenceIDs[item.ID] = struct{}{}
 		if item.From == "" || item.To == "" {
 			return nil, fmt.Errorf("evidence edge %q has an empty endpoint", item.ID)
 		}
@@ -121,6 +123,9 @@ func Build(evidence []EvidenceEdge, profile Profile) ([]Edge, error) {
 		}
 		if math.IsNaN(item.Confidence) || math.IsInf(item.Confidence, 0) || item.Confidence < 0 || item.Confidence > 1 {
 			return nil, fmt.Errorf("evidence edge %q has confidence outside [0,1]", item.ID)
+		}
+		if _, enabled := layers[item.Signal]; !enabled {
+			continue
 		}
 		if item.Strength == 0 {
 			continue

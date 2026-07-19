@@ -38,6 +38,10 @@ node_modules/
 dist/
 .vite/
 .parcel-cache/
+.next/
+.nuxt/
+.svelte-kit/
+.turbo/
 coverage/
 *.tsbuildinfo
 
@@ -53,3 +57,27 @@ venv/
 .coverage.*
 htmlcov/
 coverage.xml
+
+# Dart / Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+**/Flutter/ephemeral/
+**/.plugin_symlinks/
+
+# Gradle / Android / Kotlin
+.gradle/
+.kotlin/
+**/build/
+.cxx/
+.externalNativeBuild/
+local.properties
+
+# Apple / Swift / Xcode
+.build/
+DerivedData/
+Pods/
+Carthage/Build/
+xcuserdata/
+*.xcuserstate

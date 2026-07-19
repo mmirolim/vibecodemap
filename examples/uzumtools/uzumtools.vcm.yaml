@@ -5,7 +5,7 @@ model:
   name: Uzum Photo Checker
   summary: Flask and browser application for marketplace photo analysis, correction, AI enhancement, user accounts, credits, and Paycom payments.
   repository:
-    root: /Users/mirolim/projects/uzumtools/photochecker
+    root: ../../../uzumtools/photochecker
     revision: "4b65d40de6830e6cee70ea7930ae05b9a099df44"
     dirty: true
   generated:

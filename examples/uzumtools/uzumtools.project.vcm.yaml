@@ -1,0 +1,549 @@
+vcm_project: "0.1"
+
+project:
+  id: uzumtools
+  name: Uzumtools Photo Checker
+  repository:
+    root: ../../../uzumtools/photochecker
+    revision_policy: working_tree
+  inputs:
+    structural_model: uzumtools.vcm.yaml
+    quality_model: uzumtools.quality.vcm.yaml
+    runtime_models: []
+    requirements: []
+
+analysis:
+  languages:
+    - id: python
+      enabled: true
+      adapter: python-ast-v0
+      parser: python-ast
+      include: ["**/*.py"]
+      capabilities: [artifacts, symbols, imports, calls, effects, complexity, coverage, tests]
+      metric_sources: [ruff-mccabe, coverage.py]
+
+    - id: javascript
+      enabled: true
+      adapter: tree-sitter-javascript-v0
+      parser: tree-sitter-javascript
+      include: ["**/*.js", "**/*.mjs", "**/*.cjs"]
+      capabilities: [artifacts, symbols, imports, calls, effects, complexity, coverage, tests]
+      metric_sources: [eslint-complexity, lcov]
+
+    - id: typescript
+      enabled: false
+      adapter: typescript-compiler-v0
+      parser: typescript-compiler-api
+      include: ["**/*.ts", "**/*.tsx"]
+      capabilities: [artifacts, symbols, imports, calls, types, effects, complexity, coverage, tests]
+      metric_sources: [eslint-complexity, lcov]
+
+    - id: go
+      enabled: false
+      adapter: go-packages-v0
+      parser: go/packages+go/types
+      include: ["**/*.go"]
+      capabilities: [artifacts, symbols, imports, calls, types, effects, complexity, coverage, tests]
+      metric_sources: [go-cover, gocyclo-compatible]
+
+  scope:
+    default_action: analyze
+    read_gitignore: true
+    read_gitattributes: true
+    rules:
+      - id: scope.node-modules
+        patterns: ["**/node_modules/**"]
+        action: ignore
+        classification: installed_dependency
+        priority: 50
+        reason: Resolve JavaScript packages from manifests instead of installed source.
+
+      - id: scope.python-environments
+        patterns: ["**/.venv/**", "**/venv/**", "**/env/**"]
+        action: ignore
+        classification: installed_dependency
+        priority: 50
+        reason: Resolve Python packages from manifests instead of virtual-environment source.
+
+      - id: scope.go-vendor
+        patterns: ["**/vendor/**"]
+        action: ignore
+        classification: vendored_dependency
+        priority: 50
+        reason: Resolve Go modules from go.mod/go.sum instead of vendored source.
+
+      - id: scope.tool-caches
+        patterns:
+          - "**/__pycache__/**"
+          - "**/.pytest_cache/**"
+          - "**/.mypy_cache/**"
+          - "**/.ruff_cache/**"
+        action: ignore
+        classification: cache
+        priority: 80
+        reason: Tool caches are derived data.
+
+      - id: scope.build-output
+        patterns: ["**/dist/**", "**/build/**", "**/coverage/**", "**/out/**"]
+        action: ignore
+        classification: build_output
+        priority: 60
+        reason: Build and coverage output should not become source buildings.
+
+      - id: scope.protobuf-generated
+        patterns: ["**/*.pb.go", "**/*_pb2.py", "**/*.generated.ts"]
+        action: summarize
+        classification: generated
+        priority: 70
+        reason: Keep generated volume and dependencies without indexing every symbol.
+
+  generated_detection:
+    default_action: summarize
+    max_header_bytes: 8192
+    markers:
+      - id: generated.go-header
+        regex: '(?m)^// Code generated .* DO NOT EDIT\.$'
+        action: summarize
+        classification: generated
+        priority: 90
+        reason: Standard Go generated-code marker.
+
+      - id: generated.generic-header
+        regex: '(?im)^(//|#|/\*)\s*(auto-?generated|generated (file|code)|do not edit)\b'
+        action: summarize
+        classification: generated
+        priority: 75
+        reason: Common generated-source header.
+
+  budgets:
+    max_file_bytes: 2000000
+    max_symbols_per_file: 5000
+    max_ai_summary_files: 250
+
+decompositions:
+  - id: declared.runtime-boundaries
+    name: Declared runtime boundaries
+    kind: declared
+    districts:
+      - id: district.browser
+        code: D1
+        name: Browser runtime
+        role: owned
+        summary: Browser interfaces, localization, edge inference, and browser-local state.
+        members:
+          element_ids:
+            - deployable.browser
+            - layer.browser-presentation
+            - component.landing-ui
+            - component.tool-ui
+            - component.account-ui
+            - component.browser-i18n
+            - component.client-edge-ml
+            - operation.client.edge-background-removal
+            - resource.browser-model-cache
+          path_globs: ["app/templates/**", "app/static/**"]
+
+      - id: district.interfaces
+        code: D2
+        name: HTTP and operator boundary
+        role: owned
+        summary: Flask routes, request workers, callbacks, and operator commands.
+        members:
+          element_ids:
+            - deployable.flask-web
+            - process.flask-request-workers
+            - layer.server-interfaces
+            - component.main-blueprint
+            - component.auth-blueprint
+            - component.api-blueprint
+            - interface.operator-cli
+            - operation.api.technical-analysis
+            - operation.api.ai-analysis
+            - operation.api.enhance-image
+            - operation.api.background-upload
+            - operation.api.paycom-callback
+            - expected.endpoint.analytics
+          path_globs: ["app/views/**", "app/cli/**"]
+
+      - id: district.services
+        code: D3
+        name: Application services
+        role: owned
+        summary: Image, enhancement, lifecycle, identity, billing, and localization services.
+        members:
+          element_ids:
+            - layer.application-services
+            - component.image-analysis
+            - component.ai-analysis
+            - component.enhancement
+            - component.image-lifecycle
+            - component.jobs
+            - component.identity
+            - component.billing
+            - component.server-i18n
+          path_globs: ["app/services/**"]
+          exclude: [component.storage-adapters]
+
+      - id: district.infrastructure
+        code: D4
+        name: Shared infrastructure
+        role: shared_utility
+        summary: Models, security, storage adapters, durable stores, and shared state.
+        members:
+          element_ids:
+            - component.storage-adapters
+            - layer.data-model
+            - component.orm-models
+            - layer.cross-cutting
+            - component.security
+            - datastore.relational
+            - resource.image-storage
+            - datastore.rate-limit
+          path_globs: ["app/models/**", "app/extensions.py", "app/services/storage/**"]
+
+      - id: district.external
+        code: D5
+        name: External platforms
+        role: external_platform
+        summary: Provider, identity, payment, model-hosting, and runtime-CDN dependencies.
+        members:
+          element_ids:
+            - external.gemini
+            - external.google-oauth
+            - external.telegram
+            - external.paycom
+            - external.huggingface-model
+            - external.onnx-runtime-cdn
+
+    provenance:
+      method: human_declared
+      confidence: high
+      rationale: Curated ownership and runtime-boundary baseline for the fixture.
+
+  - id: inferred.feature-affinity-sketch
+    name: Feature affinity sketch
+    kind: inferred_static
+    districts:
+      - id: affinity.experience
+        code: E
+        name: Experience and interfaces
+        role: owned
+        members:
+          element_ids: [component.landing-ui, component.tool-ui, component.account-ui, component.main-blueprint, component.api-blueprint, component.auth-blueprint, interface.operator-cli]
+
+      - id: affinity.analysis
+        code: A
+        name: Analysis and browser ML
+        role: owned
+        members:
+          element_ids: [component.client-edge-ml, operation.client.edge-background-removal, resource.browser-model-cache, component.image-analysis, component.ai-analysis]
+
+      - id: affinity.assets
+        code: H
+        name: Enhancement and assets
+        role: owned
+        members:
+          element_ids: [component.enhancement, component.image-lifecycle, component.storage-adapters, resource.image-storage, component.jobs]
+
+      - id: affinity.identity
+        code: I
+        name: Identity and billing
+        role: owned
+        members:
+          element_ids: [component.identity, component.billing]
+
+      - id: affinity.utility
+        code: U
+        name: Shared utility belt
+        role: shared_utility
+        members:
+          element_ids: [component.orm-models, component.security, component.server-i18n, component.browser-i18n, datastore.relational, datastore.rate-limit]
+
+      - id: affinity.external
+        code: X
+        name: External platforms
+        role: external_platform
+        members:
+          element_ids: [external.gemini, external.google-oauth, external.telegram, external.paycom, external.huggingface-model, external.onnx-runtime-cdn]
+
+    provenance:
+      method: ai_inferred
+      confidence: low
+      rationale: Curated visual-grammar sketch; not produced by a completed clustering run.
+
+expectations:
+  - id: expectation.analytics-endpoint
+    kind: interface
+    name: Analytics endpoint
+    parent: district.interfaces
+    importance: required
+    summary: The landing client posts analytics events but no matching scoped Flask route was found.
+    match:
+      element_ids: [expected.endpoint.analytics]
+    provenance:
+      method: human_confirmed
+      confidence: high
+      rationale: Confirmed against the current landing client and route inventory.
+      evidence:
+        - path: app/static/landing.js
+          symbol: trackAnalytics
+          supports: Client expectation for POST /api/analytics.
+
+corrections:
+  - id: correction.storage-direct-effects
+    target:
+      entity: component.storage-adapters
+    operations:
+      - action: set
+        path: effects.filesystem.mutates_state
+        value: true
+    reason: Storage implementations write and delete images; treat them as directly mutating even if a shallow call scan misses the boundary.
+    provenance:
+      method: human_confirmed
+      confidence: high
+      rationale: Confirmed against local, GCS, and S3 storage implementations.
+      evidence:
+        - path: app/services/storage/local.py
+          symbol: save
+          supports: Direct local-filesystem write.
+        - path: app/services/storage/local.py
+          symbol: delete
+          supports: Direct local-filesystem deletion.
+
+boundaries:
+  - id: boundary.tool-user-input
+    subject: component.tool-ui
+    direction: input
+    transport: browser interaction
+    payloads: [image file, analysis and enhancement actions]
+    trust_from: public user
+    trust_to: browser application
+    authentication: mixed
+    summary: Seller-selected images and tool actions enter the browser workflow.
+    provenance: &boundary_human_high
+      method: human_declared
+      confidence: high
+      rationale: Declared from the mapped UI controls and their source-linked relations.
+
+  - id: boundary.tool-user-output
+    subject: component.tool-ui
+    direction: output
+    transport: browser rendering and download
+    payloads: [analysis JSON, rendered results, generated images]
+    trust_from: browser application
+    trust_to: public user
+    authentication: mixed
+    summary: Analysis and enhancement results are displayed or downloaded.
+    provenance: *boundary_human_high
+
+  - id: boundary.api-http-input
+    subject: component.api-blueprint
+    direction: input
+    transport: HTTP
+    payloads: [multipart image, JSON request, path and query parameters, JSON-RPC callback]
+    trust_from: mixed external callers
+    trust_to: Flask request boundary
+    authentication: mixed
+    summary: Upload, analysis, enhancement, administration, and payment-callback payloads enter here.
+    provenance: *boundary_human_high
+
+  - id: boundary.api-http-output
+    subject: component.api-blueprint
+    direction: output
+    transport: HTTP
+    payloads: [JSON response, image, download, redirect]
+    trust_from: Flask request boundary
+    trust_to: browser or external caller
+    authentication: mixed
+    summary: API results, records, images, downloads, and errors leave through this boundary.
+    provenance: *boundary_human_high
+
+  - id: boundary.auth-http-input
+    subject: component.auth-blueprint
+    direction: input
+    transport: HTTP and OAuth
+    payloads: [local credentials, OAuth callback data, signed Telegram identity]
+    trust_from: public user and identity providers
+    trust_to: authentication boundary
+    authentication: mixed
+    summary: Multiple identity formats enter the authentication subsystem.
+    provenance: *boundary_human_high
+
+  - id: boundary.auth-http-output
+    subject: component.auth-blueprint
+    direction: output
+    transport: HTTP
+    payloads: [session state, profile response, redirect]
+    trust_from: authentication boundary
+    trust_to: browser
+    authentication: required
+    summary: Authentication state and navigation responses leave here.
+    provenance: *boundary_human_high
+
+  - id: boundary.operator-cli-input
+    subject: interface.operator-cli
+    direction: input
+    transport: process CLI
+    payloads: [command, flags, account and payment identifiers]
+    trust_from: authenticated operator shell
+    trust_to: application process
+    authentication: external
+    summary: Operator commands and arguments enter through shell access.
+    provenance: *boundary_human_high
+
+  - id: boundary.operator-cli-output
+    subject: interface.operator-cli
+    direction: output
+    transport: process CLI
+    payloads: [terminal records, validation errors]
+    trust_from: application process
+    trust_to: authenticated operator shell
+    authentication: external
+    summary: Administrative results and failures return to the terminal.
+    provenance: *boundary_human_high
+
+  - id: boundary.paycom-callback-output
+    subject: external.paycom
+    direction: output
+    transport: JSON-RPC over HTTPS
+    payloads: [merchant callback method and payment data]
+    trust_from: Paycom
+    trust_to: component.api-blueprint
+    authentication: required
+    source_relation: relation.paycom-to-callback
+    summary: Paycom originates authenticated merchant-operation callbacks.
+    provenance: *boundary_human_high
+
+  - id: boundary.gemini-output
+    subject: external.gemini
+    direction: output
+    transport: HTTPS
+    payloads: [analysis response, generated image]
+    trust_from: Gemini
+    trust_to: application services
+    authentication: external
+    summary: The external model returns analysis or image-generation output.
+    provenance: *boundary_human_high
+
+security_reviews:
+  - id: security.api-mixed-trust-surface
+    subjects: [component.api-blueprint, file.app.views.api]
+    category: attack_surface
+    status: review_candidate
+    severity: high
+    summary: Uploads, administration, provider callbacks, and large workflows converge on one mixed-trust HTTP boundary.
+    impact: A broad boundary increases security-audit scope and the chance that unrelated authorization or validation assumptions interact; it is not itself proof of a vulnerability.
+    recommendation: Audit route-level authentication, authorization, payload limits, upload handling, and callback verification by operation family.
+    provenance:
+      method: ai_inferred
+      confidence: high
+      rationale: The attack-surface concentration is inferred from directly mapped route families and trust zones.
+      evidence:
+        - path: app/views/api.py
+          lines: [291, 3649]
+          supports: The module contains the mapped upload, analysis, enhancement, administration, and payment callback routes.
+
+  - id: security.auth-input-surface
+    subjects: [component.auth-blueprint]
+    category: attack_surface
+    status: review_candidate
+    severity: medium
+    summary: Local credentials, OAuth callback data, and signed Telegram identity data share one authentication boundary.
+    impact: Each identity format has different freshness, signature, redirect, and session assumptions that should be audited separately.
+    recommendation: Review each authentication flow independently, then verify shared session and account-linking invariants.
+    provenance:
+      method: ai_inferred
+      confidence: high
+      rationale: The input formats and handlers are directly mapped; no exploitability claim is made.
+      evidence:
+        - path: app/views/auth.py
+          lines: [27, 352]
+          supports: The blueprint exposes the mapped local, Google, and Telegram authentication flows.
+
+  - id: security.storage-key-boundary
+    subjects: [component.storage-adapters, component.image-lifecycle]
+    category: control_gap
+    status: review_candidate
+    severity: medium
+    summary: Filesystem paths and cloud object keys cross a storage abstraction that is only partially adopted by callers.
+    impact: Path and key validation assumptions may differ between local and cloud backends; this is a portability and audit lead, not a confirmed traversal defect.
+    recommendation: Trace every caller from untrusted filename or identifier to backend key construction and deletion.
+    provenance:
+      method: ai_inferred
+      confidence: medium
+      rationale: The partial abstraction is source-backed, but security impact requires a dedicated data-flow audit.
+      evidence:
+        - path: app/services/storage/local.py
+          lines: [1, 141]
+          supports: The local backend performs direct filesystem writes and deletion.
+        - path: app/views/api.py
+          lines: [350, 360]
+          supports: A mapped path records the current absolute-local-path limitation.
+
+render_profiles:
+  - id: render.road-city
+    kind: road_city
+    decomposition: declared.runtime-boundaries
+    hierarchy:
+      city: system
+      district: component_group
+      building: component
+      interior: [file, class, function, operation]
+    encodings:
+      body: semantic_kind
+      unknown_pattern: wireframe
+      surface_evidence: texture
+      bands:
+        - id: band.coverage-gap
+          label: Coverage gap
+          metric: quality.coverage.line_gap
+          order: 1
+          direction: higher_attention
+          normalization: ratio_0_1
+          unknown: wireframe
+
+        - id: band.complexity
+          label: Complexity
+          metric: quality.complexity.max_operation
+          order: 2
+          direction: higher_attention
+          normalization: log_project_percentile
+          unknown: wireframe
+
+        - id: band.coupling
+          label: Cross-boundary coupling
+          metric: topology.participation
+          order: 3
+          direction: higher_attention
+          normalization: ratio_0_1
+          unknown: wireframe
+
+        - id: band.effects
+          label: Mutating effects
+          metric: effects.direct_mutation_density
+          order: 4
+          direction: higher_attention
+          normalization: log_project_percentile
+          unknown: wireframe
+    roads:
+      aggregate: district_pair
+      endpoint_labels: opposite_district_code
+      local_feeders: selected_district
+      lane_family: relation_family
+      lane_execution: surface_pattern
+      max_detail_relations: 7
+      intra_district: selected_only
+    labels:
+      district_default: code
+      allow_long_names: true
+      road_endpoints: true
+    boundaries:
+      show_inputs: true
+      show_outputs: true
+      payload_detail: selected_only
+      persistence_labels: true
+    security:
+      marker: spot
+      severity_encoding: size_and_heat
+      confidence_encoding: opacity
+      candidate_treatment: label_and_outline

@@ -65,6 +65,20 @@ func TestBuildPreservesSignalContributions(t *testing.T) {
 	}
 }
 
+func TestBuildRejectsDuplicateEvidenceIDs(t *testing.T) {
+	profile := Profile{
+		ID: "duplicate-test", DedicationExponent: 1,
+		Layers: []LayerProfile{{Signal: SignalCall, Weight: 1, Normalization: NormalizeNone}},
+	}
+	evidence := []EvidenceEdge{
+		{ID: "same", From: "a", To: "b", Signal: SignalCall, Strength: 1, Confidence: 1},
+		{ID: "same", From: "b", To: "c", Signal: SignalSemantic, Strength: 1, Confidence: 1},
+	}
+	if _, err := Build(evidence, profile); err == nil {
+		t.Fatal("expected duplicate evidence id error")
+	}
+}
+
 func TestComputeRoleMetricsSeparatesConnectorParticipation(t *testing.T) {
 	edges := []Edge{
 		{From: "utility", To: "analysis", Weight: 1},

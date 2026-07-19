@@ -5,7 +5,7 @@ package clustering
 import (
 	"context"
 
-	"vibecodemap/internal/affinity"
+	"github.com/mmirolim/vibecodemap/internal/affinity"
 )
 
 // Config records every parameter required to reproduce a cluster run.

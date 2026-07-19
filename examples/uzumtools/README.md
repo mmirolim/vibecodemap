@@ -1,7 +1,9 @@
 # Uzumtools DSL fixture
 
-This fixture applies VibeCodeMap DSL 0.1 to the runtime portion of
-`/Users/mirolim/projects/uzumtools/photochecker`.
+This fixture applies VibeCodeMap DSL 0.1 to the runtime portion of a separate
+Uzumtools checkout. The checked-in models use the sibling path
+`../../../uzumtools/photochecker`; substitute your own checkout when
+regenerating them.
 
 It currently contains:
 
@@ -20,6 +22,18 @@ The companion quality fixture, `uzumtools.quality.vcm.yaml`, adds:
 - 23 source-linked measurements with provenance and freshness;
 - 5 transparent review-priority results;
 - 4 quality lenses with stable geometry and semantic-zoom rules.
+
+The repository-owned project manifest, `uzumtools.project.vcm.yaml`, adds:
+
+- Python, JavaScript, TypeScript, and Go adapter profiles;
+- ordered `analyze`, `summarize`, `externalize`, and `ignore` source-scope rules;
+- dependency, generated-code, cache, and build-output exclusions;
+- declared and editable inferred decompositions with stable district codes;
+- explicit expectations and human corrections that survive regeneration;
+- explicit input/output boundaries, payload summaries, persistent resources,
+  and source-linked security review candidates;
+- a road-city profile with four simultaneous building bands, aggregate district
+  roads, typed directional lanes, `D1 → D2` endpoint codes, and bounded feeders.
 
 The scope intentionally excludes tests, migrations, root-level diagnostic
 scripts, plans, and most documentation. That limitation is recorded in the DSL
@@ -46,11 +60,35 @@ python3 tools/validate_quality_vcm.py \
   --core examples/uzumtools/uzumtools.vcm.yaml
 ```
 
+Validate the project manifest and its editable policy:
+
+```bash
+python3 tools/validate_project_vcm.py \
+  examples/uzumtools/uzumtools.project.vcm.yaml
+
+go run ./cmd/vibecodemap validate \
+  examples/uzumtools/uzumtools.project.vcm.yaml
+```
+
+JSON Schema validation is used when the optional `jsonschema` package is
+available; the validator always enforces cross-reference, ID, district-code,
+correction-operation, pattern, and render-profile invariants itself.
+
+The Go CLI embeds both contracts so agents and humans can inspect the exact
+accepted language without locating documentation files:
+
+```bash
+go run ./cmd/vibecodemap describe
+go run ./cmd/vibecodemap schema
+```
+
 ## Extract conservative Python facts
 
 ```bash
+export UZUMTOOLS_ROOT=/path/to/uzumtools/photochecker
+
 python3 tools/extract_python_facts.py \
-  /Users/mirolim/projects/uzumtools/photochecker/app \
+  "$UZUMTOOLS_ROOT/app" \
   --pretty
 ```
 
@@ -63,8 +101,8 @@ ambiguous effects.
 
 ```bash
 python3 tools/extract_python_quality.py \
-  /Users/mirolim/projects/uzumtools/photochecker \
-  --coverage-xml /Users/mirolim/projects/uzumtools/coverage.xml \
+  "$UZUMTOOLS_ROOT" \
+  --coverage-xml "$(dirname "$UZUMTOOLS_ROOT")/coverage.xml" \
   --pretty
 ```
 

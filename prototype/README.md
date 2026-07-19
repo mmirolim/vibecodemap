@@ -25,7 +25,24 @@ show communication between districts or a selected building's bounded
 neighborhood. Its feature-affinity layout remains an explicitly illustrative
 sketch until a real cluster run is supplied by the Go core.
 
-All four are intentionally HTML fragments for the Codex visualization host
+`uzumtools-road-city.fragment.html` tests the revised visual grammar. Every
+source building can show coverage gap, complexity, mapped coupling, and direct
+mutating effects simultaneously as ordered horizontal bands. One neutral road
+connects each interacting district pair; colored directional lanes preserve
+relation family and execution style; district-coded road ends identify the opposite
+district; thin local feeders expose component-to-road evidence without drawing
+every long component edge. District codes, full labels, and hidden labels are
+separate presentation states.
+
+`uzumtools-system-city.fragment.html` is the screenshot-driven correction pass.
+It replaces unexplained roof contacts with explicit input/output ports,
+persistence labels, and severity/confidence security-review spots; uses broad
+flush building bands; routes district roads orthogonally around district
+footprints; keeps district codes visible; and makes source selection move the
+camera to the chosen building. WASD translates the camera and arrow keys change
+its orientation while the pointer is over the scene.
+
+All six are intentionally HTML fragments for the Codex visualization host
 rather than standalone applications. The landscape and pipe city use
 version-pinned Three.js and OrbitControls; the topology and clustering grammar
 use inline SVG. The next renderer iteration should replace embedded fixtures
@@ -88,3 +105,42 @@ Three-dimensional pipe-city rules:
   blended claim; shared utilities and external platforms retain distinct zones;
 - animated particles are reserved for measured runtime traces and are absent
   from the current static-evidence prototype.
+
+Three-dimensional road-city rules:
+
+- the default building surface shows four ordered review bands at once, each
+  independently normalized onto one low-to-high sequential scale;
+- unknown measurements remain visibly unknown instead of becoming low values;
+- one physical road represents one interacting district pair, while colored
+  directional lanes retain family, execution, relation count, and strength;
+- each road-end code names the opposite district, making the connection legible
+  while inspecting one local area;
+- middle LOD shows a bounded set of local building-to-port feeders for the
+  focused district; near LOD shows at most seven selected-component routes;
+- road traffic never animates unless runtime observations provide real events.
+
+Three-dimensional system-city rules:
+
+- district codes and opposite-road codes are different labels: `D2` identifies
+  the local district and `→D3` identifies the destination shown at that road
+  gate; road details use the pair form `D2 ↔ D3`;
+- roads use orthogonal obstacle routing, colored directional lanes, and local
+  circuit-like feeders instead of long component-to-component diagonals; road
+  gates are allocated on distinct district edges and parallel routes carry an
+  occupancy penalty to reduce renderer-created overlap;
+- the four broad flush bands remain coverage gap, complexity, mapped coupling,
+  and direct mutating effects from bottom to top;
+- floating buildings mean no direct mutating site was detected; they do not
+  claim purity, and no redundant green roof ball is drawn;
+- triangular ports distinguish explicit inputs and outputs, while labeled
+  persistent resources show where durable state exists;
+- red security spots are review candidates, not vulnerability claims; size
+  encodes severity and opacity encodes confidence;
+- focus selection moves to the source-backed building, and keyboard movement is
+  scoped to a hovered scene so ordinary form controls retain keyboard behavior;
+  held WASD/arrow keys use time-based acceleration and damping rather than
+  discrete browser key-repeat jumps;
+- the default road lens is **Behavior**, which excludes `import + static`
+  source/type dependencies; the explicit **All + static dependencies** mode
+  restores them for coupling investigation without presenting them as runtime
+  communication.
