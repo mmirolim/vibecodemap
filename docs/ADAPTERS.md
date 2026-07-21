@@ -43,6 +43,28 @@ and Dart disagree about whether `node_modules`, `DerivedData`, `.gradle`,
 scope. It does not mean calls, side effects, navigation, or quality have been
 analyzed. That distinction is part of the machine-readable adapter descriptor.
 
+Deep mobile semantic analysis remains future work. Appropriate native
+foundations include Go `go/packages`, Swift source tooling, the Kotlin/Gradle
+tooling APIs, Dart analyzer plugins, and Android manifests, as linked in the
+table above. Detector registration deliberately does not claim those analyzers
+already exist.
+
+## Mixed-stack repositories
+
+Run `inspect` once at the highest repository root. All detectors run over that
+same centrally scoped inventory and can return several detections together;
+there is no per-language or per-directory inspection phase. Detection scopes
+are parser/reading candidates, however, not confirmed products or deployables.
+Some current detectors identify nested manifest roots while Python and JS/TS
+may conservatively fall back to repository scope.
+
+Systems should be grouped by product, deployment, runtime, ownership, and data
+boundaries—not by language. The current DSL and renderer can express multiple
+systems as cities and deployables as area-level elements. Workload discovery
+is still primarily performed by the AI skill or a human; detector output does
+not automatically author those boundaries. See
+[Multi-stack and monorepo modeling](MULTI-STACK.md).
+
 ## Stable contracts
 
 `vibecodemap.adapter-request/0.1` contains:

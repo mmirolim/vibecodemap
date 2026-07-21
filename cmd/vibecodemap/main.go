@@ -12,6 +12,7 @@ import (
 	"github.com/mmirolim/vibecodemap/internal/projectdsl"
 	"github.com/mmirolim/vibecodemap/internal/repository"
 	"github.com/mmirolim/vibecodemap/internal/scoping"
+	"github.com/mmirolim/vibecodemap/internal/viewer"
 )
 
 const usage = `VibeCodeMap repository model tool
@@ -22,6 +23,8 @@ Usage:
   vibecodemap validate [flags] PROJECT.vcm.yaml
   vibecodemap inspect [flags] [REPOSITORY]
   vibecodemap adapters [-json]
+  vibecodemap render [flags] PROJECT.vcm.yaml
+  vibecodemap show [flags] PROJECT.vcm.yaml
 
 Validate flags:
   -json                          emit machine-readable diagnostics
@@ -38,6 +41,18 @@ Inspect flags:
   -gitignore                     apply exact Git ignore rules (default true)
   -max-header-bytes N            generated-marker prefix budget (default 8192)
   -max-file-bytes N              detailed-analysis file budget (default 10 MiB)
+
+Inspect produces a scoped repository inventory and stack candidates. It does
+not run semantic analyzers or generate VCM DSL, a view model, or an HTML map.
+
+Render flags:
+  -output FILE                   write standalone HTML to FILE
+  -json-output FILE              write derived view-model JSON to FILE
+  -profile ID                    select a render profile (default: first)
+  -open                          open generated HTML in the browser
+
+render validates all referenced DSL, creates JSON and HTML, and writes them to
+PROJECT_DIR/out by default. show performs the same pipeline and opens the map.
 `
 
 func main() {
@@ -57,12 +72,57 @@ func main() {
 		os.Exit(runInspect(os.Args[2:]))
 	case "adapters":
 		os.Exit(runAdapters(os.Args[2:]))
+	case "render":
+		os.Exit(runRender(os.Args[2:], false))
+	case "show":
+		os.Exit(runRender(os.Args[2:], true))
 	case "help", "-h", "--help":
 		fmt.Print(usage)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command %q\n\n%s", os.Args[1], usage)
 		os.Exit(2)
 	}
+}
+
+func runRender(arguments []string, openByDefault bool) int {
+	name := "render"
+	if openByDefault {
+		name = "show"
+	}
+	flags := flag.NewFlagSet(name, flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	output := flags.String("output", "", "standalone HTML output path")
+	jsonOutput := flags.String("json-output", "", "derived view-model JSON output path")
+	profile := flags.String("profile", "", "render profile id")
+	openBrowser := flags.Bool("open", openByDefault, "open generated HTML in the browser")
+	if err := flags.Parse(arguments); err != nil {
+		return 2
+	}
+	if flags.NArg() != 1 {
+		fmt.Fprintf(os.Stderr, "%s requires exactly one project manifest\n", name)
+		return 2
+	}
+	result, err := viewer.Render(flags.Arg(0), viewer.RenderOptions{
+		Profile: *profile, Output: *output, JSONOutput: *jsonOutput,
+	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	fmt.Printf("validated:  %s\n", result.ViewModel.Project.ProjectManifest)
+	fmt.Printf("view model: %s\n", result.JSONPath)
+	fmt.Printf("HTML map:   %s\n", result.HTMLPath)
+	fmt.Printf("mapped:     %d cities, %d districts, %d buildings, %d roads\n",
+		result.ViewModel.Stats.Systems, result.ViewModel.Stats.Districts,
+		result.ViewModel.Stats.Nodes, result.ViewModel.Stats.Roads)
+	if *openBrowser {
+		if err := viewer.Open(result.HTMLPath); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		fmt.Println("opened:     default browser")
+	}
+	return 0
 }
 
 type inspectOutput struct {
@@ -152,6 +212,8 @@ func printInspect(output inspectOutput, showEntries bool) {
 		fmt.Printf("  %-18s %-16s scope=%-20s confidence=%3.0f%%  %s\n",
 			detection.Stack, detection.AdapterID, detection.Scope, detection.Confidence*100, detection.Support)
 	}
+	fmt.Println("\nResult")
+	fmt.Println("  Inventory and stack candidates only; no semantic DSL or HTML map was generated.")
 
 	counts := make(map[string]int)
 	for _, entry := range output.Inventory.Entries {

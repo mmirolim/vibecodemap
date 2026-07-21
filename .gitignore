@@ -24,6 +24,8 @@ reports/
 .vcm/cache/
 .vcm/runs/
 .vcm/local/
+.vibecodemap/out/
+.vibecodemap/generated/
 
 # Go
 /bin/

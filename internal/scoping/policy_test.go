@@ -20,6 +20,9 @@ func TestDefaultPolicy(t *testing.T) {
 	}{
 		{"app/service.py", "from pathlib import Path\n", Analyze, ""},
 		{"frontend/node_modules/react/index.js", "", Ignore, "deps.node-modules"},
+		{".vibecodemap/out/shop.html", "", Ignore, "vcm.generated-output"},
+		{"services/api/.vibecodemap/generated/inventory.json", "", Ignore, "vcm.generated-output"},
+		{".vcm/cache/evidence.json", "", Ignore, "vcm.local-state"},
 		{".venv/lib/python3.13/site-packages/x.py", "", Ignore, "deps.python-venv"},
 		{"local/lib/python3.13/site-packages/x.py", "", Ignore, "deps.python-site-packages"},
 		{"api/vendor/example.com/mod/x.go", "", Ignore, "deps.go-vendor"},
@@ -115,5 +118,22 @@ func TestInvalidGlob(t *testing.T) {
 	_, err := NewPolicy(Analyze, []Rule{{ID: "bad", Pattern: "**/{one}", Action: Ignore}}, nil)
 	if err == nil {
 		t.Fatal("expected invalid brace group error")
+	}
+}
+
+func TestMatchPathUsesScopeGlobGrammar(t *testing.T) {
+	matched, err := MatchPath("apps/**/src/*.{go,ts}", "apps/api/internal/src/main.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !matched {
+		t.Fatal("expected path to match")
+	}
+	matched, err = MatchPath("apps/**/src/*.{go,ts}", "apps/api/internal/src/main.py")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if matched {
+		t.Fatal("unexpected Python match")
 	}
 }

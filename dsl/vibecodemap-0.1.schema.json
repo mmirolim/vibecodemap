@@ -250,7 +250,7 @@
               "type": "array",
               "items": { "type": "string" }
             },
-            "state": { "enum": ["stateless", "process_local", "shared", "durable", "external", "unknown"] },
+            "state": { "enum": ["stateless", "process_local", "shared", "durable", "external", "mixed", "unknown"] },
             "trust_zone": { "enum": ["public", "authenticated", "admin", "internal", "third_party", "mixed", "unknown"] }
           }
         },

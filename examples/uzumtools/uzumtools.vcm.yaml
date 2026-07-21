@@ -1241,7 +1241,7 @@ elements:
     reality: *present_unobserved
     generated: *ai_high
     evidence:
-      - { artifact: file.app.services.google-auth, lines: [41, 181], role: implementation, supports: OAuth client registration, redirect, token exchange, and user-info handling are explicit. }
+      - { artifact: file.app.services.google-auth, lines: [41, 181], role: implementation, supports: "OAuth client registration, redirect, token exchange, and user-info handling are explicit." }
 
   - id: external.telegram
     kind: external_system
@@ -1265,7 +1265,7 @@ elements:
     generated: *ai_high
     evidence:
       - { artifact: file.config, lines: [149, 165], role: configuration, supports: Merchant credentials and checkout URL are configured. }
-      - { artifact: file.app.views.api, lines: [912, 1074], role: implementation, supports: Checkout initiation, status, and history APIs exist. }
+      - { artifact: file.app.views.api, lines: [912, 1074], role: implementation, supports: "Checkout initiation, status, and history APIs exist." }
       - { artifact: file.app.views.api, lines: [3159, 3538], role: implementation, supports: The merchant JSON-RPC callback exists. }
 
   - id: external.huggingface-model
@@ -1299,7 +1299,7 @@ relations:
     execution: { trigger: event, style: event_driven, blocking: "no", concurrency: browser_event_loop, delivery: request_response }
     reality: *present_unobserved
     evidence:
-      - { artifact: file.app.template.tool, lines: [14, 329], role: implementation, supports: The tool exposes seller upload, analysis, enhancement, and result controls. }
+      - { artifact: file.app.template.tool, lines: [14, 329], role: implementation, supports: "The tool exposes seller upload, analysis, enhancement, and result controls." }
     generated: *ai_high
 
   - id: relation.tool-to-technical-api
@@ -1358,7 +1358,7 @@ relations:
     execution: *sync_request
     reality: *present_unobserved
     evidence:
-      - { artifact: file.app.views.api, lines: [327, 370], role: implementation, supports: Job creation, asset and result recording, and completion occur before response. }
+      - { artifact: file.app.views.api, lines: [327, 370], role: implementation, supports: "Job creation, asset and result recording, and completion occur before response." }
     generated: *static_high
 
   - id: relation.tool-to-ai-api
@@ -1498,7 +1498,7 @@ relations:
       implementation: partial
       runtime: not_observed
     evidence:
-      - { artifact: file.app.services.image-lifecycle, lines: [36, 584], role: implementation, supports: Lifecycle methods create directories and read, write, and delete image versions. }
+      - { artifact: file.app.services.image-lifecycle, lines: [36, 584], role: implementation, supports: "Lifecycle methods create directories and read, write, and delete image versions." }
       - { artifact: file.app.services.storage.base, lines: [12, 97], role: contract, supports: A generalized storage contract exists. }
     generated: *ai_high
 
@@ -1552,7 +1552,7 @@ relations:
     effect: { domain: network, operation: invoke, mutates_state: unknown, durability: external }
     reality: *present_unobserved
     evidence:
-      - { artifact: file.app.services.google-auth, lines: [41, 181], role: implementation, supports: OAuth registration, redirect, token exchange, and profile retrieval are explicit. }
+      - { artifact: file.app.services.google-auth, lines: [41, 181], role: implementation, supports: "OAuth registration, redirect, token exchange, and profile retrieval are explicit." }
     generated: *ai_high
 
   - id: relation.auth-to-telegram
@@ -1579,7 +1579,7 @@ relations:
     effect: { domain: external_state, operation: redirect, mutates_state: unknown, durability: external }
     reality: *present_unobserved
     evidence:
-      - { artifact: file.app.static.payments, lines: [16, 105], role: implementation, supports: Purchase initiation, checkout redirect, and status polling are explicit. }
+      - { artifact: file.app.static.payments, lines: [16, 105], role: implementation, supports: "Purchase initiation, checkout redirect, and status polling are explicit." }
     generated: *ai_high
 
   - id: relation.paycom-to-callback
@@ -1720,7 +1720,7 @@ relations:
     effect: { domain: billing, operation: update, mutates_state: "yes", durability: durable }
     reality: *present_unobserved
     evidence:
-      - { artifact: file.app.cli.account, lines: [94, 223], role: implementation, supports: Credit, plan, and payment commands call domain services and commit. }
+      - { artifact: file.app.cli.account, lines: [94, 223], role: implementation, supports: "Credit, plan, and payment commands call domain services and commit." }
       - { artifact: file.app.cli.payments, lines: [35, 212], role: implementation, supports: Reconciliation and cleanup mutate payment state. }
     generated: *ai_high
 
@@ -1825,7 +1825,7 @@ architecture:
       evidence:
         - { artifact: file.agents, lines: [33, 48], role: contract, supports: The declared structure assigns business logic to services. }
         - { artifact: file.agents, lines: [141, 141], role: contract, supports: The guide says view functions should remain thin. }
-        - { artifact: file.app.views.api, lines: [483, 872], role: implementation, supports: AI route coordinates validation, storage, billing, provider, analysis, and jobs. }
+        - { artifact: file.app.views.api, lines: [483, 872], role: implementation, supports: "AI route coordinates validation, storage, billing, provider, analysis, and jobs." }
       generated: *ai_high
 
     - id: style.mvc-like
@@ -1866,7 +1866,7 @@ architecture:
       severity: warning
       enforcement: review
       evidence:
-        - { artifact: file.config, lines: [105, 110], role: contract, supports: Local, GCS, and S3 backends are declared deployment options. }
+        - { artifact: file.config, lines: [105, 110], role: contract, supports: "Local, GCS, and S3 backends are declared deployment options." }
         - { artifact: file.app.views.api, lines: [355, 358], role: evidence, supports: The source records the current absolute-path limitation. }
 
 findings:

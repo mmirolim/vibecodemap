@@ -1,6 +1,6 @@
 # ADR-001: Go core and document generator with a Three.js browser runtime
 
-- Status: accepted for the next prototype
+- Status: accepted; initial implementation exists
 - Date: 2026-07-18
 
 ## Context
@@ -60,19 +60,21 @@ direction, freshness, or missing values. TypeScript is useful for maintaining a
 larger renderer, but it is a build-time implementation choice rather than a
 runtime requirement; the early prototype may remain plain JavaScript.
 
-The planned CLI boundary is:
+The implemented CLI boundary is:
 
 ```text
 vibecodemap describe                 # print the complete human DSL contract
 vibecodemap schema                   # print the complete machine schema
 vibecodemap validate project.yaml    # syntax, schema, and semantic references
-vibecodemap render project.yaml -o map.html
+vibecodemap render -output map.html project.yaml
+vibecodemap show project.yaml        # render and open the browser
 ```
 
-`render` should validate first, compose the structural, quality, requirement,
-runtime, boundary, and security records into one view model, then inject that
-model into embedded versioned Three.js assets. It should not contain a second
-set of architectural inference rules hidden in the HTML template.
+`render` validates first, composes the current structural, quality, boundary,
+and security records into one view model, then injects that model into the
+embedded browser template. `show` adds browser launch. Requirements/runtime
+evidence remain areas for deeper composition. The renderer must not contain a
+second set of architectural inference rules hidden in the HTML template.
 
 ### Analyzer adapters
 
@@ -123,9 +125,9 @@ parser can replace every compiler, linter, test runner, and profiler.
 - The JSON/process boundary must be versioned and tested early.
 - Go and TypeScript share generated schema types or conformance fixtures rather
   than hand-maintained duplicate models.
-- The first release can be one executable that prints the DSL, validates models,
-  and emits a self-contained map document by embedding compiled web assets in
-  Go.
+- The prototype is one executable that prints the DSL, validates models, and
+  emits a generated map document. Its HTML/data/template are embedded; the
+  current Three.js module is CDN-loaded until offline asset packaging lands.
 - Python remains a development dependency only for Python adapters that need it.
 - SQLite is deferred until scan history/query needs justify it; revision JSON
   snapshots are sufficient for the next experiment.

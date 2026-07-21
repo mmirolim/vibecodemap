@@ -182,6 +182,8 @@ func (p *Policy) Evaluate(path string, prefix []byte) Decision {
 // must not parse DerivedData, Gradle caches, or Flutter tool output as source.
 func DefaultRuleSet() ([]Rule, []MarkerRule) {
 	rules := []Rule{
+		{ID: "vcm.generated-output", Pattern: "**/.vibecodemap/{out,generated}/**", Action: Ignore, Classification: "generated_report", Priority: 90, Reason: "VibeCodeMap renderer output is derived from committed DSL."},
+		{ID: "vcm.local-state", Pattern: "**/.vcm/{cache,runs,local}/**", Action: Ignore, Classification: "cache", Priority: 90, Reason: "VibeCodeMap local run state is derived and machine-specific."},
 		{ID: "deps.node-modules", Pattern: "**/node_modules/**", Action: Ignore, Classification: "installed_dependency", Priority: 50, Reason: "Represent dependencies from manifests; do not parse installed package source."},
 		{ID: "deps.python-site-packages", Pattern: "**/site-packages/**", Action: Ignore, Classification: "installed_dependency", Priority: 50, Reason: "Represent installed Python packages from manifests; do not parse installed source."},
 		{ID: "deps.python-egg-info", Pattern: "**/*.egg-info/**", Action: Ignore, Classification: "installed_dependency", Priority: 50, Reason: "Python distribution metadata is derived from package configuration."},
@@ -240,6 +242,17 @@ func NewDefaultPolicy(rules []Rule, markers []MarkerRule) (*Policy, error) {
 
 func DefaultPolicy() (*Policy, error) {
 	return NewDefaultPolicy(nil, nil)
+}
+
+// MatchPath applies the repository glob grammar to one slash-separated path.
+// Inventory rules and renderer district selectors use this same matcher.
+func MatchPath(pattern, path string) (bool, error) {
+	expression, err := compileGlob(pattern)
+	if err != nil {
+		return false, err
+	}
+	normalized := filepath.ToSlash(strings.TrimPrefix(path, "./"))
+	return expression.MatchString(normalized), nil
 }
 
 // Rules returns a deterministic copy useful for diagnostics and DSL emission.

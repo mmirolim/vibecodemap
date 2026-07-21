@@ -3,7 +3,7 @@
 `uzumtools-evidence-landscape.fragment.html` is the current interaction and
 visual-grammar experiment. It embeds a reduced Uzumtools scan so camera behavior,
 semantic zoom, heat lenses, legends, side-effect contact, bounded dependency
-views, and source navigation can be tested before a generic renderer exists.
+views, and source navigation can be compared with the newer generic renderer.
 
 `uzumtools-system-interactions.fragment.html` is the complementary topology
 experiment. It answers a different question: how actors, browser code, HTTP
@@ -42,12 +42,12 @@ footprints; keeps district codes visible; and makes source selection move the
 camera to the chosen building. WASD translates the camera and arrow keys change
 its orientation while the pointer is over the scene.
 
-All six are intentionally HTML fragments for the Codex visualization host
-rather than standalone applications. The landscape and pipe city use
-version-pinned Three.js and OrbitControls; the topology and clustering grammar
-use inline SVG. The next renderer iteration should replace embedded fixtures
-with validated VCM JSON supplied by the Go core while preserving the tested
-visual semantics.
+All six remain curated HTML experiments for the Codex visualization host rather
+than generated applications. The landscape and pipe city use version-pinned
+Three.js and OrbitControls; the topology and clustering grammar use inline SVG.
+The generic runtime at `internal/viewer/assets/viewer.html` now consumes
+validated view-model JSON supplied by the Go core. These fragments remain a
+visual-grammar testbed for improvements not yet carried into that runtime.
 
 Important interpretation rules:
 
