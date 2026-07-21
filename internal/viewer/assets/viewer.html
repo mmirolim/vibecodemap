@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>__VCM_TITLE__ · VibeCodeMap</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080d14;
+      --panel: rgba(15, 23, 34, .93);
+      --panel-2: #121c29;
+      --line: #26384d;
+      --text: #e9f1f8;
+      --muted: #91a4b8;
+      --accent: #58d4c3;
+      --hot: #ff6b61;
+      --warn: #f7b955;
+      --blue: #68a7ff;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font: 14px/1.45 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { min-height: 100vh; overflow: hidden; }
+    button, input, select { font: inherit; }
+    button, select, input {
+      color: var(--text); background: #101a27; border: 1px solid var(--line);
+      border-radius: 7px; min-height: 34px;
+    }
+    button { padding: 0 12px; cursor: pointer; }
+    button:hover:not(:disabled) { border-color: var(--accent); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    select, input { padding: 0 9px; }
+    code { color: #b9ddff; overflow-wrap: anywhere; }
+    .app { height: 100vh; display: grid; grid-template-rows: auto 1fr; }
+    header {
+      min-height: 62px; display: flex; align-items: center; gap: 18px; padding: 10px 16px;
+      border-bottom: 1px solid var(--line); background: rgba(8,13,20,.94); backdrop-filter: blur(12px); z-index: 10;
+    }
+    .brand { min-width: 240px; }
+    .brand h1 { font-size: 17px; margin: 0; letter-spacing: .015em; }
+    .brand p { color: var(--muted); margin: 2px 0 0; font-size: 12px; }
+    .controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; flex: 1; }
+    .control { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+    .control input { width: 190px; }
+    .stats { margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
+    main { min-height: 0; display: grid; grid-template-columns: 1fr 330px; }
+    .stage { min-width: 0; position: relative; overflow: hidden; background: radial-gradient(circle at 45% 40%, #152437 0, #0a111b 55%, #060a10 100%); }
+    canvas { width: 100%; height: 100%; display: block; outline: none; touch-action: none; }
+    .labels { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    .world-label {
+      position: absolute; transform: translate(-50%, -50%); color: #eaf5ff;
+      background: rgba(7,13,21,.84); border: 1px solid rgba(125,163,195,.32);
+      border-radius: 999px; padding: 3px 7px; font-size: 11px; white-space: nowrap;
+      text-shadow: 0 1px 2px #000; backdrop-filter: blur(5px);
+    }
+    .world-label.district { color: #9ee9df; border-color: rgba(88,212,195,.5); font-weight: 700; }
+    .world-label.road { color: #adc6dd; border: 0; background: rgba(6,10,16,.72); }
+    .hint, .error {
+      position: absolute; left: 50%; transform: translateX(-50%); z-index: 4;
+      background: rgba(7,12,18,.88); border: 1px solid var(--line); border-radius: 8px;
+      padding: 6px 10px; color: var(--muted); font-size: 12px;
+    }
+    .hint { bottom: 12px; }
+    .error { top: 16px; color: #ffd0cc; border-color: #8b3d39; display: none; max-width: min(680px,90%); }
+    aside { min-height: 0; overflow: auto; border-left: 1px solid var(--line); background: var(--panel); padding: 16px; }
+    aside h2 { font-size: 16px; margin: 0 0 5px; }
+    aside h3 { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin: 18px 0 7px; }
+    .kind { color: var(--accent); font-size: 12px; }
+    .summary { color: #c4d1dd; }
+    .source { padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: #0c1520; }
+    .source-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .metric { margin: 7px 0; }
+    .metric-head { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+    .metric-track { height: 7px; margin-top: 4px; border-radius: 99px; background: #253343; overflow: hidden; }
+    .metric-fill { height: 100%; background: linear-gradient(90deg,#6f879b,#f3b44f,#ff655d); }
+    .unknown { border: 1px dashed #65788b; background: transparent; }
+    .relation-list { display: grid; gap: 6px; }
+    .relation { border-left: 3px solid var(--blue); padding: 5px 7px; background: rgba(255,255,255,.025); font-size: 12px; }
+    .relation.event { border-color: #c58cff; } .relation.state { border-color: #f17db1; }
+    .relation.provider { border-color: #f2a05f; } .relation.import { border-color: #8ac7ff; }
+    .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 10px; font-size: 12px; color: var(--muted); }
+    .swatch { display: inline-block; width: 11px; height: 11px; margin-right: 5px; vertical-align: -1px; border-radius: 2px; }
+    .warning { padding: 7px 9px; margin: 6px 0; border-left: 3px solid var(--warn); background: rgba(247,185,85,.06); color: #d6c5a4; font-size: 12px; }
+    .fallback { display: none; position: absolute; inset: 60px 20px 20px; overflow: auto; grid-template-columns: repeat(auto-fill,minmax(210px,1fr)); gap: 10px; }
+    .fallback article { border: 1px solid var(--line); background: var(--panel-2); border-radius: 8px; padding: 10px; }
+    @media (max-width: 900px) {
+      body { overflow: auto; }
+      .app { height: auto; min-height: 100vh; }
+      header { align-items: flex-start; flex-direction: column; }
+      .stats { margin-left: 0; }
+      main { grid-template-columns: 1fr; grid-template-rows: 65vh auto; }
+      aside { border-left: 0; border-top: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand"><h1 id="title">__VCM_TITLE__</h1><p>Evidence-backed software workspace · VibeCodeMap prototype</p></div>
+    <div class="controls">
+      <label class="control">City <select id="city"><option value="all">All systems</option></select></label>
+      <label class="control">Roads <select id="roads"><option value="behavior">Behavior + state</option><option value="all">All relations</option><option value="call">Call/control</option><option value="event">Events</option><option value="state">State</option><option value="provider">External/provider</option><option value="import">Static/import</option></select></label>
+      <label class="control">Labels <select id="labels"><option value="district">Districts</option><option value="all">Districts + buildings</option><option value="none">Hidden</option></select></label>
+      <label class="control"><input id="search" type="search" placeholder="Find component or source…" aria-label="Find component or source"></label>
+      <button id="reset" type="button">Reset camera</button>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+  <main>
+    <section class="stage" id="stage" aria-label="Interactive software map">
+      <canvas id="scene" tabindex="0"></canvas>
+      <div class="labels" id="label-layer"></div>
+      <div class="error" id="error"></div>
+      <div class="fallback" id="fallback"></div>
+      <div class="hint">Drag to orbit · wheel to zoom · hover then WASD to move · arrows to orient · click a building</div>
+    </section>
+    <aside>
+      <div id="detail"><h2>Workspace overview</h2><div class="kind">Select a building or search by name</div><p class="summary" id="overview"></p></div>
+      <h3>Visual grammar</h3>
+      <div class="legend">
+        <span><i class="swatch" style="background:#f2a05f"></i>interface</span>
+        <span><i class="swatch" style="background:#f17db1;border-radius:50%"></i>state</span>
+        <span><i class="swatch" style="background:#aeb9c6"></i>component</span>
+        <span><i class="swatch" style="background:#8b75d7"></i>external</span>
+        <span><i class="swatch" style="background:#ff655d;border-radius:50%"></i>security lead</span>
+        <span><i class="swatch" style="border:1px dashed #91a4b8;background:transparent"></i>unknown</span>
+        <span><i class="swatch" style="background:rgba(174,185,198,.55)"></i>no direct mutation found</span>
+        <span><i class="swatch" style="background:#58d4c3;clip-path:polygon(0 50%,100% 0,100% 100%)"></i>input</span>
+        <span><i class="swatch" style="background:#f2a05f;clip-path:polygon(0 0,100% 50%,0 100%)"></i>output</span>
+        <span><i class="swatch" style="background:linear-gradient(90deg,#71879a,#f0b84f,#ff5d55)"></i>low → high attention</span>
+        <span><i class="swatch" style="background:#5da7ff"></i>call road</span>
+        <span><i class="swatch" style="background:#c18cff"></i>event road</span>
+        <span><i class="swatch" style="background:#f17db1"></i>state road</span>
+        <span><i class="swatch" style="background:#8ac7ff"></i>static road</span>
+      </div>
+      <h3>Generation warnings</h3><div id="warnings"></div>
+    </aside>
+  </main>
+</div>
+<script id="vcm-data" type="application/json">__VCM_DATA__</script>
+<script type="module">
+const model = JSON.parse(document.getElementById('vcm-data').textContent);
+const $ = id => document.getElementById(id);
+const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+$('stats').textContent = `${model.stats.systems} cities · ${model.stats.districts} districts · ${model.stats.nodes} buildings · ${model.stats.roads} roads`;
+$('overview').textContent = model.project.summary || `${model.project.name} contains ${model.stats.nodes} mapped software elements.`;
+$('warnings').innerHTML = (model.warnings?.length ? model.warnings : ['No generation warnings.']).map(item => `<div class="warning">${esc(item)}</div>`).join('');
+for (const city of model.cities) $('city').insertAdjacentHTML('beforeend', `<option value="${esc(city.id)}">${esc(city.code)} · ${esc(city.name)}</option>`);
+
+const relationColors = {call:0x5da7ff,event:0xc18cff,state:0xf17db1,provider:0xf2a05f,import:0x8ac7ff};
+const kindColors = {interface:0xf2a05f,operation:0xe2b56e,data_store:0xf17db1,resource:0xd677a7,external_system:0x8b75d7,actor:0x58d4c3,expected_component:0xd45e62,deployable:0x6f8da8,process:0x7a96af,policy:0xe3c56f,component:0xaeb9c6};
+const nodeById = new Map(model.nodes.map(node => [node.id,node]));
+const districtById = new Map(model.districts.map(item => [item.id,item]));
+const boundariesByNode = new Map();
+for (const boundary of model.boundaries || []) { if (!boundariesByNode.has(boundary.subject)) boundariesByNode.set(boundary.subject,[]); boundariesByNode.get(boundary.subject).push(boundary); }
+const securityByNode = new Map();
+for (const review of model.security || []) for (const subject of review.subjects) { if (!securityByNode.has(subject)) securityByNode.set(subject,[]); securityByNode.get(subject).push(review); }
+
+async function start() {
+  try {
+    const THREE = await import('https://esm.sh/three@0.185.1');
+    const { OrbitControls } = await import('https://esm.sh/three@0.185.1/examples/jsm/controls/OrbitControls.js');
+    boot(THREE, OrbitControls);
+    window.__VCM_READY__ = true;
+  } catch (error) {
+    console.error(error);
+    $('error').style.display = 'block';
+    $('error').textContent = `3D renderer could not load (${error.message}). Showing the data fallback; the generated map itself is still valid.`;
+    $('scene').style.display = 'none';
+    $('label-layer').style.display = 'none';
+    $('fallback').style.display = 'grid';
+    $('fallback').innerHTML = model.nodes.map(node => `<article><strong>${esc(node.name)}</strong><div class="kind">${esc(node.kind)} · ${esc(districtById.get(node.district_id)?.code || '')}</div><p>${esc(node.summary)}</p><code>${esc(node.source?.path || 'No source target')}</code></article>`).join('');
+    window.__VCM_READY__ = 'fallback';
+  }
+}
+
+function boot(THREE, OrbitControls) {
+  const canvas = $('scene'), stage = $('stage'), labelLayer = $('label-layer');
+  const renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x080d14,.0065);
+  const camera = new THREE.PerspectiveCamera(48,1,.1,800);
+  const controls = new OrbitControls(camera,canvas);
+  controls.enableDamping = true; controls.dampingFactor = .075; controls.maxPolarAngle = Math.PI*.49;
+  scene.add(new THREE.HemisphereLight(0xb9dcff,0x15202c,2.25));
+  const sun = new THREE.DirectionalLight(0xffffff,2.4); sun.position.set(-30,55,20); sun.castShadow=true; scene.add(sun);
+  const grid = new THREE.GridHelper(500,100,0x294057,0x172638); grid.position.y=-.5; scene.add(grid);
+  const root = new THREE.Group(); scene.add(root);
+  const ego = new THREE.Group(); scene.add(ego);
+  const pickables=[], nodeMeshes=new Map(), nodePositions=new Map(), districtLayouts=new Map(), cityGroups=new Map(), roadObjects=[];
+  const labels=[];
+  let selected=null, hovered=false;
+
+  function addLabel(text, position, kind, owner, cityId) {
+    const element=document.createElement('span'); element.className=`world-label ${kind}`; element.textContent=text; labelLayer.appendChild(element);
+    const record={element,position,kind,owner,cityId,road:null}; labels.push(record); return record;
+  }
+  const cityLayouts=[];
+  let cityCursor=0;
+  for (const city of model.cities) {
+    const districts=model.districts.filter(item=>item.city_id===city.id);
+    const sizes=districts.map(item=>{const count=Math.max(1,item.nodes.length),cols=Math.ceil(Math.sqrt(count)),rows=Math.ceil(count/cols);return {item,cols,rows,w:Math.max(10,cols*3.3+3),d:Math.max(9,rows*3.3+3)}});
+    const cols=Math.max(1,Math.ceil(Math.sqrt(sizes.length))), cellW=Math.max(15,...sizes.map(x=>x.w+5)), cellD=Math.max(14,...sizes.map(x=>x.d+5));
+    const rows=Math.ceil(sizes.length/cols), width=cols*cellW+7, depth=rows*cellD+8, centerX=cityCursor+width/2;
+    cityCursor += width+18;
+    cityLayouts.push({city,districts:sizes,cols,cellW,cellD,width,depth,centerX,centerZ:0});
+  }
+  const worldCenterX=(cityCursor-18)/2;
+  for (const layout of cityLayouts) {
+    const group=new THREE.Group(); group.userData.cityId=layout.city.id; root.add(group); cityGroups.set(layout.city.id,group);
+    const cityBase=new THREE.Mesh(new THREE.BoxGeometry(layout.width,.18,layout.depth),new THREE.MeshStandardMaterial({color:0x101b28,roughness:.9,metalness:.05,transparent:true,opacity:.92}));
+    cityBase.position.set(layout.centerX,-.36,0); cityBase.receiveShadow=true; group.add(cityBase);
+    const edge=new THREE.LineSegments(new THREE.EdgesGeometry(cityBase.geometry),new THREE.LineBasicMaterial({color:0x34526c,transparent:true,opacity:.8})); cityBase.add(edge);
+    addLabel(`${layout.city.code} · ${layout.city.name}`,new THREE.Vector3(layout.centerX,.3,-layout.depth/2+1.2),'district',null,layout.city.id);
+    layout.districts.forEach((entry,index)=>{
+      const col=index%layout.cols,row=Math.floor(index/layout.cols);
+      const x=layout.centerX-layout.width/2+4+layout.cellW*(col+.5), z=-layout.depth/2+5+layout.cellD*(row+.5);
+      districtLayouts.set(entry.item.id,{x,z,w:entry.w,d:entry.d,cityId:layout.city.id});
+      const plate=new THREE.Mesh(new THREE.BoxGeometry(entry.w,.28,entry.d),new THREE.MeshStandardMaterial({color:0x263545,roughness:.94,transparent:true,opacity:.9}));
+      plate.position.set(x,-.12,z); plate.receiveShadow=true; group.add(plate);
+      const plateEdge=new THREE.LineSegments(new THREE.EdgesGeometry(plate.geometry),new THREE.LineBasicMaterial({color:0x557087,transparent:true,opacity:.8})); plate.add(plateEdge);
+      addLabel(`${entry.item.code} · ${entry.item.name}`,new THREE.Vector3(x,.35,z-entry.d/2+.8),'district',entry.item.id,layout.city.id);
+      entry.item.nodes.forEach((nodeId,nodeIndex)=>{
+        const node=nodeById.get(nodeId), ncol=nodeIndex%entry.cols,nrow=Math.floor(nodeIndex/entry.cols);
+        const nx=x-entry.w/2+2.1+ncol*3.3,nz=z-entry.d/2+2.4+nrow*3.3;
+        createBuilding(node,nx,nz,group);
+      });
+    });
+  }
+
+  function geometryFor(node) {
+    const f=node.footprint,h=node.height;
+    if (node.kind==='data_store'||node.kind==='resource') return new THREE.CylinderGeometry(f*.56,f*.56,h,20);
+    if (node.kind==='external_system') return new THREE.CylinderGeometry(f*.6,f*.6,h,6);
+    if (node.kind==='actor') return new THREE.SphereGeometry(Math.max(.65,f*.48),20,14);
+    if (node.kind==='interface') { const g=new THREE.BoxGeometry(f,h,f); g.rotateY(Math.PI/4); return g; }
+    return new THREE.BoxGeometry(f,h,f);
+  }
+  function bandGeometryFor(node) {
+    const f=node.footprint*1.035,h=.16;
+    if(node.kind==='data_store'||node.kind==='resource')return new THREE.CylinderGeometry(f*.56,f*.56,h,20);
+    if(node.kind==='external_system')return new THREE.CylinderGeometry(f*.6,f*.6,h,6);
+    if(node.kind==='actor'){const g=new THREE.TorusGeometry(Math.max(.42,f*.45),.065,7,20);g.rotateX(Math.PI/2);return g;}
+    if(node.kind==='interface'){const g=new THREE.BoxGeometry(f,h,f);g.rotateY(Math.PI/4);return g;}
+    return new THREE.BoxGeometry(f,h,f);
+  }
+  function createBuilding(node,x,z,group) {
+    const color=kindColors[node.kind] ?? kindColors.component, floating=!node.direct_mutation, base=floating ? .5 : 0;
+    const material=new THREE.MeshStandardMaterial({color,roughness:.62,metalness:.08,transparent:floating,opacity:floating ? .78 : 1,wireframe:node.implementation==='missing'});
+    const mesh=new THREE.Mesh(geometryFor(node),material); mesh.position.set(x,base+node.height/2,z); mesh.castShadow=true; mesh.receiveShadow=true; mesh.userData.nodeId=node.id; group.add(mesh);
+    nodeMeshes.set(node.id,mesh); nodePositions.set(node.id,mesh.position.clone()); pickables.push(mesh);
+    node.bands.forEach((band,index)=>{
+      const y=-node.height/2+.28+index*.21,known=band.normalized!==undefined;
+      const c=known?heatColor(band.normalized):0x536273;
+      const strip=new THREE.Mesh(bandGeometryFor(node),new THREE.MeshBasicMaterial({color:c,transparent:!known,opacity:known ? .94 : .36,wireframe:!known}));
+      strip.position.y=y; strip.userData.nodeId=node.id; mesh.add(strip); pickables.push(strip);
+    });
+    if (securityByNode.has(node.id)) {
+      const severityRank={low:1,medium:2,high:3,critical:4},severitySize={low:.17,medium:.23,high:.31,critical:.4},confidenceOpacity={low:.38,medium:.65,high:.95};
+      const review=securityByNode.get(node.id).reduce((best,item)=>(severityRank[item.severity]||0)>(severityRank[best.severity]||0)?item:best);
+      const marker=new THREE.Mesh(new THREE.SphereGeometry(severitySize[review.severity]||.22,16,10),new THREE.MeshBasicMaterial({color:0xff4e47,transparent:true,opacity:confidenceOpacity[review.confidence]||.52})); marker.position.set(0,node.height/2+.28,0); marker.userData.nodeId=node.id; mesh.add(marker); pickables.push(marker);
+    }
+    const boundaries=boundariesByNode.get(node.id)||[];
+    const ports=boundaries.flatMap(boundary=>boundary.direction==='bidirectional'?[{boundary,input:true},{boundary,input:false}]:[{boundary,input:boundary.direction==='input'}]);
+    ports.slice(0,4).forEach((port,index)=>{
+      const input=port.input, cone=new THREE.Mesh(new THREE.ConeGeometry(.2,.46,3),new THREE.MeshBasicMaterial({color:input?0x58d4c3:0xf2a05f}));
+      cone.rotation.z=input?-Math.PI/2:Math.PI/2; cone.position.set((input?-1:1)*(node.footprint/2+.25),-.1+index*.36,0); cone.userData.nodeId=node.id; mesh.add(cone); pickables.push(cone);
+    });
+    addLabel(node.name,new THREE.Vector3(x,base+node.height+.45,z),'node',node.id,node.city_id);
+  }
+  function heatColor(value) {
+    const low=new THREE.Color(0x71879a),mid=new THREE.Color(0xf0b84f),high=new THREE.Color(0xff5d55);
+    return (value<.5?low.clone().lerp(mid,value*2):mid.clone().lerp(high,(value-.5)*2)).getHex();
+  }
+  function roadSegment(start,end,radius,material) {
+    const direction=end.clone().sub(start),length=direction.length(); if(length===0)return null;
+    const segment=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,length,8),material);
+    segment.position.copy(start).add(end).multiplyScalar(.5);
+    segment.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction.normalize());
+    return segment;
+  }
+  for (const road of model.roads) {
+    const a=districtLayouts.get(road.a.district_id),b=districtLayouts.get(road.b.district_id); if(!a||!b) continue;
+    road.lanes.forEach((lane,index)=>{
+      const color=relationColors[lane.family]??0x7b8fa3,midX=(a.x+b.x)/2,offset=(index-(road.lanes.length-1)/2)*.16;
+      const points=[new THREE.Vector3(a.x,.08+index*.035,a.z+offset),new THREE.Vector3(midX,.08+index*.035,a.z+offset),new THREE.Vector3(midX,.08+index*.035,b.z+offset),new THREE.Vector3(b.x,.08+index*.035,b.z+offset)];
+      const radius=Math.min(.16,.035+Math.log1p(Math.max(0,lane.strength||lane.count||1))*.025),material=new THREE.MeshStandardMaterial({color,roughness:.7,transparent:true,opacity:lane.execution==='static' ? .48 : .86});
+      const laneGroup=new THREE.Group();
+      for(let pointIndex=0;pointIndex<points.length-1;pointIndex++){const segment=roadSegment(points[pointIndex],points[pointIndex+1],radius,material);if(segment)laneGroup.add(segment);}
+      laneGroup.userData={family:lane.family,a:a.cityId,b:b.cityId}; root.add(laneGroup); roadObjects.push(laneGroup);
+    });
+    const roadLabel=addLabel(`${road.a.code} ↔ ${road.b.code}`,new THREE.Vector3((a.x+b.x)/2,.25,(a.z+b.z)/2),'road',road.id,null);
+    roadLabel.road={families:road.lanes.map(lane=>lane.family),a:a.cityId,b:b.cityId};
+  }
+
+  const home={position:new THREE.Vector3(worldCenterX,Math.max(28,cityLayouts.length*12),Math.max(34,cityLayouts.length*12)),target:new THREE.Vector3(worldCenterX,0,0)};
+  function resetCamera(){camera.position.copy(home.position);controls.target.copy(home.target);controls.update();}
+  resetCamera();
+  function resize(){const rect=stage.getBoundingClientRect();renderer.setSize(rect.width,rect.height,false);camera.aspect=rect.width/rect.height;camera.updateProjectionMatrix();}
+  new ResizeObserver(resize).observe(stage); resize();
+
+  const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
+  canvas.addEventListener('pointerdown',event=>{const rect=canvas.getBoundingClientRect();pointer.x=((event.clientX-rect.left)/rect.width)*2-1;pointer.y=-((event.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer,camera);const city=$('city').value;const hit=raycaster.intersectObjects(pickables,false).find(candidate=>{const id=candidate.object.userData.nodeId||candidate.object.parent?.userData.nodeId,node=nodeById.get(id);return node&&(city==='all'||node.city_id===city);});if(hit){const id=hit.object.userData.nodeId||hit.object.parent?.userData.nodeId;selectNode(id,true);}});
+  canvas.addEventListener('mouseenter',()=>hovered=true); canvas.addEventListener('mouseleave',()=>hovered=false);
+  const keys=new Set();
+  addEventListener('keydown',event=>{if(!hovered)return;if(['KeyW','KeyA','KeyS','KeyD','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.code)){event.preventDefault();keys.add(event.code);}});
+  addEventListener('keyup',event=>keys.delete(event.code));
+  addEventListener('blur',()=>keys.clear());
+
+  function selectNode(id,focus=false){
+    if(selected&&nodeMeshes.has(selected)){const old=nodeMeshes.get(selected);old.material.emissive?.setHex(0);}
+    selected=id; const node=nodeById.get(id),mesh=nodeMeshes.get(id); if(!node||!mesh)return;
+    if(mesh.material.emissive)mesh.material.emissive.setHex(0x245b61);
+    for(const object of [...ego.children]){object.geometry?.dispose();if(Array.isArray(object.material))object.material.forEach(material=>material.dispose());else object.material?.dispose();ego.remove(object);}
+    const related=model.relations.filter(item=>item.from===id||item.to===id).slice(0,12);
+    for(const relation of related){const from=nodePositions.get(relation.from),to=nodePositions.get(relation.to);if(!from||!to)continue;const geometry=new THREE.BufferGeometry().setFromPoints([from.clone().add(new THREE.Vector3(0,.25,0)),to.clone().add(new THREE.Vector3(0,.25,0))]);ego.add(new THREE.Line(geometry,new THREE.LineBasicMaterial({color:relationColors[relation.family]??0xffffff,transparent:true,opacity:.95})));}
+    if(focus){controls.target.copy(mesh.position);camera.position.copy(mesh.position.clone().add(new THREE.Vector3(8,7,9)));}
+    showDetail(node,related);
+  }
+  function showDetail(node,related){
+    const source=node.source, bands=node.bands.map(b=>`<div class="metric"><div class="metric-head"><span>${esc(b.label)}</span><span>${b.raw===undefined?'unknown':esc(Number(b.raw).toLocaleString())} · ${esc(b.status)}</span></div>${b.normalized===undefined?'<div class="metric-track unknown"></div>':`<div class="metric-track"><div class="metric-fill" style="width:${Math.round(b.normalized*100)}%"></div></div>`}</div>`).join('');
+    const links=related.map(r=>{const other=nodeById.get(r.from===node.id?r.to:r.from);return `<div class="relation ${esc(r.family)}"><strong>${r.from===node.id?'→':'←'} ${esc(other?.name||'unknown')}</strong><br>${esc(r.kind)} · ${esc(r.execution)}${r.summary?`<br>${esc(r.summary)}`:''}</div>`}).join('')||'<div class="kind">No mapped relations at this level.</div>';
+    const security=(securityByNode.get(node.id)||[]).map(item=>`<div class="warning"><strong>${esc(item.severity)} ${esc(item.category)}</strong><br>${esc(item.summary)}<br><small>${esc(item.status)} · confidence ${esc(item.confidence)}</small></div>`).join('');
+    const boundaries=(boundariesByNode.get(node.id)||[]).map(item=>`<div class="relation"><strong>${esc(item.direction)} · ${esc(item.transport)}</strong><br>${esc(item.payloads?.join(', '))}<br>${esc(item.trust_from)} → ${esc(item.trust_to)}</div>`).join('');
+    $('detail').innerHTML=`<h2>${esc(node.name)}</h2><div class="kind">${esc(node.kind)} · ${esc(districtById.get(node.district_id)?.code||'')} · ${esc(node.runtime||'runtime unknown')}</div><p class="summary">${esc(node.summary)}</p>${source?`<div class="source"><code>${esc(source.path)}${source.line?`:${source.line}`:''}</code>${source.symbol?`<div>${esc(source.symbol)}</div>`:''}<div class="source-actions"><button id="open-source">Open in VS Code</button><button id="copy-source">Copy path</button></div></div>`:'<div class="source">No source target for this external or inferred element.</div>'}<h3>Condition bands</h3>${bands}${boundaries?`<h3>Inputs and outputs</h3>${boundaries}`:''}${security?`<h3>Security review leads</h3>${security}`:''}<h3>Mapped neighborhood</h3><div class="relation-list">${links}</div>`;
+    if(source){const target=`${source.absolute}${source.line?`:${source.line}`:''}`;$('copy-source').onclick=()=>copyText(target);$('open-source').onclick=()=>{let sourcePath=source.absolute.replaceAll('\\','/');if(!sourcePath.startsWith('/'))sourcePath='/'+sourcePath;sourcePath=encodeURI(sourcePath).replaceAll('#','%23').replaceAll('?','%3F');location.href=`vscode://file${sourcePath}${source.line?`:${source.line}`:''}`;};}
+  }
+  async function copyText(value){try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(value);return;}}catch{}const area=document.createElement('textarea');area.value=value;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();document.execCommand('copy');area.remove();}
+
+  function applyFilters(){
+    const city=$('city').value,road=$('roads').value,labelMode=$('labels').value;
+    for(const [id,group] of cityGroups)group.visible=city==='all'||city===id;
+    for(const line of roadObjects){const familyOK=road==='all'||(road==='behavior'?line.userData.family!=='import':line.userData.family===road);const cityOK=city==='all'||line.userData.a===city||line.userData.b===city;line.visible=familyOK&&cityOK;}
+    labels.forEach(label=>{const cityOK=label.road?(city==='all'||label.road.a===city||label.road.b===city):(city==='all'||!label.cityId||label.cityId===city);const roadOK=!label.road||road==='all'||(road==='behavior'?label.road.families.some(family=>family!=='import'):label.road.families.includes(road));const modeOK=labelMode==='all'||(labelMode==='district'&&label.kind!=='node');label.element.hidden=!(cityOK&&roadOK&&labelMode!=='none'&&modeOK);});
+  }
+  $('city').onchange=applyFilters;$('roads').onchange=applyFilters;$('labels').onchange=applyFilters;$('reset').onclick=resetCamera;
+  $('search').addEventListener('input',event=>{const query=event.target.value.trim().toLowerCase();if(!query)return;const match=model.nodes.find(node=>node.name.toLowerCase().includes(query)||node.id.toLowerCase().includes(query)||(node.source?.path||'').toLowerCase().includes(query));if(match){if($('city').value!=='all'&&$('city').value!==match.city_id){$('city').value=match.city_id;applyFilters();}selectNode(match.id,true);}});
+  applyFilters();
+
+  const clock=new THREE.Clock();
+  function animate(){requestAnimationFrame(animate);const dt=Math.min(.05,clock.getDelta()),move=10*dt,rotate=1.25*dt;const forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();const right=new THREE.Vector3().crossVectors(forward,camera.up).normalize();const delta=new THREE.Vector3();if(keys.has('KeyW'))delta.addScaledVector(forward,move);if(keys.has('KeyS'))delta.addScaledVector(forward,-move);if(keys.has('KeyD'))delta.addScaledVector(right,move);if(keys.has('KeyA'))delta.addScaledVector(right,-move);camera.position.add(delta);controls.target.add(delta);if(keys.has('ArrowLeft')||keys.has('ArrowRight')){const angle=(keys.has('ArrowLeft')?1:-1)*rotate;camera.position.sub(controls.target).applyAxisAngle(camera.up,angle).add(controls.target);}if(keys.has('ArrowUp')){camera.position.y+=move;}if(keys.has('ArrowDown')){camera.position.y=Math.max(1,camera.position.y-move);}controls.update();updateLabels();renderer.render(scene,camera);}
+  function updateLabels(){const rect=canvas.getBoundingClientRect();for(const label of labels){if(label.element.hidden)continue;const projected=label.position.clone().project(camera),visible=projected.z<1;label.element.style.display=visible?'block':'none';if(visible){label.element.style.left=`${(projected.x*.5+.5)*rect.width}px`;label.element.style.top=`${(-projected.y*.5+.5)*rect.height}px`;}}}
+  animate();
+}
+
+start();
+</script>
+</body>
+</html>

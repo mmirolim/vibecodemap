@@ -46,6 +46,11 @@ func (d Diagnostic) Error() string {
 	return fmt.Sprintf("%s%s [%s]%s: %s", location, d.Severity, d.Code, path, d.Message)
 }
 
+type manifestSelector struct {
+	ElementIDs []string `yaml:"element_ids"`
+	Exclude    []string `yaml:"exclude"`
+}
+
 type manifestIndex struct {
 	Project struct {
 		Inputs struct {
@@ -73,8 +78,9 @@ type manifestIndex struct {
 	Decompositions []struct {
 		ID        string `yaml:"id"`
 		Districts []struct {
-			ID   string `yaml:"id"`
-			Code string `yaml:"code"`
+			ID      string           `yaml:"id"`
+			Code    string           `yaml:"code"`
+			Members manifestSelector `yaml:"members"`
 		} `yaml:"districts"`
 	} `yaml:"decompositions"`
 	Expectations []struct {
@@ -82,7 +88,11 @@ type manifestIndex struct {
 		Parent string `yaml:"parent"`
 	} `yaml:"expectations"`
 	Corrections []struct {
-		ID string `yaml:"id"`
+		ID     string `yaml:"id"`
+		Target struct {
+			Entity   string           `yaml:"entity"`
+			Selector manifestSelector `yaml:"selector"`
+		} `yaml:"target"`
 	} `yaml:"corrections"`
 	Boundaries []struct {
 		ID             string `yaml:"id"`
@@ -179,24 +189,44 @@ func ValidateFile(path string) []Diagnostic {
 
 	base := filepath.Dir(path)
 	modelPath := resolvePath(base, index.Project.Inputs.StructuralModel)
-	modelIDs, modelDiagnostics := readStructuralIDs(modelPath)
+	modelIndex, modelDiagnostics := readStructuralIndex(modelPath)
 	diagnostics = append(diagnostics, modelDiagnostics...)
 	if !hasErrors(modelDiagnostics) {
-		for itemIndex, boundary := range index.Boundaries {
-			if _, exists := modelIDs[boundary.Subject]; !exists {
-				diagnostics = append(diagnostics, diagnosticAt(root, path, fmt.Sprintf("/boundaries/%d/subject", itemIndex), "reference.missing", fmt.Sprintf("subject %q does not exist in the structural model", boundary.Subject)))
+		checkReference := func(id, pointer, label string, candidates map[string]struct{}) {
+			if _, exists := candidates[id]; !exists {
+				diagnostics = append(diagnostics, diagnosticAt(root, path, pointer, "reference.missing", fmt.Sprintf("%s %q does not exist in the structural model", label, id)))
 			}
-			if boundary.SourceRelation != "" {
-				if _, exists := modelIDs[boundary.SourceRelation]; !exists {
-					diagnostics = append(diagnostics, diagnosticAt(root, path, fmt.Sprintf("/boundaries/%d/source_relation", itemIndex), "reference.missing", fmt.Sprintf("relation %q does not exist in the structural model", boundary.SourceRelation)))
+		}
+		for decompositionIndex, decomposition := range index.Decompositions {
+			for districtIndex, district := range decomposition.Districts {
+				for elementIndex, elementID := range district.Members.ElementIDs {
+					checkReference(elementID, fmt.Sprintf("/decompositions/%d/districts/%d/members/element_ids/%d", decompositionIndex, districtIndex, elementIndex), "element", modelIndex.elements)
 				}
+				for elementIndex, elementID := range district.Members.Exclude {
+					checkReference(elementID, fmt.Sprintf("/decompositions/%d/districts/%d/members/exclude/%d", decompositionIndex, districtIndex, elementIndex), "excluded element", modelIndex.elements)
+				}
+			}
+		}
+		for correctionIndex, correction := range index.Corrections {
+			if correction.Target.Entity != "" {
+				checkReference(correction.Target.Entity, fmt.Sprintf("/corrections/%d/target/entity", correctionIndex), "correction target", modelIndex.all)
+			}
+			for elementIndex, elementID := range correction.Target.Selector.ElementIDs {
+				checkReference(elementID, fmt.Sprintf("/corrections/%d/target/selector/element_ids/%d", correctionIndex, elementIndex), "correction target element", modelIndex.elements)
+			}
+			for elementIndex, elementID := range correction.Target.Selector.Exclude {
+				checkReference(elementID, fmt.Sprintf("/corrections/%d/target/selector/exclude/%d", correctionIndex, elementIndex), "excluded correction element", modelIndex.elements)
+			}
+		}
+		for itemIndex, boundary := range index.Boundaries {
+			checkReference(boundary.Subject, fmt.Sprintf("/boundaries/%d/subject", itemIndex), "subject", modelIndex.all)
+			if boundary.SourceRelation != "" {
+				checkReference(boundary.SourceRelation, fmt.Sprintf("/boundaries/%d/source_relation", itemIndex), "relation", modelIndex.relations)
 			}
 		}
 		for reviewIndex, review := range index.SecurityReviews {
 			for subjectIndex, subject := range review.Subjects {
-				if _, exists := modelIDs[subject]; !exists {
-					diagnostics = append(diagnostics, diagnosticAt(root, path, fmt.Sprintf("/security_reviews/%d/subjects/%d", reviewIndex, subjectIndex), "reference.missing", fmt.Sprintf("subject %q does not exist in the structural model", subject)))
-				}
+				checkReference(subject, fmt.Sprintf("/security_reviews/%d/subjects/%d", reviewIndex, subjectIndex), "subject", modelIndex.all)
 			}
 		}
 	}
@@ -213,7 +243,7 @@ func ValidateFile(path string) []Diagnostic {
 	if index.Project.Inputs.QualityModel != "" {
 		resolved := resolvePath(base, index.Project.Inputs.QualityModel)
 		if _, err := os.Stat(resolved); err != nil {
-			diagnostics = append(diagnostics, Diagnostic{File: resolved, Severity: "warning", Code: "input.missing", Message: err.Error()})
+			diagnostics = append(diagnostics, Diagnostic{File: resolved, Severity: "error", Code: "input.missing", Message: err.Error()})
 		}
 	}
 
@@ -380,14 +410,20 @@ func validateCrossReferences(root *yaml.Node, file string) []Diagnostic {
 	return diagnostics
 }
 
-func readStructuralIDs(path string) (map[string]struct{}, []Diagnostic) {
+type structuralIndex struct {
+	all       map[string]struct{}
+	elements  map[string]struct{}
+	relations map[string]struct{}
+}
+
+func readStructuralIndex(path string) (structuralIndex, []Diagnostic) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, []Diagnostic{{File: path, Severity: "error", Code: "input.read", Message: err.Error()}}
+		return structuralIndex{}, []Diagnostic{{File: path, Severity: "error", Code: "input.read", Message: err.Error()}}
 	}
 	root, syntaxDiagnostic := parseYAML(data, path)
 	if syntaxDiagnostic != nil {
-		return nil, []Diagnostic{*syntaxDiagnostic}
+		return structuralIndex{}, []Diagnostic{*syntaxDiagnostic}
 	}
 	var model struct {
 		Artifacts []struct {
@@ -404,9 +440,13 @@ func readStructuralIDs(path string) (map[string]struct{}, []Diagnostic) {
 		} `yaml:"findings"`
 	}
 	if err := root.Decode(&model); err != nil {
-		return nil, []Diagnostic{{File: path, Severity: "error", Code: "input.decode", Message: err.Error()}}
+		return structuralIndex{}, []Diagnostic{{File: path, Severity: "error", Code: "input.decode", Message: err.Error()}}
 	}
-	result := make(map[string]struct{})
+	result := structuralIndex{
+		all:       make(map[string]struct{}),
+		elements:  make(map[string]struct{}),
+		relations: make(map[string]struct{}),
+	}
 	diagnostics := make([]Diagnostic, 0)
 	groups := []struct {
 		name  string
@@ -432,7 +472,13 @@ func readStructuralIDs(path string) (map[string]struct{}, []Diagnostic) {
 				continue
 			}
 			seenAt[item.ID] = pointer
-			result[item.ID] = struct{}{}
+			result.all[item.ID] = struct{}{}
+			switch group.name {
+			case "elements":
+				result.elements[item.ID] = struct{}{}
+			case "relations":
+				result.relations[item.ID] = struct{}{}
+			}
 		}
 	}
 	return result, diagnostics

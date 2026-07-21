@@ -1,0 +1,487 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vibecodemap.dev/schema/0.1.json",
+  "title": "VibeCodeMap 0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["vcm", "model", "scope", "artifacts", "elements"],
+  "properties": {
+    "vcm": { "const": "0.1" },
+    "model": { "$ref": "#/$defs/model" },
+    "scope": { "$ref": "#/$defs/scope" },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/artifact" }
+    },
+    "elements": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/element" }
+    },
+    "relations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/relation" },
+      "default": []
+    },
+    "flows": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/flow" },
+      "default": []
+    },
+    "architecture": { "$ref": "#/$defs/architecture" },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" },
+      "default": []
+    },
+    "views": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/view" },
+      "default": []
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
+    },
+    "nonEmpty": { "type": "string", "minLength": 1 },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "repository", "generated"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/nonEmpty" },
+        "summary": { "type": "string" },
+        "repository": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["root"],
+          "properties": {
+            "root": { "$ref": "#/$defs/nonEmpty" },
+            "revision": { "type": "string" },
+            "dirty": { "type": "boolean" }
+          }
+        },
+        "generated": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["at", "by"],
+          "properties": {
+            "at": { "type": "string" },
+            "by": { "$ref": "#/$defs/nonEmpty" }
+          }
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["include"],
+      "properties": {
+        "include": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/nonEmpty" }
+        },
+        "exclude": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmpty" },
+          "default": []
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "generated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "confidence", "rationale"],
+      "properties": {
+        "method": {
+          "enum": [
+            "deterministic",
+            "ai_inferred",
+            "runtime_observed",
+            "human_declared",
+            "human_confirmed"
+          ]
+        },
+        "confidence": { "enum": ["high", "medium", "low"] },
+        "rationale": { "$ref": "#/$defs/nonEmpty" }
+      }
+    },
+    "sourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact"],
+      "properties": {
+        "artifact": { "$ref": "#/$defs/id" },
+        "symbol": { "type": "string" },
+        "lines": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [
+            { "type": "integer", "minimum": 1 },
+            { "type": "integer", "minimum": 1 }
+          ]
+        },
+        "role": {
+          "enum": [
+            "definition",
+            "implementation",
+            "configuration",
+            "contract",
+            "evidence",
+            "template",
+            "test",
+            "generated",
+            "schema"
+          ]
+        },
+        "supports": { "type": "string" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "kind", "language", "summary", "generated"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "path": { "$ref": "#/$defs/nonEmpty" },
+        "kind": {
+          "enum": [
+            "source",
+            "template",
+            "style",
+            "configuration",
+            "schema",
+            "migration",
+            "test",
+            "documentation",
+            "asset",
+            "generated"
+          ]
+        },
+        "language": { "$ref": "#/$defs/nonEmpty" },
+        "summary": { "$ref": "#/$defs/nonEmpty" },
+        "responsibilities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmpty" }
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": { "type": ["integer", "number", "string", "boolean"] },
+          "properties": {
+            "lines": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "generated": { "$ref": "#/$defs/generated" }
+      }
+    },
+    "reality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intent", "implementation", "runtime"],
+      "properties": {
+        "intent": { "enum": ["required", "optional", "forbidden", "unspecified"] },
+        "implementation": { "enum": ["present", "partial", "missing", "unknown", "not_applicable"] },
+        "runtime": { "enum": ["observed", "contradicted", "not_observed", "unknown", "not_applicable"] }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "trigger": { "enum": ["request", "event", "schedule", "startup", "manual", "import", "callback", "unknown"] },
+        "style": { "enum": ["synchronous", "asynchronous", "event_driven", "batch", "stream", "mixed", "unknown"] },
+        "blocking": { "enum": ["yes", "no", "mixed", "unknown"] },
+        "concurrency": { "enum": ["inline", "request_thread", "browser_event_loop", "worker", "process", "external", "unknown"] },
+        "delivery": { "enum": ["request_response", "fire_and_forget", "at_most_once", "at_least_once", "exactly_once", "unknown"] },
+        "timeout_ms": { "type": "integer", "minimum": 0 },
+        "retries": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": {
+            "mode": { "enum": ["none", "immediate", "backoff", "external", "unknown"] },
+            "maximum": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "name", "summary", "reality", "generated"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": {
+          "enum": [
+            "system",
+            "deployable",
+            "process",
+            "layer",
+            "component",
+            "interface",
+            "operation",
+            "data_store",
+            "resource",
+            "external_system",
+            "actor",
+            "policy",
+            "expected_component"
+          ]
+        },
+        "name": { "$ref": "#/$defs/nonEmpty" },
+        "parent": { "$ref": "#/$defs/id" },
+        "summary": { "$ref": "#/$defs/nonEmpty" },
+        "responsibilities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmpty" }
+        },
+        "facets": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "runtime": { "enum": ["browser", "server", "worker", "database", "external", "operator", "shared", "unknown"] },
+            "layer": { "enum": ["presentation", "interface", "application", "domain", "infrastructure", "data", "cross_cutting", "external"] },
+            "features": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "state": { "enum": ["stateless", "process_local", "shared", "durable", "external", "mixed", "unknown"] },
+            "trust_zone": { "enum": ["public", "authenticated", "admin", "internal", "third_party", "mixed", "unknown"] }
+          }
+        },
+        "reality": { "$ref": "#/$defs/reality" },
+        "execution": { "$ref": "#/$defs/execution" },
+        "source_refs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sourceRef" }
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sourceRef" }
+        },
+        "generated": { "$ref": "#/$defs/generated" }
+      }
+    },
+    "effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domain", "operation", "mutates_state", "durability"],
+      "properties": {
+        "domain": { "enum": ["database", "filesystem", "network", "browser_storage", "process", "session", "telemetry", "billing", "external_state"] },
+        "operation": { "enum": ["read", "write", "create", "update", "delete", "invoke", "redirect", "log", "reserve", "charge", "release"] },
+        "mutates_state": { "enum": ["yes", "no", "unknown"] },
+        "durability": { "enum": ["transient", "process", "request", "durable", "external", "unknown"] }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "from", "to", "kind", "summary", "reality", "generated"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "from": { "$ref": "#/$defs/id" },
+        "to": { "$ref": "#/$defs/id" },
+        "kind": {
+          "enum": [
+            "contains",
+            "invokes",
+            "calls",
+            "imports",
+            "http_request",
+            "redirects_to",
+            "callback_from",
+            "reads",
+            "writes",
+            "deletes",
+            "queries",
+            "persists",
+            "publishes",
+            "subscribes",
+            "renders",
+            "loads",
+            "authenticates_with",
+            "authorizes",
+            "rate_limits_with",
+            "implements",
+            "depends_on"
+          ]
+        },
+        "summary": { "$ref": "#/$defs/nonEmpty" },
+        "protocol": { "type": "string" },
+        "data": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "execution": { "$ref": "#/$defs/execution" },
+        "effect": { "$ref": "#/$defs/effect" },
+        "reality": { "$ref": "#/$defs/reality" },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sourceRef" }
+        },
+        "generated": { "$ref": "#/$defs/generated" }
+      }
+    },
+    "flowStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "relation"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "relation": { "$ref": "#/$defs/id" },
+        "summary": { "type": "string" },
+        "when": { "type": "string" },
+        "next": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "flow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "summary", "trigger", "steps", "generated"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/nonEmpty" },
+        "summary": { "$ref": "#/$defs/nonEmpty" },
+        "trigger": { "$ref": "#/$defs/id" },
+        "execution": { "$ref": "#/$defs/execution" },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/flowStep" }
+        },
+        "generated": { "$ref": "#/$defs/generated" }
+      }
+    },
+    "style": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scope", "name", "fit", "summary", "evidence", "generated"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "scope": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/nonEmpty" },
+        "fit": { "enum": ["primary", "supporting", "partial", "aspirational", "contradicted"] },
+        "summary": { "$ref": "#/$defs/nonEmpty" },
+        "exceptions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmpty" }
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sourceRef" }
+        },
+        "generated": { "$ref": "#/$defs/generated" }
+      }
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scope", "statement", "severity", "enforcement", "evidence"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "scope": { "$ref": "#/$defs/id" },
+        "statement": { "$ref": "#/$defs/nonEmpty" },
+        "severity": { "enum": ["info", "warning", "high", "critical"] },
+        "enforcement": { "enum": ["none", "review", "static", "test", "runtime"] },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/sourceRef" }
+        }
+      }
+    },
+    "architecture": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "styles": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/style" }
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/constraint" }
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "severity", "summary", "subjects", "impact", "evidence", "generated"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": {
+          "enum": [
+            "responsibility_concentration",
+            "boundary_violation",
+            "dangling_interaction",
+            "missing_component",
+            "hidden_synchronous_work",
+            "shared_state_risk",
+            "abstraction_bypass",
+            "untested_surface",
+            "unobserved_runtime_claim",
+            "duplication",
+            "cycle"
+          ]
+        },
+        "severity": { "enum": ["info", "warning", "high", "critical"] },
+        "summary": { "$ref": "#/$defs/nonEmpty" },
+        "subjects": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "impact": { "$ref": "#/$defs/nonEmpty" },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/sourceRef" }
+        },
+        "generated": { "$ref": "#/$defs/generated" }
+      }
+    },
+    "view": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "roots", "include"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/nonEmpty" },
+        "roots": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "include": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "element_kinds": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "relation_kinds": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "facets": { "type": "object", "additionalProperties": true }
+          }
+        },
+        "group_by": { "type": "string" },
+        "depth": { "type": "integer", "minimum": 1 },
+        "overlays": {
+          "type": "array",
+          "items": { "enum": ["execution", "effects", "findings", "reality", "source", "confidence"] }
+        }
+      }
+    }
+  }
+}

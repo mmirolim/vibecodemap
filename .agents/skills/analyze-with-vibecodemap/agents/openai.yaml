@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visualize with VibeCodeMap"
+  short_description: "Generate and open interactive codebase maps"
+  default_prompt: "Use $analyze-with-vibecodemap to map this repository end to end, generate the VCM models, and open the interactive browser visualization."

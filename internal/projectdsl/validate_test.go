@@ -123,8 +123,76 @@ func TestReadStructuralIDsRejectsDuplicateAcrossKinds(t *testing.T) {
 	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	_, diagnostics := readStructuralIDs(path)
+	_, diagnostics := readStructuralIndex(path)
 	if len(diagnostics) != 1 || diagnostics[0].Code != "structural.id_duplicate" || diagnostics[0].Line == 0 {
 		t.Fatalf("unexpected diagnostics: %+v", diagnostics)
 	}
+}
+
+func TestValidateFileRejectsStaleDistrictAndCorrectionReferences(t *testing.T) {
+	sourceDir := filepath.Clean("../../examples/uzumtools")
+	targetDir := t.TempDir()
+	for _, name := range []string{"uzumtools.vcm.yaml", "uzumtools.quality.vcm.yaml"} {
+		data, err := os.ReadFile(filepath.Join(sourceDir, name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(targetDir, name), data, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	project, err := os.ReadFile(filepath.Join(sourceDir, "uzumtools.project.vcm.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	broken := strings.Replace(string(project), "- deployable.browser", "- component.does-not-exist", 1)
+	broken = strings.Replace(broken, "entity: component.storage-adapters", "entity: component.stale-correction", 1)
+	projectPath := filepath.Join(targetDir, "uzumtools.project.vcm.yaml")
+	if err := os.WriteFile(projectPath, []byte(broken), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	diagnostics := ValidateFile(projectPath)
+	for _, expectedPath := range []string{
+		"/decompositions/0/districts/0/members/element_ids/0",
+		"/corrections/0/target/entity",
+	} {
+		found := false
+		for _, diagnostic := range diagnostics {
+			if diagnostic.Code == "reference.missing" && diagnostic.Path == expectedPath && diagnostic.Line > 0 {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("missing source-located diagnostic for %s: %+v", expectedPath, diagnostics)
+		}
+	}
+}
+
+func TestValidateFileRejectsMissingConfiguredQualityModel(t *testing.T) {
+	sourceDir := filepath.Clean("../../examples/uzumtools")
+	targetDir := t.TempDir()
+	structural, err := os.ReadFile(filepath.Join(sourceDir, "uzumtools.vcm.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(targetDir, "uzumtools.vcm.yaml"), structural, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	project, err := os.ReadFile(filepath.Join(sourceDir, "uzumtools.project.vcm.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	projectPath := filepath.Join(targetDir, "uzumtools.project.vcm.yaml")
+	if err := os.WriteFile(projectPath, project, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, diagnostic := range ValidateFile(projectPath) {
+		if diagnostic.Code == "input.missing" && diagnostic.Severity == "error" && strings.HasSuffix(diagnostic.File, "uzumtools.quality.vcm.yaml") {
+			return
+		}
+	}
+	t.Fatal("missing configured quality model was not reported as an error")
 }

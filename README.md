@@ -82,7 +82,7 @@ source-linked DSL under .vibecodemap, and open the generated 3D map.
   build artifacts, and mobile/web tool output;
 - root-owned `.vcmignore` corrections with `analyze`, `summarize`,
   `externalize`, and `ignore` actions;
-- concurrent stack detection for Python, Go, JavaScript/TypeScript,
+- multi-stack detection for Python, Go, JavaScript/TypeScript,
   Flutter/Dart, Android/Kotlin/Java, and Apple/Swift/Objective-C;
 - explainable affinity and hub metrics plus deterministic district-road/lane
   aggregation;
@@ -98,6 +98,9 @@ Important limits:
 - the current AI-authored DSL must be reviewed and corrected;
 - the MVP composer applies direct-mutation correction paths; other validated
   correction paths are surfaced as generation warnings until implemented;
+- the renderer consumes the selected decomposition and condition bands, while
+  several declared road, label, boundary, and security style switches are
+  still fixed prototype behavior;
 - a missing expectation needs a matching structural `expected_component` to
   appear as a wireframe building in the current renderer;
 - quality/security markings are evidence and review leads, not proof of bugs;
