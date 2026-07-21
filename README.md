@@ -9,6 +9,46 @@ condition map. The goal is to review architecture, interactions, side effects,
 quality signals, security leads, and missing expectations at system scale—not
 only as thousands of generated source lines.
 
+## OpenAI Build Week: built with Codex and GPT-5.6
+
+VibeCodeMap was developed from initial ideation through hackathon submission in
+Codex with **GPT-5.6 in Sol Max mode** as the primary engineering environment.
+The human builder originated the problem, the software-city metaphor, the
+visual grammar, and the product constraints, then continuously reviewed the
+output and drove corrections from rendered screenshots. Codex and GPT-5.6
+turned that direction into the implementation and repeatedly audited it.
+
+They were used to:
+
+- research adjacent approaches and turn the concept into an evidence-first Go,
+  DSL, agent-skill, and Three.js architecture;
+- design the structural, quality, clustering, project, and renderer contracts;
+- implement repository scoping, Go/Python/JS/TS analyzers, validation,
+  evidence-to-quality conversion, composition, typed roads, and the browser
+  renderer;
+- investigate real repositories, author source-linked models, and dogfood
+  VibeCodeMap on its own codebase;
+- review screenshots and code, diagnose visual noise and semantic ambiguity,
+  add tests, run validators, and correct documentation through submission.
+
+The collaboration produced six iterative commits during Build Week. Before the
+hosted product site was added, the repository contained approximately **9,900
+tracked lines of Go** and **28,800 tracked lines overall** across implementation,
+tests, schemas, examples, agent guidance, and documentation. These counts
+describe project size, not an automated authorship score; most implementation
+and documentation was drafted or revised through Codex under close human
+direction.
+
+Several important choices came directly from that human/agent review loop:
+unknown evidence must remain unknown; static imports must not be presented as
+observed runtime communication; AI architectural claims require explicit
+provenance; and clutter introduced by the renderer must never masquerade as a
+problem in the mapped repository.
+
+GPT-5.6 is a development dependency of this Build Week workflow, not a runtime
+API dependency of the generated map. The CLI and hosted visualization do not
+require OpenAI API credentials.
+
 ## See the prototype
 
 Go 1.24 or newer is required. Python 3.10 or newer is needed only when `analyze` detects
@@ -36,6 +76,19 @@ fallback remains readable if that runtime cannot load.
 
 For mapping your own repository, follow
 [Getting started](docs/GETTING-STARTED.md).
+
+### Supported platforms
+
+- **Hosted demo:** a modern desktop browser with WebGL and network access to
+  the current Three.js CDN dependency; no Go or Python installation is needed.
+- **CLI:** developed and tested on macOS with Go 1.24+. The Go implementation is
+  intended to compile on Linux and Windows, but this prototype does not yet
+  publish cross-platform release binaries or claim a complete OS test matrix.
+- **Python analysis:** Python 3.10+ on `PATH` is needed only when `analyze` runs
+  the Python AST adapter. Go and JS/TS analyzers run from the Go process.
+- **Mapped source:** prototype analyzers cover Go, Python, and JS/TS. Dart,
+  Kotlin/Java, and Swift/Objective-C are detected but remain agent-investigated,
+  detection-only stacks.
 
 ## Current end-to-end flow
 

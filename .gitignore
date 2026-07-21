@@ -73,6 +73,10 @@ coverage.xml
 .gradle/
 .kotlin/
 **/build/
+# The Sites frontend keeps a small source plugin under this otherwise-generated
+# directory name.
+!site/build/
+!site/build/sites-vite-plugin.ts
 .cxx/
 .externalNativeBuild/
 local.properties

@@ -1,0 +1,2158 @@
+{
+  "schema": "vibecodemap.view/0.1",
+  "generated_at": "2026-07-21T21:19:04.462139Z",
+  "project": {
+    "id": "vibecodemap",
+    "name": "VibeCodeMap",
+    "summary": "Experimental evidence-model and browser-map toolchain. A Go CLI inventories repositories, runs prototype language analyzers, maps deterministic measurements into quality DSL, validates editable VCM DSL, composes a renderer-neutral view model, and opens a Three.js condition map. AI agents author architecture; the CLI does not invent systems.",
+    "repository_root": "/Users/mirolim/projects/vibecodemap",
+    "project_manifest": "/Users/mirolim/projects/vibecodemap/.vibecodemap/project.vcm.yaml",
+    "structural_model": "/Users/mirolim/projects/vibecodemap/.vibecodemap/model.vcm.yaml",
+    "quality_model": "/Users/mirolim/projects/vibecodemap/.vibecodemap/quality.vcm.yaml"
+  },
+  "profile": {
+    "id": "render.road-city",
+    "name": "road_city",
+    "decomposition": "declared.runtime-boundaries",
+    "bands": [
+      {
+        "id": "band.complexity",
+        "label": "Complexity",
+        "metric": "quality.complexity.max_operation",
+        "order": 1,
+        "direction": "higher_attention",
+        "normalization": "log_project_percentile",
+        "unknown": "wireframe"
+      },
+      {
+        "id": "band.coupling",
+        "label": "Cross-boundary coupling",
+        "metric": "topology.participation",
+        "order": 2,
+        "direction": "higher_attention",
+        "normalization": "ratio_0_1",
+        "unknown": "wireframe"
+      },
+      {
+        "id": "band.effects",
+        "label": "Mutating effects",
+        "metric": "effects.direct_mutation_density",
+        "order": 3,
+        "direction": "higher_attention",
+        "normalization": "log_project_percentile",
+        "unknown": "wireframe"
+      }
+    ]
+  },
+  "stats": {
+    "systems": 1,
+    "districts": 5,
+    "nodes": 21,
+    "relations": 20,
+    "roads": 5,
+    "unrouted_relations": 0,
+    "source_files": 25
+  },
+  "cities": [
+    {
+      "id": "system.vibecodemap",
+      "code": "C1",
+      "name": "VibeCodeMap",
+      "summary": "Research prototype that turns source-linked semantic models into an interactive 3D condition map for architecture and evidence review.",
+      "nodes": [
+        "actor.ai-agent",
+        "actor.developer",
+        "component.adapter-registry",
+        "component.affinity-roads",
+        "component.agent-skill",
+        "component.analyzer.go",
+        "component.analyzer.js-ts",
+        "component.analyzer.python",
+        "component.cli-commands",
+        "component.project-validation",
+        "component.quality-bridge",
+        "component.repository-inventory",
+        "component.scope-policy",
+        "component.viewer-pipeline",
+        "deployable.cli",
+        "expected.component.workload-discovery",
+        "external.python-runtime",
+        "external.threejs-cdn",
+        "resource.evidence-json",
+        "resource.quality-yaml",
+        "resource.view-html"
+      ]
+    }
+  ],
+  "districts": [
+    {
+      "id": "district.cli-surface",
+      "source_id": "district.cli-surface",
+      "city_id": "system.vibecodemap",
+      "code": "D1",
+      "name": "CLI surface",
+      "role": "owned",
+      "summary": "Process entrypoint and command routing for developers and agents.",
+      "nodes": [
+        "actor.ai-agent",
+        "actor.developer",
+        "component.cli-commands",
+        "deployable.cli"
+      ]
+    },
+    {
+      "id": "district.inventory-scope",
+      "source_id": "district.inventory-scope",
+      "city_id": "system.vibecodemap",
+      "code": "D2",
+      "name": "Inventory and scope",
+      "role": "owned",
+      "summary": "Central repository scan and four-action reading policy.",
+      "nodes": [
+        "component.repository-inventory",
+        "component.scope-policy"
+      ]
+    },
+    {
+      "id": "district.adapters",
+      "source_id": "district.adapters",
+      "city_id": "system.vibecodemap",
+      "code": "D3",
+      "name": "Language adapters",
+      "role": "owned",
+      "summary": "Stack detection and prototype semantic analyzers for Go, Python, and JS/TS.",
+      "nodes": [
+        "component.adapter-registry",
+        "component.analyzer.go",
+        "component.analyzer.js-ts",
+        "component.analyzer.python",
+        "external.python-runtime",
+        "resource.evidence-json"
+      ]
+    },
+    {
+      "id": "district.presentation",
+      "source_id": "district.presentation",
+      "city_id": "system.vibecodemap",
+      "code": "D4",
+      "name": "Quality and presentation",
+      "role": "owned",
+      "summary": "Evidence-to-quality conversion, DSL validation, composition, road aggregation, and browser map generation.",
+      "nodes": [
+        "component.affinity-roads",
+        "component.project-validation",
+        "component.quality-bridge",
+        "component.viewer-pipeline",
+        "external.threejs-cdn",
+        "resource.quality-yaml",
+        "resource.view-html"
+      ]
+    },
+    {
+      "id": "district.agent-guidance",
+      "source_id": "district.agent-guidance",
+      "city_id": "system.vibecodemap",
+      "code": "D5",
+      "name": "Agent guidance",
+      "role": "owned",
+      "summary": "Skill and agent instructions that perform semantic mapping the CLI does not.",
+      "nodes": [
+        "component.agent-skill",
+        "expected.component.workload-discovery"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "actor.developer",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.cli-surface",
+      "kind": "actor",
+      "name": "Developer",
+      "summary": "Human who builds the CLI, reviews maps, and corrects editable VCM DSL.",
+      "parent": "system.vibecodemap",
+      "runtime": "external",
+      "layer": "external",
+      "implementation": "present",
+      "confidence": "high",
+      "height": 1.15,
+      "footprint": 1.05,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "status": "unknown"
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0,
+          "status": "derived",
+          "normalized": 0
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "status": "unknown"
+        }
+      ]
+    },
+    {
+      "id": "actor.ai-agent",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.cli-surface",
+      "kind": "actor",
+      "name": "AI mapping agent",
+      "summary": "Agent that uses inspect/analyze evidence plus source reading to author source-linked DSL.",
+      "parent": "system.vibecodemap",
+      "runtime": "external",
+      "layer": "external",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": ".agents/skills/analyze-with-vibecodemap/SKILL.md",
+        "absolute": "/Users/mirolim/projects/vibecodemap/.agents/skills/analyze-with-vibecodemap/SKILL.md",
+        "line": 1
+      },
+      "lines": 399,
+      "height": 1.9894951829808223,
+      "footprint": 2.0482217806474963,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "status": "unknown"
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0.5,
+          "status": "derived",
+          "normalized": 0.5
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "status": "unknown"
+        }
+      ]
+    },
+    {
+      "id": "deployable.cli",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.cli-surface",
+      "kind": "deployable",
+      "name": "vibecodemap CLI",
+      "summary": "Single Go binary that owns inventory, analyzer orchestration, evidence-to-quality conversion, validation, composition, HTML generation, and browser launch.",
+      "parent": "system.vibecodemap",
+      "runtime": "operator",
+      "layer": "application",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "cmd/vibecodemap/main.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/cmd/vibecodemap/main.go",
+        "symbol": "main",
+        "line": 87
+      },
+      "lines": 589,
+      "height": 3.472370450061428,
+      "footprint": 2.129192195187451,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 13,
+          "status": "observed",
+          "normalized": 0.6527390217905231
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "status": "unknown"
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 0,
+          "status": "observed",
+          "normalized": 0
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 581,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 13,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 1,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 0,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 32,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "component.cli-commands",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.cli-surface",
+      "kind": "component",
+      "name": "CLI command router",
+      "summary": "Dispatches describe, schema, validate, inspect, analyze, quality, adapters, render, and show.",
+      "parent": "deployable.cli",
+      "runtime": "operator",
+      "layer": "interface",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "cmd/vibecodemap/main.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/cmd/vibecodemap/main.go",
+        "symbol": "main",
+        "line": 87
+      },
+      "lines": 581,
+      "height": 3.741106301666467,
+      "footprint": 2.1263480099440497,
+      "direct_mutation": true,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 18,
+          "status": "observed",
+          "normalized": 0.7282714920267325
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0.7142857142857143,
+          "status": "derived",
+          "normalized": 0.7142857142857143
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 4,
+          "status": "observed",
+          "normalized": 1
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 581,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 18,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 3,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 4,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 83,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "component.repository-inventory",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.inventory-scope",
+      "kind": "component",
+      "name": "Repository inventory",
+      "summary": "Walks a repository once, applies scope policy and gitignore, and emits an auditable inventory report.",
+      "parent": "deployable.cli",
+      "runtime": "operator",
+      "layer": "infrastructure",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "internal/repository/inventory.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/repository/inventory.go",
+        "symbol": "Scan",
+        "line": 85
+      },
+      "lines": 383,
+      "height": 4.707885115694404,
+      "footprint": 2.0397171984557767,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 56,
+          "status": "observed",
+          "normalized": 1
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0.5,
+          "status": "derived",
+          "normalized": 0.5
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 0,
+          "status": "observed",
+          "normalized": 0
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 383,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 56,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 3,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 0,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 192,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "component.scope-policy",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.inventory-scope",
+      "kind": "component",
+      "name": "Scope policy",
+      "summary": "Classifies paths as analyze, summarize, externalize, or ignore using defaults, markers, and optional .vcmignore.",
+      "parent": "deployable.cli",
+      "runtime": "operator",
+      "layer": "infrastructure",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "internal/scoping/policy.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/scoping/policy.go",
+        "line": 1
+      },
+      "lines": 451,
+      "height": 3.3367178518134404,
+      "footprint": 2.0736837874650487,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 11,
+          "status": "observed",
+          "normalized": 0.6146117091210943
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0,
+          "status": "derived",
+          "normalized": 0
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 0,
+          "status": "observed",
+          "normalized": 0
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 425,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 11,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 4,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 0,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 49,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "component.adapter-registry",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.adapters",
+      "kind": "component",
+      "name": "Adapter registry",
+      "summary": "Registers detectors/analyzers, runs detection, and builds evidence bundles without inventing architecture.",
+      "parent": "deployable.cli",
+      "runtime": "operator",
+      "layer": "application",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "internal/adapters/model.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/adapters/model.go",
+        "line": 1
+      },
+      "lines": 955,
+      "height": 3.786244400727512,
+      "footprint": 2.2297412318857086,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 19,
+          "status": "observed",
+          "normalized": 0.7409582701528539
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0.25,
+          "status": "derived",
+          "normalized": 0.25
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 0,
+          "status": "observed",
+          "normalized": 0
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 955,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 19,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 4,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 0,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 78,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "component.analyzer.go",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.adapters",
+      "kind": "component",
+      "name": "Go AST analyzer",
+      "summary": "Prototype Go parser/AST evidence extractor; no go/packages or type checking yet.",
+      "parent": "component.adapter-registry",
+      "runtime": "operator",
+      "layer": "infrastructure",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "internal/adapters/go_analyzer.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/adapters/go_analyzer.go",
+        "symbol": "Analyze",
+        "line": 31
+      },
+      "lines": 359,
+      "height": 4.113220330388097,
+      "footprint": 2.0262716732187824,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 28,
+          "status": "observed",
+          "normalized": 0.8328600373623238
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0,
+          "status": "derived",
+          "normalized": 0
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 0,
+          "status": "observed",
+          "normalized": 0
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 359,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 28,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 6,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 0,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 126,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "component.analyzer.python",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.adapters",
+      "kind": "component",
+      "name": "Python AST analyzer",
+      "summary": "Go-orchestrated embedded Python AST subprocess over centrally approved .py files.",
+      "parent": "component.adapter-registry",
+      "runtime": "operator",
+      "layer": "infrastructure",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "internal/adapters/python.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/adapters/python.go",
+        "symbol": "Analyze",
+        "line": 50
+      },
+      "lines": 425,
+      "height": 3.5898780755710074,
+      "footprint": 2.061341530472786,
+      "direct_mutation": true,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 15,
+          "status": "observed",
+          "normalized": 0.6857664022956538
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0,
+          "status": "derived",
+          "normalized": 0
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 1,
+          "status": "observed",
+          "normalized": 0.43067655807339306
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 407,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 15,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 2,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 1,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 66,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "component.analyzer.js-ts",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.adapters",
+      "kind": "component",
+      "name": "JS/TS lexical analyzer",
+      "summary": "Dependency-free lexical prototype for JavaScript and TypeScript; not a compiler AST.",
+      "parent": "component.adapter-registry",
+      "runtime": "operator",
+      "layer": "infrastructure",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "internal/adapters/javascript_analyzer.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/adapters/javascript_analyzer.go",
+        "symbol": "Analyze",
+        "line": 52
+      },
+      "lines": 356,
+      "height": 3.4071554345661523,
+      "footprint": 2.0245282878707584,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 12,
+          "status": "observed",
+          "normalized": 0.63440930810539
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0,
+          "status": "derived",
+          "normalized": 0
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 0,
+          "status": "observed",
+          "normalized": 0
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 356,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 12,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 3,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 0,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 40,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "component.quality-bridge",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.presentation",
+      "kind": "component",
+      "name": "Quality evidence bridge",
+      "summary": "Converts supported analyzer facts into source-linked quality DSL while preserving unavailable metrics as unknown.",
+      "parent": "deployable.cli",
+      "runtime": "operator",
+      "layer": "application",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "cmd/vibecodemap/main.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/cmd/vibecodemap/main.go",
+        "symbol": "runQuality",
+        "line": 455
+      },
+      "lines": 1123,
+      "height": 4.050336442083809,
+      "footprint": 2.2634685480111743,
+      "direct_mutation": true,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 26,
+          "status": "observed",
+          "normalized": 0.8151855239198024
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0.6666666666666666,
+          "status": "derived",
+          "normalized": 0.6666666666666666
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 1.7809439002671417,
+          "status": "observed",
+          "normalized": 0.6354954078332702
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 1086,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 26,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 3,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 2,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 125,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "component.project-validation",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.presentation",
+      "kind": "component",
+      "name": "Project DSL validation",
+      "summary": "Validates project manifests against embedded grammar/schema and reference invariants.",
+      "parent": "deployable.cli",
+      "runtime": "operator",
+      "layer": "application",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "internal/projectdsl/validate.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/projectdsl/validate.go",
+        "line": 1
+      },
+      "lines": 601,
+      "height": 2.726748332920688,
+      "footprint": 2.133386967772671,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 5,
+          "status": "observed",
+          "normalized": 0.44317010854718086
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0,
+          "status": "derived",
+          "normalized": 0
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 0,
+          "status": "observed",
+          "normalized": 0
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 601,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 5,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 2,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 0,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 17,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "component.viewer-pipeline",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.presentation",
+      "kind": "component",
+      "name": "Viewer composition pipeline",
+      "summary": "Loads validated models, composes cities/districts/buildings/roads, writes view JSON and HTML, and opens a browser.",
+      "parent": "deployable.cli",
+      "runtime": "operator",
+      "layer": "application",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "internal/viewer/compose.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/viewer/compose.go",
+        "symbol": "Compose",
+        "line": 28
+      },
+      "lines": 2171,
+      "height": 4.538129889504852,
+      "footprint": 2.4007091002195473,
+      "direct_mutation": true,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 46,
+          "status": "observed",
+          "normalized": 0.95228760326163
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0.2,
+          "status": "derived",
+          "normalized": 0.2
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 1.842468908337172,
+          "status": "observed",
+          "normalized": 0.6490918353369846
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 1795,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 46,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 3,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 4,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 263,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "component.affinity-roads",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.presentation",
+      "kind": "component",
+      "name": "Affinity and road aggregation",
+      "summary": "Explainable affinity metrics and deterministic district-road aggregation used by composition.",
+      "parent": "deployable.cli",
+      "runtime": "operator",
+      "layer": "infrastructure",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "internal/affinity/model.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/affinity/model.go",
+        "line": 1
+      },
+      "lines": 602,
+      "height": 4.303496665841377,
+      "footprint": 2.1337327493181637,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 35,
+          "status": "observed",
+          "normalized": 0.8863402170943617
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0,
+          "status": "derived",
+          "normalized": 0
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 0,
+          "status": "observed",
+          "normalized": 0
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 602,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 35,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 3,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 0,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 9,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "component.agent-skill",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.agent-guidance",
+      "kind": "component",
+      "name": "analyze-with-vibecodemap skill",
+      "summary": "Repository-owned agent instructions for end-to-end mapping, evidence discipline, and show completion.",
+      "parent": "system.vibecodemap",
+      "runtime": "external",
+      "layer": "cross_cutting",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": ".agents/skills/analyze-with-vibecodemap/SKILL.md",
+        "absolute": "/Users/mirolim/projects/vibecodemap/.agents/skills/analyze-with-vibecodemap/SKILL.md",
+        "line": 1
+      },
+      "lines": 399,
+      "height": 1.9894951829808223,
+      "footprint": 2.0482217806474963,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "status": "unknown"
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 1,
+          "status": "derived",
+          "normalized": 1
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "status": "unknown"
+        }
+      ]
+    },
+    {
+      "id": "external.python-runtime",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.adapters",
+      "kind": "external_system",
+      "name": "Python 3 runtime",
+      "summary": "Optional host runtime required only when analyzing Python source.",
+      "parent": "system.vibecodemap",
+      "runtime": "external",
+      "layer": "external",
+      "implementation": "present",
+      "confidence": "high",
+      "height": 1.15,
+      "footprint": 1.05,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "status": "unknown"
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0,
+          "status": "derived",
+          "normalized": 0
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "status": "unknown"
+        }
+      ]
+    },
+    {
+      "id": "external.threejs-cdn",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.presentation",
+      "kind": "external_system",
+      "name": "esm.sh Three.js",
+      "summary": "CDN module load used by the browser map; offline fallback shows embedded data cards.",
+      "parent": "system.vibecodemap",
+      "runtime": "external",
+      "layer": "external",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "README.md",
+        "absolute": "/Users/mirolim/projects/vibecodemap/README.md",
+        "line": 56
+      },
+      "lines": 684,
+      "height": 2.3098536579226048,
+      "footprint": 2.1602955913046307,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "status": "unknown"
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0,
+          "status": "derived",
+          "normalized": 0
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "status": "unknown"
+        }
+      ]
+    },
+    {
+      "id": "resource.evidence-json",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.adapters",
+      "kind": "resource",
+      "name": "Evidence bundle",
+      "summary": "Intermediate analyze output at .vibecodemap/generated/evidence.json; not architecture DSL.",
+      "parent": "deployable.cli",
+      "runtime": "operator",
+      "layer": "data",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "cmd/vibecodemap/main.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/cmd/vibecodemap/main.go",
+        "symbol": "runAnalyze",
+        "line": 371
+      },
+      "lines": 581,
+      "height": 3.741106301666467,
+      "footprint": 2.1263480099440497,
+      "direct_mutation": true,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 18,
+          "status": "observed",
+          "normalized": 0.7282714920267325
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 1,
+          "status": "derived",
+          "normalized": 1
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 2,
+          "status": "observed",
+          "normalized": 0.6826061944859853
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 581,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 18,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 3,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 2,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 83,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "resource.quality-yaml",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.presentation",
+      "kind": "resource",
+      "name": "Quality model",
+      "summary": "Validated quality DSL generated from path- and symbol-matched deterministic evidence, including explicit unknown measurements.",
+      "parent": "deployable.cli",
+      "runtime": "operator",
+      "layer": "data",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "cmd/vibecodemap/main.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/cmd/vibecodemap/main.go",
+        "symbol": "runQuality",
+        "line": 455
+      },
+      "lines": 1123,
+      "height": 4.050336442083809,
+      "footprint": 2.2634685480111743,
+      "direct_mutation": true,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 26,
+          "status": "observed",
+          "normalized": 0.8151855239198024
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0,
+          "status": "derived",
+          "normalized": 0
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 1.7809439002671417,
+          "status": "observed",
+          "normalized": 0.6354954078332702
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 1086,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 26,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 3,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 2,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 125,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "resource.view-html",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.presentation",
+      "kind": "resource",
+      "name": "Generated HTML map",
+      "summary": "Standalone HTML plus view JSON under .vibecodemap/out/ after show or render.",
+      "parent": "deployable.cli",
+      "runtime": "operator",
+      "layer": "data",
+      "implementation": "present",
+      "confidence": "high",
+      "source": {
+        "path": "internal/viewer/render.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/viewer/render.go",
+        "symbol": "Render",
+        "line": 35
+      },
+      "lines": 134,
+      "height": 3.5330841769699446,
+      "footprint": 1.8219322455080063,
+      "direct_mutation": true,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "raw": 14,
+          "status": "observed",
+          "normalized": 0.6698035769782944
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "raw": 0,
+          "status": "derived",
+          "normalized": 0
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "raw": 4,
+          "status": "observed",
+          "normalized": 1
+        }
+      ],
+      "measurements": {
+        "code.lines.physical": {
+          "value": 134,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Physical source lines"
+        },
+        "complexity.cyclomatic.max": {
+          "value": 14,
+          "status": "observed",
+          "unit": "paths",
+          "name": "Maximum operation cyclomatic complexity"
+        },
+        "complexity.nesting.max": {
+          "value": 1,
+          "status": "observed",
+          "unit": "levels",
+          "name": "Maximum operation nesting"
+        },
+        "effects.mutating_sites": {
+          "value": 4,
+          "status": "observed",
+          "unit": "sites",
+          "name": "Direct mutating effect sites"
+        },
+        "function.lines.max": {
+          "value": 54,
+          "status": "observed",
+          "unit": "lines",
+          "name": "Longest operation"
+        }
+      }
+    },
+    {
+      "id": "expected.component.workload-discovery",
+      "city_id": "system.vibecodemap",
+      "district_id": "district.agent-guidance",
+      "kind": "expected_component",
+      "name": "Deterministic workload discovery",
+      "summary": "Automated product/deployable discovery from manifests and entrypoints is planned but not implemented as a CLI output.",
+      "parent": "system.vibecodemap",
+      "implementation": "missing",
+      "confidence": "high",
+      "source": {
+        "path": "README.md",
+        "absolute": "/Users/mirolim/projects/vibecodemap/README.md",
+        "line": 233
+      },
+      "lines": 327,
+      "height": 1.8860155868083508,
+      "footprint": 2.0068778350800303,
+      "direct_mutation": false,
+      "bands": [
+        {
+          "id": "band.complexity",
+          "label": "Complexity",
+          "metric": "quality.complexity.max_operation",
+          "status": "unknown"
+        },
+        {
+          "id": "band.coupling",
+          "label": "Cross-boundary coupling",
+          "metric": "topology.participation",
+          "status": "unknown"
+        },
+        {
+          "id": "band.effects",
+          "label": "Mutating effects",
+          "metric": "effects.direct_mutation_density",
+          "status": "unknown"
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "relation.adapters-to-go",
+      "from": "component.adapter-registry",
+      "to": "component.analyzer.go",
+      "kind": "calls",
+      "family": "call",
+      "execution": "sync",
+      "protocol": "in_process",
+      "summary": "When go-module is detected, the Go AST analyzer emits per-file evidence events.",
+      "mutates": false,
+      "source": {
+        "path": "internal/adapters/analyze.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/adapters/analyze.go",
+        "line": 107
+      }
+    },
+    {
+      "id": "relation.adapters-to-js",
+      "from": "component.adapter-registry",
+      "to": "component.analyzer.js-ts",
+      "kind": "calls",
+      "family": "call",
+      "execution": "sync",
+      "protocol": "in_process",
+      "summary": "When JS or TS files are detected, the lexical analyzer emits prototype evidence.",
+      "mutates": false,
+      "source": {
+        "path": "internal/adapters/javascript_analyzer.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/adapters/javascript_analyzer.go",
+        "line": 20
+      }
+    },
+    {
+      "id": "relation.adapters-to-python",
+      "from": "component.adapter-registry",
+      "to": "component.analyzer.python",
+      "kind": "calls",
+      "family": "call",
+      "execution": "sync",
+      "protocol": "in_process",
+      "summary": "When python is detected and python3 is available, the embedded adapter runs as a subprocess.",
+      "mutates": false,
+      "source": {
+        "path": "internal/adapters/python.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/adapters/python.go",
+        "line": 50
+      }
+    },
+    {
+      "id": "relation.agent-follows-skill",
+      "from": "actor.ai-agent",
+      "to": "component.agent-skill",
+      "kind": "implements",
+      "family": "import",
+      "execution": "static",
+      "summary": "Agent behavior is constrained by the checked-in skill and AGENTS truth boundaries.",
+      "mutates": false,
+      "source": {
+        "path": "AGENTS.md",
+        "absolute": "/Users/mirolim/projects/vibecodemap/AGENTS.md",
+        "line": 6
+      }
+    },
+    {
+      "id": "relation.agent-uses-cli",
+      "from": "actor.ai-agent",
+      "to": "component.cli-commands",
+      "kind": "invokes",
+      "family": "call",
+      "execution": "sync",
+      "summary": "Mapping skill orchestrates CLI inspect, analyze, and show around source investigation and DSL authoring.",
+      "mutates": false,
+      "source": {
+        "path": ".agents/skills/analyze-with-vibecodemap/SKILL.md",
+        "absolute": "/Users/mirolim/projects/vibecodemap/.agents/skills/analyze-with-vibecodemap/SKILL.md",
+        "line": 36
+      }
+    },
+    {
+      "id": "relation.cli-to-adapters",
+      "from": "component.cli-commands",
+      "to": "component.adapter-registry",
+      "kind": "calls",
+      "family": "call",
+      "execution": "sync",
+      "protocol": "in_process",
+      "summary": "inspect detects stacks; analyze builds the evidence bundle through the registry.",
+      "mutates": false,
+      "source": {
+        "path": "cmd/vibecodemap/main.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/cmd/vibecodemap/main.go",
+        "line": 241
+      }
+    },
+    {
+      "id": "relation.cli-to-inventory",
+      "from": "component.cli-commands",
+      "to": "component.repository-inventory",
+      "kind": "calls",
+      "family": "call",
+      "execution": "sync",
+      "protocol": "in_process",
+      "summary": "inspect and analyze invoke a single repository Scan with shared scope options.",
+      "mutates": false,
+      "source": {
+        "path": "cmd/vibecodemap/main.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/cmd/vibecodemap/main.go",
+        "symbol": "runInspect",
+        "line": 231
+      }
+    },
+    {
+      "id": "relation.cli-to-quality",
+      "from": "component.cli-commands",
+      "to": "component.quality-bridge",
+      "kind": "calls",
+      "family": "call",
+      "execution": "sync",
+      "protocol": "in_process",
+      "summary": "The quality command validates the structural model and invokes deterministic evidence-to-quality conversion.",
+      "mutates": false,
+      "source": {
+        "path": "cmd/vibecodemap/main.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/cmd/vibecodemap/main.go",
+        "symbol": "runQuality",
+        "line": 455
+      }
+    },
+    {
+      "id": "relation.cli-to-viewer",
+      "from": "component.cli-commands",
+      "to": "component.viewer-pipeline",
+      "kind": "calls",
+      "family": "call",
+      "execution": "sync",
+      "protocol": "in_process",
+      "summary": "render and show validate models, compose the view, write HTML and JSON, and optionally open a browser.",
+      "mutates": false,
+      "source": {
+        "path": "cmd/vibecodemap/main.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/cmd/vibecodemap/main.go",
+        "symbol": "runRender",
+        "line": 153
+      }
+    },
+    {
+      "id": "relation.cli-writes-evidence",
+      "from": "component.cli-commands",
+      "to": "resource.evidence-json",
+      "kind": "writes",
+      "family": "state",
+      "execution": "unknown",
+      "summary": "analyze writes the intermediate evidence bundle for AI or human DSL authors.",
+      "mutates": true,
+      "source": {
+        "path": "cmd/vibecodemap/main.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/cmd/vibecodemap/main.go",
+        "line": 428
+      }
+    },
+    {
+      "id": "relation.developer-uses-cli",
+      "from": "actor.developer",
+      "to": "component.cli-commands",
+      "kind": "invokes",
+      "family": "call",
+      "execution": "sync",
+      "summary": "Developer runs the vibecodemap CLI for inspect, analyze, validate, and show.",
+      "mutates": false,
+      "source": {
+        "path": "cmd/vibecodemap/main.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/cmd/vibecodemap/main.go",
+        "line": 20
+      }
+    },
+    {
+      "id": "relation.html-loads-threejs",
+      "from": "resource.view-html",
+      "to": "external.threejs-cdn",
+      "kind": "loads",
+      "family": "provider",
+      "execution": "unknown",
+      "summary": "Interactive 3D runtime currently loads Three.js from esm.sh; data-card fallback remains without it.",
+      "mutates": false,
+      "source": {
+        "path": "README.md",
+        "absolute": "/Users/mirolim/projects/vibecodemap/README.md",
+        "line": 56
+      }
+    },
+    {
+      "id": "relation.inventory-to-scope",
+      "from": "component.repository-inventory",
+      "to": "component.scope-policy",
+      "kind": "calls",
+      "family": "call",
+      "execution": "sync",
+      "protocol": "in_process",
+      "summary": "Inventory evaluates every path against the compiled scope policy before reading contents.",
+      "mutates": false,
+      "source": {
+        "path": "internal/repository/inventory.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/repository/inventory.go",
+        "line": 118
+      }
+    },
+    {
+      "id": "relation.python-to-runtime",
+      "from": "component.analyzer.python",
+      "to": "external.python-runtime",
+      "kind": "invokes",
+      "family": "call",
+      "execution": "sync",
+      "summary": "Python analysis requires a host Python 3 executable on PATH.",
+      "mutates": false,
+      "source": {
+        "path": "internal/adapters/python.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/adapters/python.go",
+        "symbol": "pythonCommand",
+        "line": 33
+      }
+    },
+    {
+      "id": "relation.quality-reads-evidence",
+      "from": "component.quality-bridge",
+      "to": "resource.evidence-json",
+      "kind": "reads",
+      "family": "state",
+      "execution": "unknown",
+      "summary": "Quality generation reads the centrally scoped evidence bundle and rejects mismatched repository roots.",
+      "mutates": false,
+      "source": {
+        "path": "internal/qualitymodel/generate.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/qualitymodel/generate.go",
+        "symbol": "Generate",
+        "line": 146
+      }
+    },
+    {
+      "id": "relation.quality-writes-model",
+      "from": "component.quality-bridge",
+      "to": "resource.quality-yaml",
+      "kind": "writes",
+      "family": "state",
+      "execution": "unknown",
+      "summary": "The quality command writes and validates source-linked quality DSL.",
+      "mutates": true,
+      "source": {
+        "path": "cmd/vibecodemap/main.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/cmd/vibecodemap/main.go",
+        "symbol": "runQuality",
+        "line": 455
+      }
+    },
+    {
+      "id": "relation.viewer-reads-quality",
+      "from": "component.viewer-pipeline",
+      "to": "resource.quality-yaml",
+      "kind": "reads",
+      "family": "state",
+      "execution": "unknown",
+      "summary": "Composition consumes the linked quality model to populate condition bands and provenance.",
+      "mutates": false,
+      "source": {
+        "path": "internal/viewer/contracts.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/viewer/contracts.go",
+        "line": 49
+      }
+    },
+    {
+      "id": "relation.viewer-to-roads",
+      "from": "component.viewer-pipeline",
+      "to": "component.affinity-roads",
+      "kind": "calls",
+      "family": "call",
+      "execution": "sync",
+      "protocol": "in_process",
+      "summary": "Composer aggregates district roads and lanes through the roads package.",
+      "mutates": false,
+      "source": {
+        "path": "internal/viewer/compose.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/viewer/compose.go",
+        "line": 12
+      }
+    },
+    {
+      "id": "relation.viewer-to-validation",
+      "from": "component.viewer-pipeline",
+      "to": "component.project-validation",
+      "kind": "calls",
+      "family": "call",
+      "execution": "sync",
+      "protocol": "in_process",
+      "summary": "Composition begins only after project validation succeeds.",
+      "mutates": false,
+      "source": {
+        "path": "internal/viewer/contracts.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/viewer/contracts.go",
+        "line": 55
+      }
+    },
+    {
+      "id": "relation.viewer-writes-html",
+      "from": "component.viewer-pipeline",
+      "to": "resource.view-html",
+      "kind": "writes",
+      "family": "state",
+      "execution": "unknown",
+      "summary": "Render writes view JSON and HTML under the project out directory.",
+      "mutates": true,
+      "source": {
+        "path": "internal/viewer/render.go",
+        "absolute": "/Users/mirolim/projects/vibecodemap/internal/viewer/render.go",
+        "line": 80
+      }
+    }
+  ],
+  "roads": [
+    {
+      "id": "road.d3-d1",
+      "a": {
+        "district_id": "district.adapters",
+        "code": "D3",
+        "opposite": "D1"
+      },
+      "b": {
+        "district_id": "district.cli-surface",
+        "code": "D1",
+        "opposite": "D3"
+      },
+      "lanes": [
+        {
+          "from": "district.cli-surface",
+          "to": "district.adapters",
+          "family": "call",
+          "execution": "sync",
+          "count": 1,
+          "strength": 1,
+          "relations": [
+            "relation.cli-to-adapters"
+          ]
+        },
+        {
+          "from": "district.cli-surface",
+          "to": "district.adapters",
+          "family": "state",
+          "execution": "unknown",
+          "count": 1,
+          "strength": 1,
+          "relations": [
+            "relation.cli-writes-evidence"
+          ]
+        }
+      ],
+      "count": 2,
+      "strength": 2
+    },
+    {
+      "id": "road.d3-d4",
+      "a": {
+        "district_id": "district.adapters",
+        "code": "D3",
+        "opposite": "D4"
+      },
+      "b": {
+        "district_id": "district.presentation",
+        "code": "D4",
+        "opposite": "D3"
+      },
+      "lanes": [
+        {
+          "from": "district.presentation",
+          "to": "district.adapters",
+          "family": "state",
+          "execution": "unknown",
+          "count": 1,
+          "strength": 1,
+          "relations": [
+            "relation.quality-reads-evidence"
+          ]
+        }
+      ],
+      "count": 1,
+      "strength": 1
+    },
+    {
+      "id": "road.d5-d1",
+      "a": {
+        "district_id": "district.agent-guidance",
+        "code": "D5",
+        "opposite": "D1"
+      },
+      "b": {
+        "district_id": "district.cli-surface",
+        "code": "D1",
+        "opposite": "D5"
+      },
+      "lanes": [
+        {
+          "from": "district.cli-surface",
+          "to": "district.agent-guidance",
+          "family": "import",
+          "execution": "static",
+          "count": 1,
+          "strength": 1,
+          "relations": [
+            "relation.agent-follows-skill"
+          ]
+        }
+      ],
+      "count": 1,
+      "strength": 1
+    },
+    {
+      "id": "road.d1-d2",
+      "a": {
+        "district_id": "district.cli-surface",
+        "code": "D1",
+        "opposite": "D2"
+      },
+      "b": {
+        "district_id": "district.inventory-scope",
+        "code": "D2",
+        "opposite": "D1"
+      },
+      "lanes": [
+        {
+          "from": "district.cli-surface",
+          "to": "district.inventory-scope",
+          "family": "call",
+          "execution": "sync",
+          "count": 1,
+          "strength": 1,
+          "relations": [
+            "relation.cli-to-inventory"
+          ]
+        }
+      ],
+      "count": 1,
+      "strength": 1
+    },
+    {
+      "id": "road.d1-d4",
+      "a": {
+        "district_id": "district.cli-surface",
+        "code": "D1",
+        "opposite": "D4"
+      },
+      "b": {
+        "district_id": "district.presentation",
+        "code": "D4",
+        "opposite": "D1"
+      },
+      "lanes": [
+        {
+          "from": "district.cli-surface",
+          "to": "district.presentation",
+          "family": "call",
+          "execution": "sync",
+          "count": 2,
+          "strength": 2,
+          "relations": [
+            "relation.cli-to-quality",
+            "relation.cli-to-viewer"
+          ]
+        }
+      ],
+      "count": 2,
+      "strength": 2
+    }
+  ],
+  "boundaries": [
+    {
+      "id": "boundary.cli-user-input",
+      "subject": "component.cli-commands",
+      "direction": "input",
+      "transport": "process arguments and local filesystem",
+      "payloads": [
+        "repository paths",
+        "project manifests",
+        "scope flags"
+      ],
+      "trust_from": "local developer or agent",
+      "trust_to": "CLI process",
+      "authentication": "mixed",
+      "summary": "Local users and agents pass repository and project paths into the CLI."
+    },
+    {
+      "id": "boundary.cli-user-output",
+      "subject": "component.cli-commands",
+      "direction": "output",
+      "transport": "stdout, generated files, browser",
+      "payloads": [
+        "inventory report",
+        "evidence JSON",
+        "quality YAML",
+        "diagnostics",
+        "HTML map"
+      ],
+      "trust_from": "CLI process",
+      "trust_to": "local developer or agent",
+      "authentication": "none",
+      "summary": "Analysis and map artifacts leave through stdout, .vibecodemap outputs, and the default browser."
+    },
+    {
+      "id": "boundary.python-subprocess",
+      "subject": "component.analyzer.python",
+      "direction": "output",
+      "transport": "subprocess stdin/stdout JSON lines",
+      "payloads": [
+        "AnalyzeRequest",
+        "EvidenceEvent stream"
+      ],
+      "trust_from": "Go orchestrator",
+      "trust_to": "Python 3 runtime",
+      "authentication": "none",
+      "summary": "Python analysis crosses a process boundary with versioned request and event JSON."
+    }
+  ],
+  "security": [
+    {
+      "id": "review.local-path-reads",
+      "subjects": [
+        "component.repository-inventory"
+      ],
+      "category": "attack_surface",
+      "status": "review_candidate",
+      "severity": "low",
+      "confidence": "medium",
+      "summary": "Inventory reads local repository paths chosen by the operator; it should remain a local trusted-path tool, not a remote multi-tenant scanner.",
+      "impact": "Path traversal outside intended roots is primarily an operator-trust concern for this local CLI."
+    }
+  ]
+}
