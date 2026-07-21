@@ -1,6 +1,6 @@
 {
   "schema": "vibecodemap.view/0.1",
-  "generated_at": "2026-07-21T21:19:04.462139Z",
+  "generated_at": "2026-07-21T21:30:25.105338Z",
   "project": {
     "id": "vibecodemap",
     "name": "VibeCodeMap",
@@ -1310,9 +1310,9 @@
         "absolute": "/Users/mirolim/projects/vibecodemap/README.md",
         "line": 56
       },
-      "lines": 684,
-      "height": 2.3098536579226048,
-      "footprint": 2.1602955913046307,
+      "lines": 688,
+      "height": 2.3136143474067006,
+      "footprint": 2.1615085981278455,
       "direct_mutation": false,
       "bands": [
         {
@@ -1595,9 +1595,9 @@
         "absolute": "/Users/mirolim/projects/vibecodemap/README.md",
         "line": 233
       },
-      "lines": 327,
-      "height": 1.8860155868083508,
-      "footprint": 2.0068778350800303,
+      "lines": 331,
+      "height": 1.8920950583109049,
+      "footprint": 2.0094031185242685,
       "direct_mutation": false,
       "bands": [
         {

@@ -51,6 +51,10 @@ require OpenAI API credentials.
 
 ## See the prototype
 
+**[Open the public product site and live self-map](https://vibecodemap.alanthedirector.chatgpt.site/)** — no installation or account required.
+The hosted artifact maps VibeCodeMap itself and can be explored directly in a
+modern desktop browser.
+
 Go 1.24 or newer is required. Python 3.10 or newer is needed only when `analyze` detects
 Python source and runs the Python AST adapter; validation and rendering are Go.
 
