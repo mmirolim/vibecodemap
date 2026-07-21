@@ -6,10 +6,13 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/mmirolim/vibecodemap/internal/adapters"
 	"github.com/mmirolim/vibecodemap/internal/projectdsl"
+	"github.com/mmirolim/vibecodemap/internal/qualitymodel"
 	"github.com/mmirolim/vibecodemap/internal/repository"
 	"github.com/mmirolim/vibecodemap/internal/scoping"
 	"github.com/mmirolim/vibecodemap/internal/viewer"
@@ -18,20 +21,24 @@ import (
 const usage = `VibeCodeMap repository model tool
 
 Usage:
-  vibecodemap describe            print the complete human DSL grammar
-  vibecodemap schema              print the complete JSON Schema
+  vibecodemap describe [project]  print the project-manifest DSL grammar
+  vibecodemap schema [KIND]       print project, structural, or quality JSON Schema
   vibecodemap validate [flags] PROJECT.vcm.yaml
   vibecodemap inspect [flags] [REPOSITORY]
+  vibecodemap analyze [flags] [REPOSITORY]
+  vibecodemap quality [flags] STRUCTURAL.vcm.yaml
   vibecodemap adapters [-json]
   vibecodemap render [flags] PROJECT.vcm.yaml
   vibecodemap show [flags] PROJECT.vcm.yaml
 
 Validate flags:
   -json                          emit machine-readable diagnostics
+  -kind KIND                     auto, project, structural, or quality
+  -core FILE                     structural model used for direct quality validation
 
-Validation reports YAML syntax, schema, cross-record, district-code, band-order,
-and structural-model reference errors with source path, line, and column where
-the parser provides them.
+Validation reports YAML syntax, schema, source evidence, graph, quality,
+district-code, band-order, and cross-document reference errors. A project
+manifest validates its referenced structural and quality documents too.
 
 Inspect flags:
   -json                          emit the full machine-readable inventory
@@ -44,6 +51,28 @@ Inspect flags:
 
 Inspect produces a scoped repository inventory and stack candidates. It does
 not run semantic analyzers or generate VCM DSL, a view model, or an HTML map.
+Scope correction is optional; use .vcmignore only for false classifications.
+
+Analyze flags:
+  -output FILE                   evidence JSON output; default is
+                                 REPOSITORY/.vibecodemap/generated/evidence.json
+  -rules, -gitignore,
+  -max-header-bytes,
+  -max-file-bytes               same central scope controls as inspect
+
+analyze scans once and automatically runs every implemented semantic adapter
+for detected stacks. Detection-only stacks are explicitly reported as not
+implemented. The evidence helps an AI or human author DSL; it is not DSL.
+
+Quality flags:
+  -evidence FILE                 analyzer evidence JSON; default is
+                                 STRUCTURAL_DIR/generated/evidence.json
+  -output FILE                   generated quality DSL; default is
+                                 STRUCTURAL_DIR/quality.vcm.yaml
+
+quality maps deterministic file/symbol measurements onto structural artifact
+and element IDs. It keeps unavailable coverage and unsupported metrics unknown;
+the project manifest must explicitly reference the generated quality model.
 
 Render flags:
   -output FILE                   write standalone HTML to FILE
@@ -63,13 +92,17 @@ func main() {
 
 	switch os.Args[1] {
 	case "describe", "grammar":
-		_, _ = os.Stdout.Write(projectdsl.Grammar())
+		os.Exit(runDescribe(os.Args[2:]))
 	case "schema":
-		_, _ = os.Stdout.Write(projectdsl.Schema())
+		os.Exit(runSchema(os.Args[2:]))
 	case "validate":
 		os.Exit(runValidate(os.Args[2:]))
 	case "inspect", "inventory":
 		os.Exit(runInspect(os.Args[2:]))
+	case "analyze":
+		os.Exit(runAnalyze(os.Args[2:]))
+	case "quality":
+		os.Exit(runQuality(os.Args[2:]))
 	case "adapters":
 		os.Exit(runAdapters(os.Args[2:]))
 	case "render":
@@ -82,6 +115,39 @@ func main() {
 		fmt.Fprintf(os.Stderr, "unknown command %q\n\n%s", os.Args[1], usage)
 		os.Exit(2)
 	}
+}
+
+func runDescribe(arguments []string) int {
+	if len(arguments) > 1 || (len(arguments) == 1 && arguments[0] != "project") {
+		fmt.Fprintln(os.Stderr, "describe currently supports only the project grammar; use schema structural|quality for the other contracts")
+		return 2
+	}
+	_, _ = os.Stdout.Write(projectdsl.Grammar())
+	return 0
+}
+
+func runSchema(arguments []string) int {
+	if len(arguments) > 1 {
+		fmt.Fprintln(os.Stderr, "schema accepts at most one kind: project, structural, or quality")
+		return 2
+	}
+	kind := "project"
+	if len(arguments) == 1 {
+		kind = strings.ToLower(arguments[0])
+	}
+	var document []byte
+	var err error
+	if kind == "project" {
+		document = projectdsl.Schema()
+	} else {
+		document, err = viewer.ContractSchema(kind)
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 2
+	}
+	_, _ = os.Stdout.Write(document)
+	return 0
 }
 
 func runRender(arguments []string, openByDefault bool) int {
@@ -214,6 +280,14 @@ func printInspect(output inspectOutput, showEntries bool) {
 	}
 	fmt.Println("\nResult")
 	fmt.Println("  Inventory and stack candidates only; no semantic DSL or HTML map was generated.")
+	fmt.Println("  Scope correction is optional. Proceed unchanged when owned source and manifests are")
+	fmt.Println("  analyzed while dependencies, generated code, caches, and build output are not.")
+	fmt.Println("  Add .vcmignore only to correct a false classification, then rerun inspect.")
+	fmt.Println("\nScope actions")
+	fmt.Println("  analyze      full source input for adapters and AI investigation")
+	fmt.Println("  summarize    retain file/volume evidence without detailed symbol analysis")
+	fmt.Println("  externalize  represent a dependency or boundary without reading internals")
+	fmt.Println("  ignore       omit irrelevant or derived content")
 
 	counts := make(map[string]int)
 	for _, entry := range output.Inventory.Entries {
@@ -277,13 +351,174 @@ func runAdapters(arguments []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	descriptors := registry.Descriptors()
+	statuses := registry.Statuses()
 	if *jsonOutput {
-		return encodeJSON(descriptors)
+		return encodeJSON(statuses)
 	}
-	for _, descriptor := range descriptors {
-		fmt.Printf("%-24s %-15s %s\n", descriptor.ID, descriptor.Support, descriptor.Summary)
+	for _, status := range statuses {
+		analysis := "not implemented"
+		if status.SemanticAnalysis && status.RuntimeAvailable {
+			analysis = "ready"
+		} else if status.SemanticAnalysis {
+			analysis = "runtime missing"
+		}
+		fmt.Printf("%-24s detect=yes  analyze=%-15s %-15s %s\n",
+			status.Descriptor.ID, analysis, status.Descriptor.Support, status.Descriptor.Summary)
 	}
+	return 0
+}
+
+func runAnalyze(arguments []string) int {
+	flags := flag.NewFlagSet("analyze", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	outputPath := flags.String("output", "", "evidence JSON output path; '-' writes stdout")
+	ruleFile := flags.String("rules", "", "repository rule file; '-' disables it")
+	readGitignore := flags.Bool("gitignore", true, "apply Git ignore rules")
+	maxHeaderBytes := flags.Int64("max-header-bytes", 8192, "generated marker prefix budget")
+	maxFileBytes := flags.Int64("max-file-bytes", 10*1024*1024, "detailed analysis file budget")
+	if err := flags.Parse(arguments); err != nil {
+		return 2
+	}
+	if flags.NArg() > 1 {
+		fmt.Fprintln(os.Stderr, "analyze accepts at most one repository path")
+		return 2
+	}
+	root := "."
+	if flags.NArg() == 1 {
+		root = flags.Arg(0)
+	}
+	if *maxHeaderBytes <= 0 || *maxFileBytes <= 0 {
+		fmt.Fprintln(os.Stderr, "analysis byte budgets must be positive")
+		return 2
+	}
+	options := repository.DefaultOptions()
+	options.RuleFile = *ruleFile
+	options.ReadGitignore = *readGitignore
+	options.MaxHeaderBytes = *maxHeaderBytes
+	options.MaxFileBytes = *maxFileBytes
+	report, err := repository.Scan(context.Background(), root, options)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	registry, err := adapters.BuiltinRegistry()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	bundle, err := registry.Analyze(context.Background(), report)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	if *outputPath == "-" {
+		return encodeJSON(bundle)
+	}
+	destination := *outputPath
+	if destination == "" {
+		destination = filepath.Join(report.Root, ".vibecodemap", "generated", "evidence.json")
+	} else if !filepath.IsAbs(destination) {
+		absolute, err := filepath.Abs(destination)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		destination = absolute
+	}
+	data, err := json.MarshalIndent(bundle, "", "  ")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	data = append(data, '\n')
+	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	if err := os.WriteFile(destination, data, 0o644); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	fmt.Printf("evidence: %s\n", destination)
+	fmt.Printf("events:   %d\n", len(bundle.Events))
+	for _, run := range bundle.Runs {
+		fmt.Printf("  %-24s %-20s %d events", run.AdapterID, run.Status, run.Events)
+		if run.Detail != "" {
+			fmt.Printf(" — %s", run.Detail)
+		}
+		fmt.Println()
+	}
+	fmt.Println("next: use this evidence plus approved source to author structural DSL; then generate/link quality DSL and run show")
+	return 0
+}
+
+func runQuality(arguments []string) int {
+	flags := flag.NewFlagSet("quality", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	evidencePath := flags.String("evidence", "", "analyzer evidence JSON path")
+	outputPath := flags.String("output", "", "quality VCM YAML output path")
+	if err := flags.Parse(arguments); err != nil {
+		return 2
+	}
+	if flags.NArg() != 1 {
+		fmt.Fprintln(os.Stderr, "quality requires exactly one structural model")
+		return 2
+	}
+	structuralPath, err := filepath.Abs(flags.Arg(0))
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	for _, diagnostic := range viewer.ValidateDocument(structuralPath, viewer.ValidationOptions{Kind: "structural"}) {
+		if diagnostic.Severity == "error" {
+			fmt.Fprintln(os.Stderr, diagnostic.Error())
+			return 1
+		}
+	}
+	evidence := *evidencePath
+	if evidence == "" {
+		evidence = filepath.Join(filepath.Dir(structuralPath), "generated", "evidence.json")
+	} else if !filepath.IsAbs(evidence) {
+		evidence, err = filepath.Abs(evidence)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+	}
+	destination := *outputPath
+	if destination == "" {
+		destination = filepath.Join(filepath.Dir(structuralPath), "quality.vcm.yaml")
+	} else if !filepath.IsAbs(destination) {
+		destination, err = filepath.Abs(destination)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+	}
+	data, summary, err := qualitymodel.Generate(structuralPath, evidence, qualitymodel.Options{})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	if err := os.WriteFile(destination, data, 0o644); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	diagnostics := viewer.ValidateDocument(destination, viewer.ValidationOptions{Kind: "quality", Core: structuralPath})
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Severity == "error" {
+			fmt.Fprintln(os.Stderr, diagnostic.Error())
+			return 1
+		}
+	}
+	fmt.Printf("quality model: %s\n", destination)
+	fmt.Printf("measurements: %d (%d measured artifacts, %d symbol-mapped elements, %d unmapped evidence events)\n",
+		summary.Measurements, summary.Artifacts, summary.Elements, summary.Unmapped)
+	fmt.Println("next: reference this file as project.inputs.quality_model, then run show")
 	return 0
 }
 
@@ -314,15 +549,17 @@ func runValidate(arguments []string) int {
 	flags := flag.NewFlagSet("validate", flag.ContinueOnError)
 	flags.SetOutput(os.Stderr)
 	jsonOutput := flags.Bool("json", false, "emit JSON diagnostics")
+	kind := flags.String("kind", "auto", "document kind: auto, project, structural, or quality")
+	core := flags.String("core", "", "structural model for direct quality validation")
 	if err := flags.Parse(arguments); err != nil {
 		return 2
 	}
 	if flags.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "validate requires exactly one project manifest")
+		fmt.Fprintln(os.Stderr, "validate requires exactly one VCM document")
 		return 2
 	}
 
-	diagnostics := projectdsl.ValidateFile(flags.Arg(0))
+	diagnostics := viewer.ValidateDocument(flags.Arg(0), viewer.ValidationOptions{Kind: *kind, Core: *core})
 	if *jsonOutput {
 		if code := encodeJSON(diagnostics); code != 0 {
 			return code

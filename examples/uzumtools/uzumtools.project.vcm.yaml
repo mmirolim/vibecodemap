@@ -19,37 +19,37 @@ analysis:
       adapter: python-ast-v0
       parser: python-ast
       include: ["**/*.py"]
-      capabilities: [artifacts, symbols, imports, calls, effects, complexity, coverage, tests]
-      metric_sources: [ruff-mccabe, coverage.py]
+      capabilities: [artifacts, symbols, imports, calls, effects, complexity, entrypoints]
+      metric_sources: [python-ast-v0]
 
     - id: javascript
       enabled: true
-      adapter: tree-sitter-javascript-v0
-      parser: tree-sitter-javascript
+      adapter: javascript-source-v0
+      parser: lexical-source-v0
       include: ["**/*.js", "**/*.mjs", "**/*.cjs"]
-      capabilities: [artifacts, symbols, imports, calls, effects, complexity, coverage, tests]
-      metric_sources: [eslint-complexity, lcov]
+      capabilities: [artifacts, symbols, imports, calls, effects, complexity, tests, entrypoints]
+      metric_sources: [javascript-source-v0]
 
     - id: typescript
       enabled: false
-      adapter: typescript-compiler-v0
-      parser: typescript-compiler-api
+      adapter: typescript-source-v0
+      parser: lexical-source-v0
       include: ["**/*.ts", "**/*.tsx"]
-      capabilities: [artifacts, symbols, imports, calls, types, effects, complexity, coverage, tests]
-      metric_sources: [eslint-complexity, lcov]
+      capabilities: [artifacts, symbols, imports, calls, effects, complexity, tests, entrypoints]
+      metric_sources: [typescript-source-v0]
 
     - id: go
       enabled: false
-      adapter: go-packages-v0
-      parser: go/packages+go/types
+      adapter: go-ast-v0
+      parser: go-parser-ast
       include: ["**/*.go"]
-      capabilities: [artifacts, symbols, imports, calls, types, effects, complexity, coverage, tests]
-      metric_sources: [go-cover, gocyclo-compatible]
+      capabilities: [artifacts, symbols, imports, calls, types, effects, complexity, tests, entrypoints]
+      metric_sources: [go-ast-v0]
 
   scope:
     default_action: analyze
     read_gitignore: true
-    read_gitattributes: true
+    read_gitattributes: false
     rules:
       - id: scope.node-modules
         patterns: ["**/node_modules/**"]

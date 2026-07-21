@@ -8,7 +8,8 @@ Schema: `vibecodemap-project-0.1.schema.json`
 ## 1. Decision
 
 The repository owns a small committed `*.project.vcm.yaml` manifest. Scanner
-outputs remain generated evidence. The committed manifest controls:
+outputs remain generated evidence. The committed manifest records intended
+analysis policy and controls composition-facing declarations for:
 
 - which source is analyzed, summarized, externalized, or ignored;
 - enabled language adapters and their declared capabilities;
@@ -113,7 +114,7 @@ analysis:
   scope:
     default_action: analyze
     read_gitignore: true
-    read_gitattributes: true
+    read_gitattributes: false
     rules:
       - id: dependencies.node-modules
         patterns: ["**/node_modules/**"]
@@ -129,6 +130,13 @@ analysis:
         priority: 100
         reason: This checked-in file is manually maintained despite its name.
 ```
+
+Current executable limitation: `inspect` and `analyze` do not yet consume a
+project manifest. Their operational scope comes from built-in rules, Git ignore
+rules, and the root `.vcmignore`. Mirror any required scope override in
+`.vcmignore`; `analysis.scope` remains validated, durable intent for future
+orchestration. `read_gitattributes` is reserved and currently has no scanner
+effect.
 
 The initial Go policy implementation also recognizes common Python, JS/TS, Go,
 protobuf, Swift/Xcode, Android/Gradle, Dart/Flutter, build-output, cache, and
@@ -156,8 +164,8 @@ directory that has already been pruned; opt the parent into `summarize` or
 Path rules are not enough because checked-in generated files frequently have
 ordinary names. The scanner reads only a bounded prefix and applies marker
 regular expressions. Go's standard convention is a header matching
-`// Code generated ... DO NOT EDIT.`; `.gitattributes` may also mark
-`linguist-generated` paths.
+`// Code generated ... DO NOT EDIT.`. A future scanner may also consume
+`.gitattributes` `linguist-generated` markings; the current scanner does not.
 
 ```yaml
 analysis:
@@ -196,10 +204,10 @@ analysis:
 | Kotlin / Java / Android | Kotlin/Java compiler models, Gradle metadata, Android manifests and lint outputs | Detekt/Android Lint, JaCoCo, test reports | variants, generated sources, lifecycle, permissions, and navigation are stack-specific |
 | Dart / Flutter | Dart analyzer, package metadata, Flutter platform manifests | analyzer diagnostics, coverage and test reports | widget composition, navigation, plugins, and platform channels require Flutter semantics |
 
-The current executable implements conservative stack detection for these rows,
-not their full semantic analyzers. `detection_only`, `prototype`, and
-`available` are distinct support states and must remain visible to agents and
-humans.
+The current executable implements prototype source analyzers for Python, Go,
+and JavaScript/TypeScript, plus conservative detection for the mobile rows.
+These are not full compiler-grade analyzers. `detection_only`, `prototype`,
+and `available` remain distinct support states visible to agents and humans.
 
 An adapter declares capabilities rather than claiming universal completeness:
 
@@ -207,11 +215,11 @@ An adapter declares capabilities rather than claiming universal completeness:
 languages:
   - id: go
     enabled: true
-    adapter: go-packages-v0
-    parser: go/packages+go/types
+    adapter: go-ast-v0
+    parser: go-parser-ast
     include: ["**/*.go"]
-    capabilities: [artifacts, symbols, imports, calls, types, effects, complexity, coverage, tests, entrypoints]
-    metric_sources: [go-cover, gocyclo-compatible]
+    capabilities: [artifacts, symbols, imports, calls, types, effects, complexity, tests, entrypoints]
+    metric_sources: [go-ast-v0]
 ```
 
 Unsupported capabilities remain `unknown`; they never become zero.

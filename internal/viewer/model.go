@@ -2,7 +2,11 @@
 // view model and a standalone browser document.
 package viewer
 
-import "time"
+import (
+	"time"
+
+	"gopkg.in/yaml.v3"
+)
 
 const ViewSchema = "vibecodemap.view/0.1"
 
@@ -292,19 +296,61 @@ type structuralDocument struct {
 			Root string `yaml:"root"`
 		} `yaml:"repository"`
 	} `yaml:"model"`
-	Artifacts []artifact `yaml:"artifacts"`
-	Elements  []element  `yaml:"elements"`
-	Relations []relation `yaml:"relations"`
-	Findings  []finding  `yaml:"findings"`
+	Scope struct {
+		Include []string `yaml:"include"`
+		Exclude []string `yaml:"exclude"`
+	} `yaml:"scope"`
+	Artifacts    []artifact `yaml:"artifacts"`
+	Elements     []element  `yaml:"elements"`
+	Relations    []relation `yaml:"relations"`
+	Flows        []flow     `yaml:"flows"`
+	Architecture struct {
+		Styles      []architectureStyle      `yaml:"styles"`
+		Constraints []architectureConstraint `yaml:"constraints"`
+	} `yaml:"architecture"`
+	Findings []finding        `yaml:"findings"`
+	Views    []structuralView `yaml:"views"`
+}
+
+type flow struct {
+	ID        string     `yaml:"id"`
+	Trigger   string     `yaml:"trigger"`
+	Steps     []flowStep `yaml:"steps"`
+	Generated provenance `yaml:"generated"`
+}
+
+type flowStep struct {
+	ID       string   `yaml:"id"`
+	Relation string   `yaml:"relation"`
+	Next     []string `yaml:"next"`
+}
+
+type architectureStyle struct {
+	ID        string      `yaml:"id"`
+	Scope     string      `yaml:"scope"`
+	Evidence  []sourceRef `yaml:"evidence"`
+	Generated provenance  `yaml:"generated"`
+}
+
+type architectureConstraint struct {
+	ID       string      `yaml:"id"`
+	Scope    string      `yaml:"scope"`
+	Evidence []sourceRef `yaml:"evidence"`
+}
+
+type structuralView struct {
+	ID    string   `yaml:"id"`
+	Roots []string `yaml:"roots"`
 }
 
 type finding struct {
-	ID       string      `yaml:"id"`
-	Kind     string      `yaml:"kind"`
-	Severity string      `yaml:"severity"`
-	Summary  string      `yaml:"summary"`
-	Subjects []string    `yaml:"subjects"`
-	Evidence []sourceRef `yaml:"evidence"`
+	ID        string      `yaml:"id"`
+	Kind      string      `yaml:"kind"`
+	Severity  string      `yaml:"severity"`
+	Summary   string      `yaml:"summary"`
+	Subjects  []string    `yaml:"subjects"`
+	Evidence  []sourceRef `yaml:"evidence"`
+	Generated provenance  `yaml:"generated"`
 }
 
 type artifact struct {
@@ -355,27 +401,111 @@ type relation struct {
 		Operation    string `yaml:"operation"`
 		MutatesState string `yaml:"mutates_state"`
 	} `yaml:"effect"`
+	Reality struct {
+		Implementation string `yaml:"implementation"`
+		Runtime        string `yaml:"runtime"`
+	} `yaml:"reality"`
 	Evidence  []sourceRef `yaml:"evidence"`
 	Generated provenance  `yaml:"generated"`
 }
 
 type qualityDocument struct {
-	Version       string             `yaml:"vcm_quality"`
-	MetricCatalog []metricDefinition `yaml:"metric_catalog"`
-	Measurements  []measurement      `yaml:"measurements"`
+	Version string `yaml:"vcm_quality"`
+	Model   struct {
+		CoreModel string `yaml:"core_model"`
+	} `yaml:"model"`
+	MetricCatalog    []metricDefinition `yaml:"metric_catalog"`
+	Measurements     []measurement      `yaml:"measurements"`
+	AnalyzerFindings []analyzerFinding  `yaml:"analyzer_findings"`
+	QualityFindings  []qualityFinding   `yaml:"quality_findings"`
+	PriorityModels   []priorityModel    `yaml:"priority_models"`
+	PriorityResults  []priorityResult   `yaml:"priority_results"`
+	LayoutProfiles   []layoutProfile    `yaml:"layout_profiles"`
+	Lenses           []qualityLens      `yaml:"lenses"`
 }
 
 type metricDefinition struct {
-	ID        string `yaml:"id"`
-	Name      string `yaml:"name"`
-	Unit      string `yaml:"unit"`
-	Direction string `yaml:"direction"`
+	ID          string `yaml:"id"`
+	Name        string `yaml:"name"`
+	Unit        string `yaml:"unit"`
+	Direction   string `yaml:"direction"`
+	Aggregation struct {
+		Default string   `yaml:"default"`
+		Allowed []string `yaml:"allowed"`
+	} `yaml:"aggregation"`
 }
 
 type measurement struct {
-	ID      string  `yaml:"id"`
-	Subject string  `yaml:"subject"`
-	Metric  string  `yaml:"metric"`
-	Status  string  `yaml:"status"`
-	Value   float64 `yaml:"value"`
+	ID         string      `yaml:"id"`
+	Subject    string      `yaml:"subject"`
+	Metric     string      `yaml:"metric"`
+	Status     string      `yaml:"status"`
+	Value      float64     `yaml:"value"`
+	HasValue   bool        `yaml:"-"`
+	SourceRefs []sourceRef `yaml:"source_refs"`
+	Provenance struct {
+		Producer string `yaml:"producer"`
+		Method   string `yaml:"method"`
+		Scope    string `yaml:"scope"`
+	} `yaml:"provenance"`
+}
+
+func (item *measurement) UnmarshalYAML(node *yaml.Node) error {
+	type plain measurement
+	var decoded plain
+	if err := node.Decode(&decoded); err != nil {
+		return err
+	}
+	*item = measurement(decoded)
+	for index := 0; index+1 < len(node.Content); index += 2 {
+		if node.Content[index].Value == "value" {
+			item.HasValue = true
+			break
+		}
+	}
+	return nil
+}
+
+type analyzerFinding struct {
+	ID         string      `yaml:"id"`
+	Subject    string      `yaml:"subject"`
+	SourceRefs []sourceRef `yaml:"source_refs"`
+}
+
+type qualityFinding struct {
+	ID       string      `yaml:"id"`
+	Subjects []string    `yaml:"subjects"`
+	Factors  []string    `yaml:"factors"`
+	Evidence []sourceRef `yaml:"evidence"`
+}
+
+type priorityModel struct {
+	ID      string `yaml:"id"`
+	Factors []struct {
+		Metric string  `yaml:"metric"`
+		Weight float64 `yaml:"weight"`
+	} `yaml:"factors"`
+}
+
+type priorityResult struct {
+	Model   string `yaml:"model"`
+	Subject string `yaml:"subject"`
+}
+
+type layoutProfile struct {
+	ID            string `yaml:"id"`
+	Footprint     string `yaml:"footprint"`
+	Height        string `yaml:"height"`
+	EffectContact struct {
+		Metric string `yaml:"metric"`
+	} `yaml:"effect_contact"`
+}
+
+type qualityLens struct {
+	ID     string `yaml:"id"`
+	Layout string `yaml:"layout"`
+	Heat   struct {
+		Metric string `yaml:"metric"`
+	} `yaml:"heat"`
+	Legend map[string]any `yaml:"legend"`
 }

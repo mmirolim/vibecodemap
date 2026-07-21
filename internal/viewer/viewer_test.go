@@ -141,6 +141,30 @@ func TestInstantiateViewerDoesNotReplaceInsideValues(t *testing.T) {
 	}
 }
 
+func TestViewerKeepsFilteredLabelsHiddenAndPortsDirectional(t *testing.T) {
+	t.Parallel()
+	for _, required := range []string{
+		"label.enabled=cityOK&&roadOK&&labelMode!=='none'&&modeOK",
+		"if(!label.enabled){label.element.style.display='none';continue;}",
+		"addBoundaryPort(mesh,node,port.input,index)",
+		"input → building",
+		"building → output",
+		"new THREE.Timer()",
+		"timer.update(timestamp)",
+		"THREE.PCFShadowMap",
+		"fitDistance=Math.max",
+	} {
+		if !strings.Contains(viewerDocument, required) {
+			t.Fatalf("embedded viewer is missing interaction contract %q", required)
+		}
+	}
+	for _, deprecated := range []string{"new THREE.Clock()", "THREE.PCFSoftShadowMap"} {
+		if strings.Contains(viewerDocument, deprecated) {
+			t.Fatalf("embedded viewer still uses deprecated Three.js API %q", deprecated)
+		}
+	}
+}
+
 func TestComposeCreatesOneCityPerSystem(t *testing.T) {
 	t.Parallel()
 
@@ -402,6 +426,171 @@ func TestEmbeddedSchemasMatchCanonicalContracts(t *testing.T) {
 		}
 		if !bytes.Equal(canonical, test.embedded) {
 			t.Fatalf("embedded schema differs from %s", test.path)
+		}
+	}
+}
+
+func TestContractSchemaExposesStructuralAndQualityContracts(t *testing.T) {
+	t.Parallel()
+	for kind, marker := range map[string]string{
+		"structural": `"vcm"`,
+		"quality":    `"vcm_quality"`,
+	} {
+		document, err := ContractSchema(kind)
+		if err != nil {
+			t.Fatalf("ContractSchema(%q): %v", kind, err)
+		}
+		if !bytes.Contains(document, []byte(marker)) {
+			t.Fatalf("ContractSchema(%q) is missing %s", kind, marker)
+		}
+	}
+	if _, err := ContractSchema("project"); err == nil {
+		t.Fatal("viewer contract schema should reject project; projectdsl owns it")
+	}
+}
+
+func TestValidateDocumentAutoDetectsAllDocumentKinds(t *testing.T) {
+	t.Parallel()
+	base := filepath.Join("..", "..", "examples", "uzumtools")
+	for _, name := range []string{"uzumtools.vcm.yaml", "uzumtools.quality.vcm.yaml", "uzumtools.project.vcm.yaml"} {
+		diagnostics := ValidateDocument(filepath.Join(base, name), ValidationOptions{})
+		for _, diagnostic := range diagnostics {
+			if diagnostic.Severity == "error" {
+				t.Fatalf("%s validation error: %s", name, diagnostic.Error())
+			}
+		}
+	}
+}
+
+func TestValidateDocumentRejectsAmbiguousVersionKeys(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "ambiguous.vcm.yaml")
+	if err := os.WriteFile(path, []byte("vcm: \"0.1\"\nvcm_quality: \"0.2-draft\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	diagnostics := ValidateDocument(path, ValidationOptions{})
+	if len(diagnostics) != 1 || diagnostics[0].Code != "document.detect" || !strings.Contains(diagnostics[0].Message, "more than one") {
+		t.Fatalf("ambiguous version keys were not rejected: %+v", diagnostics)
+	}
+}
+
+func TestStructuralValidationChecksActualSourceRanges(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	source := filepath.Join(root, "app.py")
+	if err := os.WriteFile(source, []byte("print('ok')\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	model := `vcm: "0.1"
+model:
+  id: model.test
+  name: Test
+  repository: {root: "` + root + `"}
+  generated: {at: now, by: test}
+scope: {include: [app.py]}
+artifacts:
+  - id: file.app
+    path: app.py
+    kind: source
+    language: python
+    summary: Test source.
+    metrics: {lines: 1}
+    generated: {method: deterministic, confidence: high, rationale: Test fixture.}
+elements:
+  - id: component.app
+    kind: component
+    name: App
+    summary: Test app.
+    reality: {intent: required, implementation: present, runtime: unknown}
+    source_refs: [{artifact: file.app, lines: [1, 2]}]
+    generated: {method: deterministic, confidence: high, rationale: Test fixture.}
+`
+	path := filepath.Join(root, "model.vcm.yaml")
+	if err := os.WriteFile(path, []byte(model), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	diagnostics := ValidateDocument(path, ValidationOptions{})
+	found := false
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Code == "structural.sources" && strings.Contains(diagnostic.Message, "outside artifact") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("missing source range diagnostic: %+v", diagnostics)
+	}
+}
+
+func TestStructuralValidationChecksScopeCompleteness(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	for _, name := range []string{"modeled.go", "missing.go"} {
+		if err := os.WriteFile(filepath.Join(root, name), []byte("package test\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	model := `vcm: "0.1"
+model:
+  id: model.test
+  name: Test
+  repository: {root: "` + root + `"}
+  generated: {at: now, by: test}
+scope: {include: ["*.go"]}
+artifacts:
+  - id: file.modeled
+    path: modeled.go
+    kind: source
+    language: go
+    summary: Modeled source.
+    metrics: {lines: 1}
+    generated: {method: deterministic, confidence: high, rationale: Test fixture.}
+elements:
+  - id: component.modeled
+    kind: component
+    name: Modeled
+    summary: Test component.
+    reality: {intent: required, implementation: present, runtime: unknown}
+    source_refs: [{artifact: file.modeled, lines: [1, 1]}]
+    generated: {method: deterministic, confidence: high, rationale: Test fixture.}
+`
+	path := filepath.Join(root, "model.vcm.yaml")
+	if err := os.WriteFile(path, []byte(model), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	diagnostics := ValidateDocument(path, ValidationOptions{})
+	found := false
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Code == "structural.scope" && diagnostic.Severity == "error" && strings.Contains(diagnostic.Message, "missing.go") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("missing scope-completeness diagnostic: %+v", diagnostics)
+	}
+}
+
+func TestStructuralReferenceValidationPreservesProvenanceEvidenceRules(t *testing.T) {
+	t.Parallel()
+	var model structuralDocument
+	model.Artifacts = []artifact{{ID: "file.uncertain", Path: "uncertain.go", Generated: provenance{Method: "deterministic", Confidence: "low"}}}
+	model.Elements = []element{{ID: "actor.user", Kind: "actor", Generated: provenance{Method: "human_declared", Confidence: "high"}}}
+	model.Flows = []flow{{ID: "flow.uncertain", Trigger: "actor.user", Generated: provenance{Method: "human_declared", Confidence: "low"}}}
+	model.Findings = []finding{{
+		ID: "finding.uncertain", Subjects: []string{"actor.user"},
+		Generated: provenance{Method: "ai_inferred", Confidence: "medium"},
+	}}
+
+	err := validateStructuralReferences("model.vcm.yaml", model)
+	if err == nil {
+		t.Fatal("expected provenance evidence errors")
+	}
+	for _, expected := range []string{
+		`low-confidence artifact "file.uncertain" has no source evidence`,
+		`low-confidence flow "flow.uncertain" has no source evidence`,
+		`finding "finding.uncertain" requires source evidence`,
+	} {
+		if !strings.Contains(err.Error(), expected) {
+			t.Fatalf("missing %q in %v", expected, err)
 		}
 	}
 }

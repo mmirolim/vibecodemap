@@ -117,6 +117,27 @@ func TestValidateRejectsDuplicateLanguageAndBandMetric(t *testing.T) {
 	}
 }
 
+func TestValidateRejectsInvalidMarkerRegexAndMissingCorrectionValue(t *testing.T) {
+	data, err := os.ReadFile("../../examples/uzumtools/uzumtools.project.vcm.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	broken := strings.Replace(string(data), "regex: '(?m)^// Code generated .* DO NOT EDIT\\.$'", "regex: '['", 1)
+	broken = strings.Replace(broken, "        value: true\n", "", 1)
+	diagnostics := Validate([]byte(broken), "invalid-semantics.yaml")
+	wanted := map[string]bool{"marker.regex_invalid": false, "correction.value_required": false}
+	for _, diagnostic := range diagnostics {
+		if _, exists := wanted[diagnostic.Code]; exists {
+			wanted[diagnostic.Code] = diagnostic.Line > 0
+		}
+	}
+	for code, found := range wanted {
+		if !found {
+			t.Fatalf("missing %s diagnostic: %+v", code, diagnostics)
+		}
+	}
+}
+
 func TestReadStructuralIDsRejectsDuplicateAcrossKinds(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "structure.yaml")
 	data := "artifacts:\n  - id: shared.id\nelements:\n  - id: shared.id\nrelations: []\nfindings: []\n"

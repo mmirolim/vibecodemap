@@ -66,12 +66,14 @@ type manifestIndex struct {
 		} `yaml:"languages"`
 		Scope struct {
 			Rules []struct {
-				ID string `yaml:"id"`
+				ID       string   `yaml:"id"`
+				Patterns []string `yaml:"patterns"`
 			} `yaml:"rules"`
 		} `yaml:"scope"`
 		GeneratedDetection struct {
 			Markers []struct {
-				ID string `yaml:"id"`
+				ID    string `yaml:"id"`
+				Regex string `yaml:"regex"`
 			} `yaml:"markers"`
 		} `yaml:"generated_detection"`
 	} `yaml:"analysis"`
@@ -93,6 +95,10 @@ type manifestIndex struct {
 			Entity   string           `yaml:"entity"`
 			Selector manifestSelector `yaml:"selector"`
 		} `yaml:"target"`
+		Operations []struct {
+			Action string    `yaml:"action"`
+			Value  yaml.Node `yaml:"value"`
+		} `yaml:"operations"`
 	} `yaml:"corrections"`
 	Boundaries []struct {
 		ID             string `yaml:"id"`
@@ -331,9 +337,17 @@ func validateCrossReferences(root *yaml.Node, file string) []Diagnostic {
 	}
 	for ruleIndex, rule := range index.Analysis.Scope.Rules {
 		registerID(rule.ID, fmt.Sprintf("/analysis/scope/rules/%d/id", ruleIndex), "scope rule")
+		for patternIndex, pattern := range rule.Patterns {
+			if strings.Contains(pattern, "\\") {
+				diagnostics = append(diagnostics, diagnosticAt(root, file, fmt.Sprintf("/analysis/scope/rules/%d/patterns/%d", ruleIndex, patternIndex), "scope.backslash", "globs must use forward slashes"))
+			}
+		}
 	}
 	for markerIndex, marker := range index.Analysis.GeneratedDetection.Markers {
 		registerID(marker.ID, fmt.Sprintf("/analysis/generated_detection/markers/%d/id", markerIndex), "generated marker")
+		if _, err := regexp.Compile(marker.Regex); err != nil {
+			diagnostics = append(diagnostics, diagnosticAt(root, file, fmt.Sprintf("/analysis/generated_detection/markers/%d/regex", markerIndex), "marker.regex_invalid", err.Error()))
+		}
 	}
 	for decompositionIndex, decomposition := range index.Decompositions {
 		decompositionPointer := fmt.Sprintf("/decompositions/%d/id", decompositionIndex)
@@ -362,6 +376,18 @@ func validateCrossReferences(root *yaml.Node, file string) []Diagnostic {
 	}
 	for itemIndex, item := range index.Corrections {
 		registerID(item.ID, fmt.Sprintf("/corrections/%d/id", itemIndex), "correction")
+		for operationIndex, operation := range item.Operations {
+			pointer := fmt.Sprintf("/corrections/%d/operations/%d", itemIndex, operationIndex)
+			hasValue := operation.Value.Kind != 0
+			if (operation.Action == "set" || operation.Action == "merge" || operation.Action == "add") && !hasValue {
+				diagnostics = append(diagnostics, diagnosticAt(root, file, pointer, "correction.value_required", fmt.Sprintf("action %q requires value", operation.Action)))
+			}
+			if operation.Action == "remove" && hasValue {
+				diagnostic := diagnosticAt(root, file, pointer+"/value", "correction.value_ignored", "remove ignores its value")
+				diagnostic.Severity = "warning"
+				diagnostics = append(diagnostics, diagnostic)
+			}
+		}
 	}
 	for itemIndex, item := range index.Boundaries {
 		registerID(item.ID, fmt.Sprintf("/boundaries/%d/id", itemIndex), "boundary")

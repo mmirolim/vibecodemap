@@ -229,7 +229,6 @@ func DefaultRuleSet() ([]Rule, []MarkerRule) {
 		{ID: "generated.generic-header", Pattern: `(?im)^(//|#|/\*|\*)\s*(code generated|auto-?generated|generated (by|file|code)|do not edit)\b`, Action: Summarize, Classification: "generated", Priority: 75, Reason: "Common generated-code header."},
 	}
 	return rules, markers
-
 }
 
 // NewDefaultPolicy appends repository-owned corrections after the built-ins.
@@ -244,15 +243,42 @@ func DefaultPolicy() (*Policy, error) {
 	return NewDefaultPolicy(nil, nil)
 }
 
+// PathMatcher compiles repository globs once for repeated matching during
+// inventory-scale validation and composition.
+type PathMatcher struct {
+	expressions []*regexp.Regexp
+}
+
+func CompilePathMatcher(patterns []string) (PathMatcher, error) {
+	matcher := PathMatcher{expressions: make([]*regexp.Regexp, 0, len(patterns))}
+	for _, pattern := range patterns {
+		expression, err := compileGlob(pattern)
+		if err != nil {
+			return PathMatcher{}, fmt.Errorf("glob %q: %w", pattern, err)
+		}
+		matcher.expressions = append(matcher.expressions, expression)
+	}
+	return matcher, nil
+}
+
+func (matcher PathMatcher) Match(path string) bool {
+	normalized := filepath.ToSlash(strings.TrimPrefix(path, "./"))
+	for _, expression := range matcher.expressions {
+		if expression.MatchString(normalized) {
+			return true
+		}
+	}
+	return false
+}
+
 // MatchPath applies the repository glob grammar to one slash-separated path.
 // Inventory rules and renderer district selectors use this same matcher.
 func MatchPath(pattern, path string) (bool, error) {
-	expression, err := compileGlob(pattern)
+	matcher, err := CompilePathMatcher([]string{pattern})
 	if err != nil {
 		return false, err
 	}
-	normalized := filepath.ToSlash(strings.TrimPrefix(path, "./"))
-	return expression.MatchString(normalized), nil
+	return matcher.Match(path), nil
 }
 
 // Rules returns a deterministic copy useful for diagnostics and DSL emission.

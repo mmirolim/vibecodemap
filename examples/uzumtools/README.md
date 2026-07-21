@@ -42,37 +42,33 @@ itself so the map cannot honestly claim whole-repository completeness.
 ## Validate
 
 ```bash
-python3 tools/validate_vcm.py \
-  examples/uzumtools/uzumtools.vcm.yaml \
-  --schema dsl/vibecodemap-0.1.schema.json
+go run ./cmd/vibecodemap validate \
+  examples/uzumtools/uzumtools.vcm.yaml
 ```
 
-The validator checks IDs, graph references, source paths, line ranges, artifact
-inventory against declared scope, flow continuity, provenance, and runtime-claim
-rules. JSON Schema shape validation is additionally used when the optional
-`jsonschema` package is installed.
+The Go validator checks JSON Schema shape, IDs, graph/flow references,
+provenance, runtime claims, and—when the separate source checkout is
+available—artifact paths, line counts, source ranges, and artifact coverage of
+the declared include/exclude scope.
 
 Validate the quality extension and all references back to the structural model:
 
 ```bash
-python3 tools/validate_quality_vcm.py \
-  examples/uzumtools/uzumtools.quality.vcm.yaml \
-  --core examples/uzumtools/uzumtools.vcm.yaml
+go run ./cmd/vibecodemap validate \
+  -core examples/uzumtools/uzumtools.vcm.yaml \
+  examples/uzumtools/uzumtools.quality.vcm.yaml
 ```
 
 Validate the project manifest and its editable policy:
 
 ```bash
-python3 tools/validate_project_vcm.py \
-  examples/uzumtools/uzumtools.project.vcm.yaml
-
 go run ./cmd/vibecodemap validate \
   examples/uzumtools/uzumtools.project.vcm.yaml
 ```
 
-JSON Schema validation is used when the optional `jsonschema` package is
-available; the validator always enforces cross-reference, ID, district-code,
-correction-operation, pattern, and render-profile invariants itself.
+Project validation automatically validates the referenced structural and
+quality documents as well as cross-reference, ID, district-code,
+correction-operation, pattern, and render-profile invariants.
 
 The Go CLI embeds both contracts so agents and humans can inspect the exact
 accepted language without locating documentation files:
@@ -82,35 +78,18 @@ go run ./cmd/vibecodemap describe
 go run ./cmd/vibecodemap schema
 ```
 
-## Extract conservative Python facts
+## Run the Python evidence adapter
 
 ```bash
-export UZUMTOOLS_ROOT=/path/to/uzumtools/photochecker
-
-python3 tools/extract_python_facts.py \
-  "$UZUMTOOLS_ROOT/app" \
-  --pretty
+go run ./cmd/vibecodemap analyze /path/to/uzumtools/photochecker
 ```
 
-The extractor intentionally produces evidence, not architecture. It inventories
-Python files, symbols, routes, imports, calls, execution syntax, and conservative
-effect candidates. An AI mapper still has to interpret boundaries and verify
-ambiguous effects.
-
-## Extract conservative quality evidence
-
-```bash
-python3 tools/extract_python_quality.py \
-  "$UZUMTOOLS_ROOT" \
-  --coverage-xml "$(dirname "$UZUMTOOLS_ROOT")/coverage.xml" \
-  --pretty
-```
-
-This prototype adapter collects file size, function complexity, nesting,
-imports/coupling, side-effect call sites, coverage, and Git churn. Its combined
-score is labeled **relative review priority**, not code quality or defect
-probability. Coverage is marked stale when its revision cannot be tied to the
-current checkout.
+The Go command applies central exclusions and invokes the embedded Python AST
+adapter automatically. It writes
+`.vibecodemap/generated/evidence.json` containing source-linked files,
+symbols, routes, imports, calls, execution syntax, effect candidates, and
+transparent static complexity/nesting facts. It does not infer architecture,
+runtime behavior, coverage, Git churn, or a quality score.
 
 ## What this iteration exposed
 
@@ -134,14 +113,14 @@ current checkout.
 
 - The interactive conversation view is an initial curated projection of this
   fixture, not yet a generic renderer that reads arbitrary VCM files.
-- JavaScript, template, and CSS summaries were mapped by repository-aware AI;
-  only Python has a deterministic fact extractor in this iteration.
+- Python, JavaScript, and TypeScript now have orchestrated source analyzers;
+  templates and CSS still require repository-aware AI investigation.
 - No runtime traces were collected, so runtime state is consistently marked
   `not_observed`.
 - Source buttons rely on a host adapter. The current conversation view asks
   Codex to open the exact path and line; an IDE extension could open it directly.
-- Coverage and Git churn are modeled, but ownership, migration history, runtime
-  load, and requirement conformance are not yet available.
+- Coverage and Git churn in this committed fixture came from earlier named
+  evidence; the current Python adapter does not collect them automatically.
 - The current AST complexity calculation is a conservative prototype. A
   production Python adapter should ingest Ruff/Radon output and SARIF rather
   than treating this implementation as a cross-language standard.

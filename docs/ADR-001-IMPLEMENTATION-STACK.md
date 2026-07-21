@@ -63,9 +63,12 @@ runtime requirement; the early prototype may remain plain JavaScript.
 The implemented CLI boundary is:
 
 ```text
-vibecodemap describe                 # print the complete human DSL contract
-vibecodemap schema                   # print the complete machine schema
-vibecodemap validate project.yaml    # syntax, schema, and semantic references
+vibecodemap describe [project]       # print the project-manifest grammar
+vibecodemap schema [kind]            # print project, structural, or quality schema
+vibecodemap inspect repository       # inventory and stack candidates
+vibecodemap analyze repository       # implemented adapter evidence
+vibecodemap quality structure.yaml   # evidence-backed quality DSL
+vibecodemap validate document.yaml   # syntax, schema, and semantic references
 vibecodemap render -output map.html project.yaml
 vibecodemap show project.yaml        # render and open the browser
 ```
@@ -78,8 +81,10 @@ second set of architectural inference rules hidden in the HTML template.
 
 ### Analyzer adapters
 
-Adapters are separate executables or scripts. They may be written in the most
-appropriate language and emit one of these normalized inputs:
+Adapters may run in-process in Go or as versioned subprocesses written in the
+most appropriate language. Users invoke them centrally through `analyze`; they
+do not install or run each adapter separately. Adapters emit normalized inputs
+such as:
 
 1. a versioned VCM evidence event stream;
 2. SARIF for discrete analyzer findings;

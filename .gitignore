@@ -24,8 +24,9 @@ reports/
 .vcm/cache/
 .vcm/runs/
 .vcm/local/
-.vibecodemap/out/
-.vibecodemap/generated/
+# This repository's dogfood map is local. Committed VCM fixtures live under
+# examples/; downstream repositories can version their authored DSL normally.
+.vibecodemap/
 
 # Go
 /bin/

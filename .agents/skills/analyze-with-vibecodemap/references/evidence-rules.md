@@ -92,13 +92,17 @@ Use the answers to propose systems and deployables. Language is secondary.
 ## Completion checklist
 
 - Scope decisions were reviewed before source interpretation.
+- A task plan and, for a large target, a coverage ledger account for admitted
+  source by coherent subsystem; omissions are explicit.
 - Every adapter support level was stated honestly.
 - Important elements link to source or are explicitly external/expected.
 - Inputs, outputs, state, and trust transitions are visible.
 - Static and runtime relations are not conflated.
 - Unsupported measurements remain unknown.
+- Deterministic adapter measurements were converted to quality DSL and linked
+  from the project, or their absence was stated explicitly.
 - AI claims carry `ai_inferred` provenance and confidence.
 - Mixed-stack boundaries use product/runtime/deployment evidence, not language.
 - `vibecodemap show` validated all authored files and generated the HTML map.
 - The map was visually sanity-checked for grouping, source targets, road types,
-  unknown state, and generation warnings.
+  label modes, input/output direction, unknown state, and generation warnings.

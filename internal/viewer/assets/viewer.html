@@ -119,14 +119,14 @@
       <h3>Visual grammar</h3>
       <div class="legend">
         <span><i class="swatch" style="background:#f2a05f"></i>interface</span>
-        <span><i class="swatch" style="background:#f17db1;border-radius:50%"></i>state</span>
+        <span><i class="swatch" style="background:#f17db1;border-radius:50%"></i>data / resource</span>
         <span><i class="swatch" style="background:#aeb9c6"></i>component</span>
         <span><i class="swatch" style="background:#8b75d7"></i>external</span>
         <span><i class="swatch" style="background:#ff655d;border-radius:50%"></i>security lead</span>
         <span><i class="swatch" style="border:1px dashed #91a4b8;background:transparent"></i>unknown</span>
         <span><i class="swatch" style="background:rgba(174,185,198,.55)"></i>no direct mutation found</span>
-        <span><i class="swatch" style="background:#58d4c3;clip-path:polygon(0 50%,100% 0,100% 100%)"></i>input</span>
-        <span><i class="swatch" style="background:#f2a05f;clip-path:polygon(0 0,100% 50%,0 100%)"></i>output</span>
+        <span><i class="swatch" style="background:#58d4c3;clip-path:polygon(0 50%,100% 0,100% 100%)"></i>input → building</span>
+        <span><i class="swatch" style="background:#f2a05f;clip-path:polygon(0 0,100% 50%,0 100%)"></i>building → output</span>
         <span><i class="swatch" style="background:linear-gradient(90deg,#71879a,#f0b84f,#ff5d55)"></i>low → high attention</span>
         <span><i class="swatch" style="background:#5da7ff"></i>call road</span>
         <span><i class="swatch" style="background:#c18cff"></i>event road</span>
@@ -180,7 +180,7 @@ function boot(THREE, OrbitControls) {
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.PCFShadowMap;
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x080d14,.0065);
   const camera = new THREE.PerspectiveCamera(48,1,.1,800);
@@ -197,7 +197,7 @@ function boot(THREE, OrbitControls) {
 
   function addLabel(text, position, kind, owner, cityId) {
     const element=document.createElement('span'); element.className=`world-label ${kind}`; element.textContent=text; labelLayer.appendChild(element);
-    const record={element,position,kind,owner,cityId,road:null}; labels.push(record); return record;
+    const record={element,position,kind,owner,cityId,road:null,enabled:true}; labels.push(record); return record;
   }
   const cityLayouts=[];
   let cityCursor=0;
@@ -266,11 +266,16 @@ function boot(THREE, OrbitControls) {
     }
     const boundaries=boundariesByNode.get(node.id)||[];
     const ports=boundaries.flatMap(boundary=>boundary.direction==='bidirectional'?[{boundary,input:true},{boundary,input:false}]:[{boundary,input:boundary.direction==='input'}]);
-    ports.slice(0,4).forEach((port,index)=>{
-      const input=port.input, cone=new THREE.Mesh(new THREE.ConeGeometry(.2,.46,3),new THREE.MeshBasicMaterial({color:input?0x58d4c3:0xf2a05f}));
-      cone.rotation.z=input?-Math.PI/2:Math.PI/2; cone.position.set((input?-1:1)*(node.footprint/2+.25),-.1+index*.36,0); cone.userData.nodeId=node.id; mesh.add(cone); pickables.push(cone);
-    });
+    ports.slice(0,4).forEach((port,index)=>addBoundaryPort(mesh,node,port.input,index));
     addLabel(node.name,new THREE.Vector3(x,base+node.height+.45,z),'node',node.id,node.city_id);
+  }
+  function addBoundaryPort(mesh,node,input,index) {
+    const color=input?0x58d4c3:0xf2a05f, material=new THREE.MeshBasicMaterial({color}), port=new THREE.Group();
+    const side=input?-1:1, y=-node.height/2+.42+index*.34;
+    port.position.set(side*node.footprint/2,y,0); port.userData.nodeId=node.id; mesh.add(port);
+    const collar=new THREE.Mesh(new THREE.TorusGeometry(.14,.035,7,16),material); collar.rotation.y=Math.PI/2; collar.userData.nodeId=node.id; port.add(collar); pickables.push(collar);
+    const shaft=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.38,8),material); shaft.rotation.z=-Math.PI/2; shaft.position.x=input?-.38:.19; shaft.userData.nodeId=node.id; port.add(shaft); pickables.push(shaft);
+    const head=new THREE.Mesh(new THREE.ConeGeometry(.18,.36,4),material); head.rotation.z=-Math.PI/2; head.position.x=input?-.18:.56; head.userData.nodeId=node.id; port.add(head); pickables.push(head);
   }
   function heatColor(value) {
     const low=new THREE.Color(0x71879a),mid=new THREE.Color(0xf0b84f),high=new THREE.Color(0xff5d55);
@@ -297,11 +302,10 @@ function boot(THREE, OrbitControls) {
     roadLabel.road={families:road.lanes.map(lane=>lane.family),a:a.cityId,b:b.cityId};
   }
 
-  const home={position:new THREE.Vector3(worldCenterX,Math.max(28,cityLayouts.length*12),Math.max(34,cityLayouts.length*12)),target:new THREE.Vector3(worldCenterX,0,0)};
-  function resetCamera(){camera.position.copy(home.position);controls.target.copy(home.target);controls.update();}
-  resetCamera();
+  const worldWidth=Math.max(1,cityCursor-18),worldDepth=Math.max(1,...cityLayouts.map(layout=>layout.depth)),homeTarget=new THREE.Vector3(worldCenterX,0,0),homeDirection=new THREE.Vector3(0,.64,.77).normalize();
+  function resetCamera(){const verticalFov=THREE.MathUtils.degToRad(camera.fov),horizontalFov=2*Math.atan(Math.tan(verticalFov/2)*camera.aspect),fitDistance=Math.max(34,(worldWidth/2)/Math.tan(horizontalFov/2)*1.25,(worldDepth/2)/Math.tan(verticalFov/2)*1.55);camera.position.copy(homeTarget).addScaledVector(homeDirection,fitDistance);controls.target.copy(homeTarget);controls.update();}
   function resize(){const rect=stage.getBoundingClientRect();renderer.setSize(rect.width,rect.height,false);camera.aspect=rect.width/rect.height;camera.updateProjectionMatrix();}
-  new ResizeObserver(resize).observe(stage); resize();
+  new ResizeObserver(resize).observe(stage); resize(); resetCamera();
 
   const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
   canvas.addEventListener('pointerdown',event=>{const rect=canvas.getBoundingClientRect();pointer.x=((event.clientX-rect.left)/rect.width)*2-1;pointer.y=-((event.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer,camera);const city=$('city').value;const hit=raycaster.intersectObjects(pickables,false).find(candidate=>{const id=candidate.object.userData.nodeId||candidate.object.parent?.userData.nodeId,node=nodeById.get(id);return node&&(city==='all'||node.city_id===city);});if(hit){const id=hit.object.userData.nodeId||hit.object.parent?.userData.nodeId;selectNode(id,true);}});
@@ -325,7 +329,7 @@ function boot(THREE, OrbitControls) {
     const source=node.source, bands=node.bands.map(b=>`<div class="metric"><div class="metric-head"><span>${esc(b.label)}</span><span>${b.raw===undefined?'unknown':esc(Number(b.raw).toLocaleString())} · ${esc(b.status)}</span></div>${b.normalized===undefined?'<div class="metric-track unknown"></div>':`<div class="metric-track"><div class="metric-fill" style="width:${Math.round(b.normalized*100)}%"></div></div>`}</div>`).join('');
     const links=related.map(r=>{const other=nodeById.get(r.from===node.id?r.to:r.from);return `<div class="relation ${esc(r.family)}"><strong>${r.from===node.id?'→':'←'} ${esc(other?.name||'unknown')}</strong><br>${esc(r.kind)} · ${esc(r.execution)}${r.summary?`<br>${esc(r.summary)}`:''}</div>`}).join('')||'<div class="kind">No mapped relations at this level.</div>';
     const security=(securityByNode.get(node.id)||[]).map(item=>`<div class="warning"><strong>${esc(item.severity)} ${esc(item.category)}</strong><br>${esc(item.summary)}<br><small>${esc(item.status)} · confidence ${esc(item.confidence)}</small></div>`).join('');
-    const boundaries=(boundariesByNode.get(node.id)||[]).map(item=>`<div class="relation"><strong>${esc(item.direction)} · ${esc(item.transport)}</strong><br>${esc(item.payloads?.join(', '))}<br>${esc(item.trust_from)} → ${esc(item.trust_to)}</div>`).join('');
+    const boundaries=(boundariesByNode.get(node.id)||[]).map(item=>{const direction=item.direction==='input'?'→ into component':item.direction==='output'?'component → outward':'↔ bidirectional';return `<div class="relation"><strong>${esc(direction)} · ${esc(item.transport)}</strong><br>${esc(item.payloads?.join(', '))}<br>${esc(item.trust_from)} → ${esc(item.trust_to)}</div>`;}).join('');
     $('detail').innerHTML=`<h2>${esc(node.name)}</h2><div class="kind">${esc(node.kind)} · ${esc(districtById.get(node.district_id)?.code||'')} · ${esc(node.runtime||'runtime unknown')}</div><p class="summary">${esc(node.summary)}</p>${source?`<div class="source"><code>${esc(source.path)}${source.line?`:${source.line}`:''}</code>${source.symbol?`<div>${esc(source.symbol)}</div>`:''}<div class="source-actions"><button id="open-source">Open in VS Code</button><button id="copy-source">Copy path</button></div></div>`:'<div class="source">No source target for this external or inferred element.</div>'}<h3>Condition bands</h3>${bands}${boundaries?`<h3>Inputs and outputs</h3>${boundaries}`:''}${security?`<h3>Security review leads</h3>${security}`:''}<h3>Mapped neighborhood</h3><div class="relation-list">${links}</div>`;
     if(source){const target=`${source.absolute}${source.line?`:${source.line}`:''}`;$('copy-source').onclick=()=>copyText(target);$('open-source').onclick=()=>{let sourcePath=source.absolute.replaceAll('\\','/');if(!sourcePath.startsWith('/'))sourcePath='/'+sourcePath;sourcePath=encodeURI(sourcePath).replaceAll('#','%23').replaceAll('?','%3F');location.href=`vscode://file${sourcePath}${source.line?`:${source.line}`:''}`;};}
   }
@@ -335,16 +339,16 @@ function boot(THREE, OrbitControls) {
     const city=$('city').value,road=$('roads').value,labelMode=$('labels').value;
     for(const [id,group] of cityGroups)group.visible=city==='all'||city===id;
     for(const line of roadObjects){const familyOK=road==='all'||(road==='behavior'?line.userData.family!=='import':line.userData.family===road);const cityOK=city==='all'||line.userData.a===city||line.userData.b===city;line.visible=familyOK&&cityOK;}
-    labels.forEach(label=>{const cityOK=label.road?(city==='all'||label.road.a===city||label.road.b===city):(city==='all'||!label.cityId||label.cityId===city);const roadOK=!label.road||road==='all'||(road==='behavior'?label.road.families.some(family=>family!=='import'):label.road.families.includes(road));const modeOK=labelMode==='all'||(labelMode==='district'&&label.kind!=='node');label.element.hidden=!(cityOK&&roadOK&&labelMode!=='none'&&modeOK);});
+    labels.forEach(label=>{const cityOK=label.road?(city==='all'||label.road.a===city||label.road.b===city):(city==='all'||!label.cityId||label.cityId===city);const roadOK=!label.road||road==='all'||(road==='behavior'?label.road.families.some(family=>family!=='import'):label.road.families.includes(road));const modeOK=labelMode==='all'||(labelMode==='district'&&label.kind!=='node');label.enabled=cityOK&&roadOK&&labelMode!=='none'&&modeOK;label.element.hidden=!label.enabled;label.element.style.display=label.enabled?'':'none';});
   }
   $('city').onchange=applyFilters;$('roads').onchange=applyFilters;$('labels').onchange=applyFilters;$('reset').onclick=resetCamera;
   $('search').addEventListener('input',event=>{const query=event.target.value.trim().toLowerCase();if(!query)return;const match=model.nodes.find(node=>node.name.toLowerCase().includes(query)||node.id.toLowerCase().includes(query)||(node.source?.path||'').toLowerCase().includes(query));if(match){if($('city').value!=='all'&&$('city').value!==match.city_id){$('city').value=match.city_id;applyFilters();}selectNode(match.id,true);}});
   applyFilters();
 
-  const clock=new THREE.Clock();
-  function animate(){requestAnimationFrame(animate);const dt=Math.min(.05,clock.getDelta()),move=10*dt,rotate=1.25*dt;const forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();const right=new THREE.Vector3().crossVectors(forward,camera.up).normalize();const delta=new THREE.Vector3();if(keys.has('KeyW'))delta.addScaledVector(forward,move);if(keys.has('KeyS'))delta.addScaledVector(forward,-move);if(keys.has('KeyD'))delta.addScaledVector(right,move);if(keys.has('KeyA'))delta.addScaledVector(right,-move);camera.position.add(delta);controls.target.add(delta);if(keys.has('ArrowLeft')||keys.has('ArrowRight')){const angle=(keys.has('ArrowLeft')?1:-1)*rotate;camera.position.sub(controls.target).applyAxisAngle(camera.up,angle).add(controls.target);}if(keys.has('ArrowUp')){camera.position.y+=move;}if(keys.has('ArrowDown')){camera.position.y=Math.max(1,camera.position.y-move);}controls.update();updateLabels();renderer.render(scene,camera);}
-  function updateLabels(){const rect=canvas.getBoundingClientRect();for(const label of labels){if(label.element.hidden)continue;const projected=label.position.clone().project(camera),visible=projected.z<1;label.element.style.display=visible?'block':'none';if(visible){label.element.style.left=`${(projected.x*.5+.5)*rect.width}px`;label.element.style.top=`${(-projected.y*.5+.5)*rect.height}px`;}}}
-  animate();
+  const timer=new THREE.Timer(); timer.connect(document);
+  function animate(timestamp){requestAnimationFrame(animate);timer.update(timestamp);const dt=Math.min(.05,timer.getDelta()),move=10*dt,rotate=1.25*dt;const forward=new THREE.Vector3();camera.getWorldDirection(forward);forward.y=0;forward.normalize();const right=new THREE.Vector3().crossVectors(forward,camera.up).normalize();const delta=new THREE.Vector3();if(keys.has('KeyW'))delta.addScaledVector(forward,move);if(keys.has('KeyS'))delta.addScaledVector(forward,-move);if(keys.has('KeyD'))delta.addScaledVector(right,move);if(keys.has('KeyA'))delta.addScaledVector(right,-move);camera.position.add(delta);controls.target.add(delta);if(keys.has('ArrowLeft')||keys.has('ArrowRight')){const angle=(keys.has('ArrowLeft')?1:-1)*rotate;camera.position.sub(controls.target).applyAxisAngle(camera.up,angle).add(controls.target);}if(keys.has('ArrowUp')){camera.position.y+=move;}if(keys.has('ArrowDown')){camera.position.y=Math.max(1,camera.position.y-move);}controls.update();updateLabels();renderer.render(scene,camera);}
+  function updateLabels(){const rect=canvas.getBoundingClientRect();for(const label of labels){if(!label.enabled){label.element.style.display='none';continue;}const projected=label.position.clone().project(camera),visible=projected.z<1;label.element.style.display=visible?'block':'none';if(visible){label.element.style.left=`${(projected.x*.5+.5)*rect.width}px`;label.element.style.top=`${(-projected.y*.5+.5)*rect.height}px`;}}}
+  requestAnimationFrame(animate);
 }
 
 start();

@@ -32,9 +32,9 @@ and Dart disagree about whether `node_modules`, `DerivedData`, `.gradle`,
 
 | Adapter | Detection | Semantic analysis | Intended native foundation |
 |---|---|---|---|
-| Python | available | prototype, not orchestrated | Python `ast`, established quality and coverage tools |
-| Go | available | not implemented | [`go/packages`](https://pkg.go.dev/golang.org/x/tools/go/packages), `go/types`, AST/SSA |
-| JavaScript / TypeScript | available | not implemented | TypeScript project service/compiler model plus ecosystem analyzers |
+| Python | available | implemented prototype, Go-orchestrated | embedded Python `ast` adapter (requires Python 3.10+) |
+| Go | available | implemented AST prototype | standard Go parser/AST; future [`go/packages`](https://pkg.go.dev/golang.org/x/tools/go/packages), `go/types`, and SSA |
+| JavaScript / TypeScript | available | implemented lexical prototype | dependency-free source analysis; future TypeScript compiler/project model |
 | Flutter / Dart | available | not implemented | [Dart analyzer plugins](https://dart.dev/tools/analyzer-plugins), package and Flutter metadata |
 | Android / Kotlin / Java | available | not implemented | Gradle/Kotlin tooling, [Android manifests](https://developer.android.com/guide/topics/manifest/manifest-intro.html), lint/test reports |
 | Apple / Swift / Objective-C | available | not implemented | [SourceKit-LSP and Swift source tooling](https://www.swift.org/documentation/source-code/), Xcode project/index metadata |
@@ -43,11 +43,32 @@ and Dart disagree about whether `node_modules`, `DerivedData`, `.gradle`,
 scope. It does not mean calls, side effects, navigation, or quality have been
 analyzed. That distinction is part of the machine-readable adapter descriptor.
 
-Deep mobile semantic analysis remains future work. Appropriate native
-foundations include Go `go/packages`, Swift source tooling, the Kotlin/Gradle
-tooling APIs, Dart analyzer plugins, and Android manifests, as linked in the
-table above. Detector registration deliberately does not claim those analyzers
-already exist.
+Compiler-grade Go analysis and deep mobile semantic analysis remain future
+work. Appropriate foundations include Go `go/packages`, Swift source tooling,
+the Kotlin/Gradle tooling APIs, Dart analyzer plugins, and Android manifests,
+as linked above. Detector registration deliberately does not claim unbuilt
+analyzers already exist.
+
+Check the executable truth directly:
+
+```bash
+vibecodemap adapters
+vibecodemap adapters -json
+```
+
+The status separates `detection`, `semantic_analysis`, and
+`runtime_available`. `vibecodemap analyze REPOSITORY` scans once, dispatches
+implemented analyzers automatically, and writes
+`REPOSITORY/.vibecodemap/generated/evidence.json`. It records unsupported
+detections as `not_implemented`.
+
+An adapter does not have to be written in the language it analyzes. It must
+obey the request/event protocol and state its precision limits. Python is an
+embedded Python subprocess because its standard-library AST is useful; Go and
+JS/TS analysis run in-process in Go. The JS/TS prototype is lexical rather than
+compiler-grade, so aliases, types, JSX structure, and dynamic dispatch remain
+unresolved. All detectors are Go code, and there are no separate adapter
+packages for users to install.
 
 ## Mixed-stack repositories
 
@@ -64,6 +85,11 @@ systems as cities and deployables as area-level elements. Workload discovery
 is still primarily performed by the AI skill or a human; detector output does
 not automatically author those boundaries. See
 [Multi-stack and monorepo modeling](MULTI-STACK.md).
+
+After reviewing scope—and correcting it only when necessary—run `analyze` once
+at the same root. Its evidence is a deterministic aid where analyzers exist.
+For detection-only stacks, the AI skill reads approved source and tools
+directly and labels its architectural conclusions `ai_inferred`.
 
 ## Stable contracts
 
@@ -85,6 +111,15 @@ not automatically author those boundaries. See
 
 The payload may evolve by adapter and evidence kind. Identity, confidence,
 provenance, and source navigation do not.
+
+`vibecodemap.evidence-bundle/0.1` is the JSON file written by `analyze`. It
+contains detections, one explicit run status per detected adapter, and the
+validated evidence events. It is an intermediate report for an AI or human DSL
+author—not structural DSL, quality DSL, or renderer view JSON. After a
+structural model exists, `vibecodemap quality STRUCTURAL.vcm.yaml` can convert
+supported source-linked measurements in this bundle into validated quality
+DSL. That bridge does not infer architecture or execute external quality tools;
+unsupported metrics and missing coverage remain explicit unknowns.
 
 ## Mobile-specific semantics
 

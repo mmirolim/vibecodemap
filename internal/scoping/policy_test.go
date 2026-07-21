@@ -137,3 +137,13 @@ func TestMatchPathUsesScopeGlobGrammar(t *testing.T) {
 		t.Fatal("unexpected Python match")
 	}
 }
+
+func TestCompiledPathMatcherMatchesAnyPattern(t *testing.T) {
+	matcher, err := CompilePathMatcher([]string{"cmd/**/*.go", "docs/**"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !matcher.Match("cmd/vcm/main.go") || !matcher.Match("docs/guide.md") || matcher.Match("web/app.js") {
+		t.Fatal("compiled matcher did not apply all patterns")
+	}
+}

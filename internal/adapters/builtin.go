@@ -14,80 +14,46 @@ import (
 	"github.com/mmirolim/vibecodemap/internal/scoping"
 )
 
-// BuiltinRegistry returns conservative stack detectors. These detectors do not
-// claim semantic analysis support: they identify the native adapter(s) a later
-// analyze command should invoke for each repository scope.
+// BuiltinRegistry returns conservative stack detectors plus the semantic
+// analyzers currently implemented behind the common evidence contract.
 func BuiltinRegistry() (*Registry, error) {
 	return NewRegistry(
-		stackDetector{
-			descriptor: Descriptor{
-				ID: "python-ast-v0", Version: "0.1", Languages: []string{"python"}, Stacks: []string{"python"},
-				Capabilities: []Capability{Artifacts, Symbols, Imports, Calls, Effects, Complexity},
-				Support:      Prototype, Summary: "Conservative Python AST prototype; orchestration is not wired yet.",
-			},
-			detect: detectPython,
-		},
-		stackDetector{
-			descriptor: Descriptor{
-				ID: "go-packages-v0", Version: "0.1", Languages: []string{"go"}, Stacks: []string{"go-module"},
-				Capabilities: []Capability{Artifacts, Symbols, Imports, Calls, Types, Effects, Complexity, Coverage, Tests, Entrypoints},
-				Support:      DetectionOnly, Summary: "Go module detector; semantic analysis should use go/packages and go/types.",
-			},
-			detect: detectGo,
-		},
-		stackDetector{
-			descriptor: Descriptor{
-				ID: "typescript-project-v0", Version: "0.1", Languages: []string{"typescript", "javascript"}, Stacks: []string{"typescript"},
-				Capabilities: []Capability{Artifacts, Symbols, Imports, Calls, Types, Effects, Complexity, Coverage, Tests, Entrypoints},
-				Support:      DetectionOnly, Summary: "TypeScript project detector; semantic analysis is not implemented.",
-			},
-			detect: detectTypeScript,
-		},
-		stackDetector{
-			descriptor: Descriptor{
-				ID: "javascript-package-v0", Version: "0.1", Languages: []string{"javascript"}, Stacks: []string{"javascript"},
-				Capabilities: []Capability{Artifacts, Symbols, Imports, Calls, Effects, Complexity, Coverage, Tests, Entrypoints},
-				Support:      DetectionOnly, Summary: "JavaScript package detector; semantic analysis is not implemented.",
-			},
-			detect: detectJavaScript,
-		},
+		newPythonAnalyzer(),
+		newGoAnalyzer(),
+		newTypeScriptAnalyzer(),
+		newJavaScriptAnalyzer(),
 		stackDetector{
 			descriptor: Descriptor{
 				ID: "flutter-dart-v0", Version: "0.1", Languages: []string{"dart"}, Stacks: []string{"flutter"},
-				Capabilities: []Capability{Artifacts, Symbols, Imports, Calls, Types, Effects, Complexity, Coverage, Tests, Entrypoints, UIComposition, Navigation, Lifecycle, Permissions, PlatformBoundaries},
-				Support:      DetectionOnly, Summary: "Flutter project detector; Dart analyzer integration is not implemented.",
+				Support: DetectionOnly, Summary: "Flutter project detector; Dart analyzer integration is not implemented.",
 			},
 			detect: detectFlutter,
 		},
 		stackDetector{
 			descriptor: Descriptor{
 				ID: "dart-package-v0", Version: "0.1", Languages: []string{"dart"}, Stacks: []string{"dart-package"},
-				Capabilities: []Capability{Artifacts, Symbols, Imports, Calls, Types, Effects, Complexity, Coverage, Tests, Entrypoints},
-				Support:      DetectionOnly, Summary: "Dart package detector; analyzer integration is not implemented.",
+				Support: DetectionOnly, Summary: "Dart package detector; analyzer integration is not implemented.",
 			},
 			detect: detectDart,
 		},
 		stackDetector{
 			descriptor: Descriptor{
 				ID: "android-kotlin-v0", Version: "0.1", Languages: []string{"kotlin", "java"}, Stacks: []string{"android"},
-				Capabilities: []Capability{Artifacts, Symbols, Imports, Calls, Types, Effects, Complexity, Coverage, Tests, Entrypoints, UIComposition, Navigation, Lifecycle, Permissions, PlatformBoundaries},
-				Support:      DetectionOnly, Summary: "Android module detector; Gradle/Kotlin semantic analysis is not implemented.",
+				Support: DetectionOnly, Summary: "Android module detector; Gradle/Kotlin semantic analysis is not implemented.",
 			},
 			detect: detectAndroid,
 		},
 		stackDetector{
 			descriptor: Descriptor{
 				ID: "kotlin-gradle-v0", Version: "0.1", Languages: []string{"kotlin", "java"}, Stacks: []string{"kotlin-gradle"},
-				Capabilities: []Capability{Artifacts, Symbols, Imports, Calls, Types, Effects, Complexity, Coverage, Tests, Entrypoints},
-				Support:      DetectionOnly, Summary: "Non-Android Kotlin/Gradle detector; semantic analysis is not implemented.",
+				Support: DetectionOnly, Summary: "Non-Android Kotlin/Gradle detector; semantic analysis is not implemented.",
 			},
 			detect: detectKotlin,
 		},
 		stackDetector{
 			descriptor: Descriptor{
 				ID: "apple-swift-v0", Version: "0.1", Languages: []string{"swift", "objective-c"}, Stacks: []string{"apple", "swift-package"},
-				Capabilities: []Capability{Artifacts, Symbols, Imports, Calls, Types, Effects, Complexity, Coverage, Tests, Entrypoints, UIComposition, Navigation, Lifecycle, Permissions, PlatformBoundaries},
-				Support:      DetectionOnly, Summary: "SwiftPM/Xcode detector; SourceKit-LSP integration is not implemented.",
+				Support: DetectionOnly, Summary: "SwiftPM/Xcode detector; SourceKit-LSP integration is not implemented.",
 			},
 			detect: detectApple,
 		},

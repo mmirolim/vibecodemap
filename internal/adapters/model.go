@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/mmirolim/vibecodemap/internal/repository"
 	"github.com/mmirolim/vibecodemap/internal/scoping"
@@ -141,7 +143,7 @@ type AnalyzeRequest struct {
 	Files        []FileInput  `json:"files"`
 }
 
-func NewAnalyzeRequest(report repository.Report, descriptor Descriptor, capabilities []Capability) (AnalyzeRequest, error) {
+func NewAnalyzeRequest(report repository.Report, descriptor Descriptor, capabilities []Capability, scopes ...string) (AnalyzeRequest, error) {
 	if err := descriptor.validate(); err != nil {
 		return AnalyzeRequest{}, err
 	}
@@ -162,9 +164,15 @@ func NewAnalyzeRequest(report repository.Report, descriptor Descriptor, capabili
 		}
 		seenCapabilities[capability] = struct{}{}
 	}
+	if len(scopes) == 0 {
+		scopes = []string{"."}
+	}
 	files := make([]FileInput, 0)
 	for _, entry := range report.Entries {
 		if entry.Kind != repository.File || (entry.Action != scoping.Analyze && entry.Action != scoping.Summarize) {
+			continue
+		}
+		if !pathInDetectionScopes(entry.Path, scopes) {
 			continue
 		}
 		files = append(files, FileInput{
@@ -184,6 +192,17 @@ func NewAnalyzeRequest(report repository.Report, descriptor Descriptor, capabili
 		Capabilities: capabilities,
 		Files:        files,
 	}, nil
+}
+
+func pathInDetectionScopes(relative string, scopes []string) bool {
+	path := strings.TrimPrefix(filepath.ToSlash(filepath.Clean(relative)), "./")
+	for _, candidate := range scopes {
+		scope := strings.TrimPrefix(filepath.ToSlash(filepath.Clean(candidate)), "./")
+		if scope == "" || scope == "." || path == scope || strings.HasPrefix(path, scope+"/") {
+			return true
+		}
+	}
+	return false
 }
 
 type SourceLocation struct {
@@ -254,8 +273,27 @@ type Analyzer interface {
 	Analyze(context.Context, AnalyzeRequest, Sink) error
 }
 
+// RuntimeAware is implemented by subprocess adapters whose analyzer can be
+// installed independently from the Go binary. RuntimeStatus must not mutate
+// the repository or start analysis.
+type RuntimeAware interface {
+	RuntimeStatus() (available bool, detail string)
+}
+
+// Status makes detection and semantic-analysis support explicit. A detector
+// can recognize a stack without having an analyzer capable of extracting
+// semantic evidence from it.
+type Status struct {
+	Descriptor       Descriptor `json:"descriptor"`
+	Detection        bool       `json:"detection"`
+	SemanticAnalysis bool       `json:"semantic_analysis"`
+	RuntimeAvailable bool       `json:"runtime_available"`
+	RuntimeDetail    string     `json:"runtime_detail,omitempty"`
+}
+
 type Registry struct {
 	detectors []Detector
+	analyzers map[string]Analyzer
 }
 
 func NewRegistry(detectors ...Detector) (*Registry, error) {
@@ -273,7 +311,13 @@ func NewRegistry(detectors ...Detector) (*Registry, error) {
 		}
 		seen[descriptor.ID] = struct{}{}
 	}
-	return &Registry{detectors: append([]Detector(nil), detectors...)}, nil
+	analyzers := make(map[string]Analyzer)
+	for _, detector := range detectors {
+		if analyzer, ok := detector.(Analyzer); ok {
+			analyzers[detector.Descriptor().ID] = analyzer
+		}
+	}
+	return &Registry{detectors: append([]Detector(nil), detectors...), analyzers: analyzers}, nil
 }
 
 func (registry *Registry) Descriptors() []Descriptor {
@@ -283,6 +327,33 @@ func (registry *Registry) Descriptors() []Descriptor {
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].ID < result[j].ID })
 	return result
+}
+
+func (registry *Registry) Statuses() []Status {
+	result := make([]Status, 0, len(registry.detectors))
+	for _, detector := range registry.detectors {
+		descriptor := detector.Descriptor()
+		_, semantic := registry.analyzers[descriptor.ID]
+		available := semantic
+		detail := "no semantic analyzer implemented"
+		if semantic {
+			detail = "in-process analyzer"
+			if runtime, ok := detector.(RuntimeAware); ok {
+				available, detail = runtime.RuntimeStatus()
+			}
+		}
+		result = append(result, Status{
+			Descriptor: descriptor, Detection: true, SemanticAnalysis: semantic,
+			RuntimeAvailable: available, RuntimeDetail: detail,
+		})
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].Descriptor.ID < result[j].Descriptor.ID })
+	return result
+}
+
+func (registry *Registry) Analyzer(id string) (Analyzer, bool) {
+	analyzer, ok := registry.analyzers[id]
+	return analyzer, ok
 }
 
 func (registry *Registry) Detect(ctx context.Context, report repository.Report) ([]Detection, error) {

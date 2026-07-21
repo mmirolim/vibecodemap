@@ -11,8 +11,8 @@ only as thousands of generated source lines.
 
 ## See the prototype
 
-Go 1.24 or newer is required. Python is optional and is currently used only by
-prototype Python extractors and validators.
+Go 1.24 or newer is required. Python 3.10 or newer is needed only when `analyze` detects
+Python source and runs the Python AST adapter; validation and rendering are Go.
 
 ```bash
 git clone https://github.com/mmirolim/vibecodemap.git
@@ -44,9 +44,13 @@ clone VibeCodeMap and build the Go CLI
         ↓
 run one root inspect over the target repository
         ↓
-review/correct scope with target/.vcmignore
+review the computed scope; add target/.vcmignore only if something is misclassified
         ↓
-AI agent explores approved source and writes target/.vibecodemap/*.yaml
+vibecodemap analyze runs implemented adapters over that exact scope
+        ↓
+AI agent follows a subsystem plan, investigates approved source, and writes structural/project DSL
+        ↓
+vibecodemap quality maps deterministic evidence into source-linked quality DSL
         ↓
 vibecodemap show project.vcm.yaml
         ↓
@@ -56,22 +60,26 @@ review the map, source links, warnings, and editable DSL; iterate
 ```
 
 The checked-in `$analyze-with-vibecodemap` agent skill drives this whole flow.
-Today AI is the primary semantic mapper between repository files and the DSL;
-`inspect` is its bounded, explainable reading plan, not an architecture
-generator.
+Today AI is the primary architectural mapper between repository evidence and
+the DSL. The skill plans the potentially long investigation and tracks source
+coverage by subsystem. `inspect` bounds that work; `analyze` adds deterministic
+facts where a real adapter exists; `quality` links supported measurements to
+structural artifacts and elements. None of these commands invents architecture.
 
 Example prompt from the VibeCodeMap checkout:
 
 ```text
 Use $analyze-with-vibecodemap to map /absolute/path/to/my-app end to end.
 Build the CLI if needed, inspect the repository once at its root, write
-source-linked DSL under .vibecodemap, and open the generated 3D map.
+source-linked structural and quality DSL under .vibecodemap, track the
+investigation by subsystem, and open the generated 3D map.
 ```
 
 ## What works today
 
-- a Go CLI for repository inventory, stack detection, DSL validation,
-  composition, standalone HTML generation, and browser launch;
+- a Go CLI for repository inventory, stack detection, analyzer orchestration,
+  evidence-to-quality conversion, DSL validation, composition, standalone HTML
+  generation, and browser launch;
 - editable structural, quality, clustering/visual, and project DSL with JSON
   Schemas;
 - generated renderer-neutral `vibecodemap.view/0.1` JSON;
@@ -86,15 +94,23 @@ source-linked DSL under .vibecodemap, and open the generated 3D map.
   Flutter/Dart, Android/Kotlin/Java, and Apple/Swift/Objective-C;
 - explainable affinity and hub metrics plus deterministic district-road/lane
   aggregation;
-- conservative Python AST and quality extraction prototypes;
+- Python AST, Go AST, and JS/TS lexical analyzers for source-linked imports,
+  symbols, routes, calls, effect candidates, and transparent structural signals;
 - a repository-owned agent skill for source exploration and DSL authoring.
 
 Important limits:
 
 - stack detection is not deep semantic analysis;
 - `inspect` does not write the DSL;
-- native Go, JS/TS, Swift, Kotlin, and Dart semantic adapters are not yet
-  orchestrated;
+- Go and JS/TS have prototype source analyzers; Dart, Kotlin/Java, and
+  Swift/Objective-C remain detection-only;
+- detection-only stacks can still be visualized after the agent or a human
+  investigates their approved source and authors valid DSL, but `analyze`
+  contributes no language-specific semantic evidence for those stacks;
+- analyzer evidence is static and does not establish runtime behavior or
+  architecture by itself; JS/TS analysis is lexical rather than compiler-grade;
+- `quality` converts measurements already present in analyzer evidence; it does
+  not run tests, coverage, linters, compilers, or third-party audit tools;
 - the current AI-authored DSL must be reviewed and corrected;
 - the MVP composer applies direct-mutation correction paths; other validated
   correction paths are surfaced as generation warnings until implemented;
@@ -123,6 +139,48 @@ It does not resolve imports/calls, infer systems, detect effects, calculate
 quality, or author DSL. The AI agent uses its output to avoid reading generated
 or installed source and to decide which manifests, entrypoints, deployables,
 and source relationships require investigation.
+
+Scope is the repository file set and reading depth used by analyzers and the AI
+mapper. Every entry is classified as `analyze` (full source), `summarize`
+(metadata/volume only), `externalize` (dependency boundary), or `ignore`.
+Reviewing this result is recommended; changing it is optional. Proceed when
+owned source/manifests are analyzed and dependencies, generated code, caches,
+and build output are not. The AI agent performs this review; a developer can
+inspect or override it. `inspect` never creates `.vcmignore` automatically.
+
+## What `analyze` does
+
+```bash
+./bin/vibecodemap analyze /absolute/path/to/app
+./bin/vibecodemap adapters
+```
+
+`analyze` performs the same centrally scoped scan, detects all stacks, and
+automatically invokes every implemented analyzer. Its default output is
+`/absolute/path/to/app/.vibecodemap/generated/evidence.json`. Python AST, Go
+AST, and JS/TS source analyzers are implemented. Mobile detections are recorded
+as `not_implemented` instead of being silently treated as analyzed. The
+evidence file assists the AI/human DSL author and is not itself DSL or a view
+model.
+
+## What `quality` does
+
+After `model.vcm.yaml` exists, generate a quality document from analyzer
+evidence and link it from `project.inputs.quality_model`:
+
+```bash
+./bin/vibecodemap quality \
+  -evidence /absolute/path/to/app/.vibecodemap/generated/evidence.json \
+  -output /absolute/path/to/app/.vibecodemap/quality.vcm.yaml \
+  /absolute/path/to/app/.vibecodemap/model.vcm.yaml
+```
+
+The command matches evidence to structural artifacts by repository-relative
+path and to elements by source symbol/range. Go and Python AST evidence can
+therefore populate complexity, nesting, size, and direct-effect bands. JS/TS
+lexical decision counts remain distinct from compiler-grade cyclomatic
+complexity. Coverage remains explicitly unknown until a real,
+revision-matched coverage result is imported.
 
 Example `.vcmignore`:
 
@@ -167,7 +225,7 @@ See [Multi-stack and monorepo modeling](docs/MULTI-STACK.md).
 | Part | Technology | Responsibility |
 |---|---|---|
 | Core and document generator | Go | inventory, validation, evidence composition, aggregation, view-model JSON, HTML generation, and browser launch |
-| Language adapters | language-native tools or subprocesses | compiler/analyzer facts, calls, effects, quality, coverage, tests, and stack semantics |
+| Language adapters | in-process Go or versioned subprocesses | compiler/analyzer facts; an adapter may be written in any language if it obeys the central scope/evidence contracts |
 | Browser presentation | Three.js and plain JavaScript | 3D layout, picking, semantic filtering, legends, source navigation, and fallback presentation |
 | Semantic mapping | checked-in AI agent skill | workload discovery, source-linked architecture/effect inference, DSL authoring, and iterative correction |
 
@@ -191,17 +249,20 @@ measured traffic unless runtime evidence explicitly says so.
 ```bash
 make check
 
-python3 tools/validate_vcm.py examples/uzumtools/uzumtools.vcm.yaml
-python3 tools/validate_quality_vcm.py \
-  examples/uzumtools/uzumtools.quality.vcm.yaml \
-  --core examples/uzumtools/uzumtools.vcm.yaml
-python3 tools/validate_project_vcm.py \
-  examples/uzumtools/uzumtools.project.vcm.yaml
+./bin/vibecodemap schema structural
+./bin/vibecodemap schema quality
+
+./bin/vibecodemap validate examples/uzumtools/uzumtools.vcm.yaml
+./bin/vibecodemap validate \
+  -core examples/uzumtools/uzumtools.vcm.yaml \
+  examples/uzumtools/uzumtools.quality.vcm.yaml
+./bin/vibecodemap validate examples/uzumtools/uzumtools.project.vcm.yaml
 ```
 
 ## Near-term work
 
-1. Orchestrate native semantic adapters, beginning with Go and Python.
+1. Upgrade Go and TypeScript/JavaScript analysis to compiler/project-aware
+   adapters, then add mobile-stack analyzers.
 2. Add workload discovery and optional deterministic DSL generation.
 3. Add replaceable Leiden/CPM clustering and revision-stability reports.
 4. Improve large-workspace layout, offline renderer packaging, and accessible
