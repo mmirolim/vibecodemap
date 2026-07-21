@@ -31,8 +31,9 @@ They were used to:
 - review screenshots and code, diagnose visual noise and semantic ambiguity,
   add tests, run validators, and correct documentation through submission.
 
-The collaboration produced six iterative commits during Build Week. Before the
-hosted product site was added, the repository contained approximately **9,900
+The core prototype was built through six iterative commits during Build Week;
+later commits package the hosted submission site. Before that site was added,
+the repository contained approximately **9,900
 tracked lines of Go** and **28,800 tracked lines overall** across implementation,
 tests, schemas, examples, agent guidance, and documentation. These counts
 describe project size, not an automated authorship score; most implementation
