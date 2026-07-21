@@ -143,11 +143,6 @@ export default function Home() {
             visual critique, code review, testing, documentation, and submission.
           </p>
         </div>
-        <div className="build-facts">
-          <article><strong>6</strong><span>core prototype commits before submission packaging</span></article>
-          <article><strong>9.9k</strong><span>tracked lines of Go before this site</span></article>
-          <article><strong>28.8k</strong><span>tracked lines across code, schemas, tests, examples, and docs before this site</span></article>
-        </div>
         <div className="roles-grid">
           <article>
             <h3>Human direction</h3>

@@ -31,15 +31,6 @@ They were used to:
 - review screenshots and code, diagnose visual noise and semantic ambiguity,
   add tests, run validators, and correct documentation through submission.
 
-The core prototype was built through six iterative commits during Build Week;
-later commits package the hosted submission site. Before that site was added,
-the repository contained approximately **9,900
-tracked lines of Go** and **28,800 tracked lines overall** across implementation,
-tests, schemas, examples, agent guidance, and documentation. These counts
-describe project size, not an automated authorship score; most implementation
-and documentation was drafted or revised through Codex under close human
-direction.
-
 Several important choices came directly from that human/agent review loop:
 unknown evidence must remain unknown; static imports must not be presented as
 observed runtime communication; AI architectural claims require explicit
