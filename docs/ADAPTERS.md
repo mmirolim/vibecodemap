@@ -62,6 +62,15 @@ implemented analyzers automatically, and writes
 `REPOSITORY/.vibecodemap/generated/evidence.json`. It records unsupported
 detections as `not_implemented`.
 
+Each analyzer is isolated behind a configurable deadline (two minutes by
+default). `runtime_unavailable`, `failed`, and `timed_out` are explicit run
+statuses in the evidence bundle; partial events from an unsuccessful adapter
+are discarded while healthy adapters continue. Python receives an additional
+five-second startup/import health probe. Set
+`VIBECODEMAP_PYTHON=/absolute/path/to/python3` to select a known-good Python
+3.10+ interpreter when several are installed. These safeguards prevent a
+damaged or stalled optional runtime from blocking the entire mixed-stack scan.
+
 An adapter does not have to be written in the language it analyzes. It must
 obey the request/event protocol and state its precision limits. Python is an
 embedded Python subprocess because its standard-library AST is useful; Go and

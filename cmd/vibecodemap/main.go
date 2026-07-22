@@ -56,6 +56,7 @@ Scope correction is optional; use .vcmignore only for false classifications.
 Analyze flags:
   -output FILE                   evidence JSON output; default is
                                  REPOSITORY/.vibecodemap/generated/evidence.json
+  -adapter-timeout DURATION      maximum time for each analyzer (default 2m)
   -rules, -gitignore,
   -max-header-bytes,
   -max-file-bytes               same central scope controls as inspect
@@ -376,6 +377,7 @@ func runAnalyze(arguments []string) int {
 	readGitignore := flags.Bool("gitignore", true, "apply Git ignore rules")
 	maxHeaderBytes := flags.Int64("max-header-bytes", 8192, "generated marker prefix budget")
 	maxFileBytes := flags.Int64("max-file-bytes", 10*1024*1024, "detailed analysis file budget")
+	adapterTimeout := flags.Duration("adapter-timeout", adapters.DefaultAdapterTimeout, "maximum time for each analyzer")
 	if err := flags.Parse(arguments); err != nil {
 		return 2
 	}
@@ -387,8 +389,8 @@ func runAnalyze(arguments []string) int {
 	if flags.NArg() == 1 {
 		root = flags.Arg(0)
 	}
-	if *maxHeaderBytes <= 0 || *maxFileBytes <= 0 {
-		fmt.Fprintln(os.Stderr, "analysis byte budgets must be positive")
+	if *maxHeaderBytes <= 0 || *maxFileBytes <= 0 || *adapterTimeout <= 0 {
+		fmt.Fprintln(os.Stderr, "analysis byte budgets and adapter timeout must be positive")
 		return 2
 	}
 	options := repository.DefaultOptions()
@@ -406,7 +408,7 @@ func runAnalyze(arguments []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	bundle, err := registry.Analyze(context.Background(), report)
+	bundle, err := registry.AnalyzeWithOptions(context.Background(), report, adapters.AnalysisOptions{AdapterTimeout: *adapterTimeout})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
@@ -441,12 +443,19 @@ func runAnalyze(arguments []string) int {
 	}
 	fmt.Printf("evidence: %s\n", destination)
 	fmt.Printf("events:   %d\n", len(bundle.Events))
+	var incomplete []string
 	for _, run := range bundle.Runs {
 		fmt.Printf("  %-24s %-20s %d events", run.AdapterID, run.Status, run.Events)
 		if run.Detail != "" {
 			fmt.Printf(" — %s", run.Detail)
 		}
 		fmt.Println()
+		if run.Status == "runtime_unavailable" || run.Status == "failed" || run.Status == "timed_out" {
+			incomplete = append(incomplete, run.AdapterID)
+		}
+	}
+	if len(incomplete) > 0 {
+		fmt.Printf("warning: analyzer evidence is incomplete for %s; use the run details, select a working runtime, or investigate that source directly\n", strings.Join(incomplete, ", "))
 	}
 	fmt.Println("next: use this evidence plus approved source to author structural DSL; then generate/link quality DSL and run show")
 	return 0

@@ -8,8 +8,9 @@ understanding a repository and authoring the editable DSL.
 ## 1. Clone and build VibeCodeMap
 
 Go 1.24 or newer is required. Python 3.10 or newer is needed only to analyze
-Python source. Validation, composition, and HTML generation run in the Go
-binary; the generated page renders with Three.js in the browser.
+Python source and may be selected with `VIBECODEMAP_PYTHON`. Validation,
+composition, and HTML generation run in the Go binary; the generated page
+renders with Three.js in the browser.
 
 ```bash
 git clone https://github.com/mmirolim/vibecodemap.git
@@ -107,6 +108,18 @@ route/effect candidates, and transparent structural metrics within their stated
 limits. Dart, Kotlin/Java, and Swift/Objective-C remain `not_implemented`, so
 the agent investigates their approved source directly. Adapter evidence is
 input to DSL authoring, not architecture, DSL, or a rendered map.
+
+Analyzer subprocesses are supervised. The Python startup/import probe is
+bounded, and every analyzer has a two-minute default deadline configurable
+with `-adapter-timeout`. Runs marked `runtime_unavailable`, `failed`, or
+`timed_out` produced no retained evidence for that adapter; continue the source
+investigation explicitly or rerun with a working runtime. When multiple Python
+installations exist, select one without changing repository configuration:
+
+```bash
+VIBECODEMAP_PYTHON=/absolute/path/to/python3 \
+  ./bin/vibecodemap analyze -adapter-timeout=5m /absolute/path/to/my-app
+```
 
 ## 4. Review the durable model
 
@@ -215,8 +228,9 @@ runtime roads.
 
 Run `analyze` once at that same root as well. It dispatches implemented
 analyzers automatically; there is no per-language install or invocation flow.
-The Python analyzer needs Python 3.10 or newer on `PATH`. Detection-only stacks need no
-extra runtime because no analyzer is run for them.
+The Python analyzer needs Python 3.10 or newer on `PATH` or selected through
+`VIBECODEMAP_PYTHON`. Detection-only stacks need no extra runtime because no
+analyzer is run for them.
 
 The usual filenames remain `model.vcm.yaml`, `quality.vcm.yaml`, and
 `project.vcm.yaml` even for mixed stacks—the model is unified, not one file per

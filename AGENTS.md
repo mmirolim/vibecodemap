@@ -16,6 +16,8 @@ When asked to inspect or map a repository, use the checked-in
 - unknown quality, runtime, coverage, and security state remains unknown;
 - static imports are topology, not observed runtime communication;
 - native semantic adapters are not yet orchestrated for every detected stack;
+- adapter runs marked `runtime_unavailable`, `failed`, or `timed_out` supplied
+  no retained evidence and require explicit source investigation or rerun;
 - the generic composer renders valid VCM DSL, but it does not make an
   AI-authored semantic model automatically true.
 

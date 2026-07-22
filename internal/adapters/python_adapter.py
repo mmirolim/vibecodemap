@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import ast
 from collections import Counter
-import hashlib
 import json
 from pathlib import Path
 import sys
@@ -265,7 +264,13 @@ def analyze_file(root: Path, relative: str) -> tuple[dict[str, Any], int]:
 
 
 def event_id(path: str) -> str:
-    return "python.file." + hashlib.sha256(path.encode("utf-8")).hexdigest()[:16]
+    # Stable FNV-1a avoids loading an optional native crypto extension merely
+    # to identify deterministic evidence records.
+    value = 0xCBF29CE484222325
+    for byte in path.encode("utf-8"):
+        value ^= byte
+        value = (value * 0x100000001B3) & 0xFFFFFFFFFFFFFFFF
+    return f"python.file.{value:016x}"
 
 
 def emit(event: dict[str, Any]) -> None:

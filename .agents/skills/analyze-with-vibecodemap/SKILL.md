@@ -132,12 +132,22 @@ Read `TARGET_ROOT/.vibecodemap/generated/evidence.json`. `analyze` repeats the
 central scan with the same rules, dispatches each implemented detected
 analyzer, and records every detection-only stack as `not_implemented`.
 
+Review every run status before using the bundle. `runtime_unavailable`,
+`failed`, and `timed_out` mean that analyzer supplied no retained evidence;
+healthy adapters still complete. For Python, use
+`VIBECODEMAP_PYTHON=/absolute/path/to/python3` to select another Python 3.10+
+runtime. Increase `-adapter-timeout` only when repository size plausibly
+explains the timeout. Otherwise record the limitation and investigate that
+language's approved source directly; never silently retry forever or present
+the missing adapter evidence as complete.
+
 Current executable truth:
 
 - Python: a prototype semantic analyzer is implemented. Go sends its embedded
   Python AST subprocess only approved `.py` files. It returns source-linked
   imports, symbols, routes, calls, effect candidates, and transparent static
-  complexity/nesting facts. Python 3.10 or newer must be on `PATH`.
+  complexity/nesting facts. Python 3.10 or newer must be on `PATH` or selected
+  through `VIBECODEMAP_PYTHON`.
 - Go: an in-process parser/AST prototype returns packages, imports, types,
   functions, calls, concurrency, route/effect candidates, and complexity.
   Package loading, types, SSA, and dynamic dispatch remain unresolved.

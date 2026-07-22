@@ -47,8 +47,9 @@ require OpenAI API credentials.
 The hosted artifact maps VibeCodeMap itself and can be explored directly in a
 modern desktop browser.
 
-Go 1.24 or newer is required. Python 3.10 or newer is needed only when `analyze` detects
-Python source and runs the Python AST adapter; validation and rendering are Go.
+Go 1.24 or newer is required. Python 3.10 or newer is needed only when
+`analyze` detects Python source and runs the Python AST adapter; validation and
+rendering are Go.
 
 ```bash
 git clone https://github.com/mmirolim/vibecodemap.git
@@ -81,7 +82,9 @@ For mapping your own repository, follow
   intended to compile on Linux and Windows, but this prototype does not yet
   publish cross-platform release binaries or claim a complete OS test matrix.
 - **Python analysis:** Python 3.10+ on `PATH` is needed only when `analyze` runs
-  the Python AST adapter. Go and JS/TS analyzers run from the Go process.
+  the Python AST adapter. Set `VIBECODEMAP_PYTHON=/absolute/path/to/python3`
+  when several interpreters are installed and the first one on `PATH` is not
+  usable. Go and JS/TS analyzers run from the Go process.
 - **Mapped source:** prototype analyzers cover Go, Python, and JS/TS. Dart,
   Kotlin/Java, and Swift/Objective-C are detected but remain agent-investigated,
   detection-only stacks.
@@ -210,7 +213,21 @@ automatically invokes every implemented analyzer. Its default output is
 AST, and JS/TS source analyzers are implemented. Mobile detections are recorded
 as `not_implemented` instead of being silently treated as analyzed. The
 evidence file assists the AI/human DSL author and is not itself DSL or a view
-model.
+model. Each analyzer is bounded independently (`-adapter-timeout=2m` by
+default). A missing runtime, analyzer failure, or timeout is recorded as
+`runtime_unavailable`, `failed`, or `timed_out`; healthy adapters still write
+their evidence and partial output from the unsuccessful adapter is discarded.
+Do not treat one of these statuses as successful analysis of that language.
+
+The Python runtime is health-checked before use. If its startup or required
+standard-library imports stall, `analyze` reports `runtime_unavailable` after
+the probe deadline instead of waiting forever. Select another interpreter when
+available:
+
+```bash
+VIBECODEMAP_PYTHON=/opt/homebrew/bin/python3 \
+  ./bin/vibecodemap analyze /absolute/path/to/app
+```
 
 ## What `quality` does
 

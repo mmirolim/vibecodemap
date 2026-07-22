@@ -2,14 +2,22 @@ package adapters
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/mmirolim/vibecodemap/internal/repository"
 	"github.com/mmirolim/vibecodemap/internal/scoping"
 )
 
 const EvidenceBundleSchema = "vibecodemap.evidence-bundle/0.1"
+
+const DefaultAdapterTimeout = 2 * time.Minute
+
+type AnalysisOptions struct {
+	AdapterTimeout time.Duration
+}
 
 type AnalysisRun struct {
 	AdapterID string       `json:"adapter_id"`
@@ -57,6 +65,17 @@ func (sink *collectingSink) Emit(_ context.Context, event EvidenceEvent) error {
 // repository report. Detection-only stacks are recorded as not_implemented;
 // they are not silently presented as semantically analyzed.
 func (registry *Registry) Analyze(ctx context.Context, report repository.Report) (EvidenceBundle, error) {
+	return registry.AnalyzeWithOptions(ctx, report, AnalysisOptions{AdapterTimeout: DefaultAdapterTimeout})
+}
+
+// AnalyzeWithOptions runs detected analyzers independently. A broken optional
+// runtime must not prevent evidence from healthy adapters being written: a
+// failed or timed-out run is recorded explicitly and its partial events are
+// discarded.
+func (registry *Registry) AnalyzeWithOptions(ctx context.Context, report repository.Report, options AnalysisOptions) (EvidenceBundle, error) {
+	if options.AdapterTimeout <= 0 {
+		return EvidenceBundle{}, fmt.Errorf("adapter timeout must be positive")
+	}
 	detections, err := registry.Detect(ctx, report)
 	if err != nil {
 		return EvidenceBundle{}, err
@@ -123,12 +142,33 @@ func (registry *Registry) Analyze(ctx context.Context, report repository.Report)
 		if err != nil {
 			return EvidenceBundle{}, err
 		}
-		before := len(sink.events)
-		if err := analyzer.Analyze(ctx, request, sink); err != nil {
-			return EvidenceBundle{}, fmt.Errorf("analyze with %s: %w", id, err)
+		adapterSink := &collectingSink{seen: make(map[string]struct{}), allowed: allowed}
+		adapterContext, cancel := context.WithTimeout(ctx, options.AdapterTimeout)
+		analyzeErr := analyzer.Analyze(adapterContext, request, adapterSink)
+		adapterContextErr := adapterContext.Err()
+		cancel()
+		if err := ctx.Err(); err != nil {
+			return EvidenceBundle{}, err
+		}
+		if errors.Is(adapterContextErr, context.DeadlineExceeded) {
+			run.Status = "timed_out"
+			run.Detail = fmt.Sprintf("exceeded adapter timeout %s; partial evidence was discarded", options.AdapterTimeout)
+			runs = append(runs, run)
+			continue
+		}
+		if analyzeErr != nil {
+			run.Status = "failed"
+			run.Detail = fmt.Sprintf("%v; partial evidence was discarded", analyzeErr)
+			runs = append(runs, run)
+			continue
+		}
+		for _, event := range adapterSink.events {
+			if err := sink.Emit(ctx, event); err != nil {
+				return EvidenceBundle{}, fmt.Errorf("merge evidence from %s: %w", id, err)
+			}
 		}
 		run.Status = "completed"
-		run.Events = len(sink.events) - before
+		run.Events = len(adapterSink.events)
 		runs = append(runs, run)
 	}
 	sort.Slice(sink.events, func(i, j int) bool { return sink.events[i].ID < sink.events[j].ID })

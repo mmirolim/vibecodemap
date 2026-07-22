@@ -7,12 +7,16 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 //go:embed python_adapter.py
 var pythonAdapterSource string
+
+const pythonRuntimeProbeTimeout = 5 * time.Second
 
 type pythonAnalyzer struct {
 	stackDetector
@@ -31,17 +35,43 @@ func newPythonAnalyzer() pythonAnalyzer {
 }
 
 func pythonCommand() (string, error) {
-	for _, candidate := range []string{"python3", "python"} {
+	candidates := []string{"python3", "python"}
+	if configured := strings.TrimSpace(os.Getenv("VIBECODEMAP_PYTHON")); configured != "" {
+		candidates = []string{configured}
+	}
+	return findPythonCommand(candidates, pythonRuntimeProbeTimeout)
+}
+
+func findPythonCommand(candidates []string, probeTimeout time.Duration) (string, error) {
+	const probe = "import ast, collections, json, pathlib, sys, typing; raise SystemExit(0 if sys.version_info >= (3, 10) else 'VibeCodeMap requires Python 3.10 or newer')"
+	var failures []string
+	for _, candidate := range candidates {
 		path, err := exec.LookPath(candidate)
 		if err != nil {
+			failures = append(failures, fmt.Sprintf("%s: not found", candidate))
 			continue
 		}
-		check := exec.Command(path, "-c", "import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)")
-		if err := check.Run(); err == nil {
+		probeContext, cancel := context.WithTimeout(context.Background(), probeTimeout)
+		check := exec.CommandContext(probeContext, path, "-c", probe)
+		var stderr bytes.Buffer
+		check.Stderr = &stderr
+		err = check.Run()
+		timedOut := probeContext.Err() == context.DeadlineExceeded
+		cancel()
+		if err == nil {
 			return path, nil
 		}
+		if timedOut {
+			failures = append(failures, fmt.Sprintf("%s: startup/import probe exceeded %s", path, probeTimeout))
+			continue
+		}
+		detail := strings.TrimSpace(stderr.String())
+		if detail == "" {
+			detail = err.Error()
+		}
+		failures = append(failures, fmt.Sprintf("%s: %s", path, detail))
 	}
-	return "", fmt.Errorf("Python 3.10 or newer runtime not found in PATH")
+	return "", fmt.Errorf("usable Python 3.10+ runtime not found (%s); set VIBECODEMAP_PYTHON to a working interpreter path", strings.Join(failures, "; "))
 }
 
 func (analyzer pythonAnalyzer) RuntimeStatus() (bool, string) {
